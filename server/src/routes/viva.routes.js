@@ -1,0 +1,25 @@
+import { Router } from 'express';
+import vivaController from '../controllers/viva.controller.js';
+import { authenticate } from '../middleware/auth.js';
+import { requireProjectAccess } from '../middleware/projectAccess.js';
+
+const router = Router();
+
+router.use(authenticate);
+
+// Generate questions
+router.post('/:id/viva/generate', requireProjectAccess, vivaController.generateVivaQuestions);
+
+// Retrieve all questions
+router.get('/:id/viva/questions', requireProjectAccess, vivaController.getVivaQuestions);
+
+// Submit answer for single question
+router.post('/viva/questions/:questionId/answer', vivaController.answerVivaQuestion);
+
+// Calculate readiness score
+router.post('/:id/readiness-score/generate', requireProjectAccess, vivaController.generateReadinessScore);
+
+// Get current readiness score
+router.get('/:id/readiness-score', requireProjectAccess, vivaController.getReadinessScore);
+
+export default router;

@@ -1,0 +1,255 @@
+// CapstoneGuard AI — Prisma Schema
+// Provider: SQLite (dev) / PostgreSQL (prod)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("student") // student, supervisor, admin
+  profileImage String?
+  createdAt    DateTime @default(now())
+
+  // Relations
+  createdProjects  Project[]        @relation("ProjectCreator")
+  supervisedProjects Project[]      @relation("ProjectSupervisor")
+  memberships      ProjectMember[]
+  assignedTasks    Task[]
+  progressLogs     ProgressLog[]
+  givenReviews     PeerReview[]     @relation("Reviewer")
+  receivedReviews  PeerReview[]     @relation("ReviewedUser")
+  uploadedFiles    File[]
+  vivaAnswers      VivaAnswer[]
+  comments         SupervisorComment[]
+}
+
+model Project {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  category     String?
+  department   String?
+  academicYear String?
+  status       String   @default("active") // active, completed, archived
+  supervisorId Int?
+  createdBy    Int
+  createdAt    DateTime @default(now())
+
+  // Relations
+  supervisor   User?            @relation("ProjectSupervisor", fields: [supervisorId], references: [id])
+  creator      User             @relation("ProjectCreator", fields: [createdBy], references: [id])
+  members      ProjectMember[]
+  requirements Requirement[]
+  tasks        Task[]
+  progressLogs ProgressLog[]
+  peerReviews  PeerReview[]
+  files        File[]
+  vivaQuestions VivaQuestion[]
+  readinessScores ReadinessScore[]
+  comments     SupervisorComment[]
+}
+
+model ProjectMember {
+  id          Int      @id @default(autoincrement())
+  projectId   Int
+  userId      Int
+  projectRole String?  // frontend_dev, backend_dev, doc_lead, researcher, tester, ui_ux, project_manager
+  isLeader    Boolean  @default(false)
+  joinedAt    DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+model Requirement {
+  id          Int      @id @default(autoincrement())
+  projectId   Int
+  type        String   // functional, non_functional
+  title       String
+  description String
+  priority    String   @default("medium") // low, medium, high
+  status      String   @default("draft")  // draft, approved, rejected
+  createdAt   DateTime @default(now())
+
+  // Relations
+  project            Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  acceptanceCriteria AcceptanceCriteria[]
+  testCases          TestCase[]
+  tasks              Task[]
+}
+
+model AcceptanceCriteria {
+  id            Int      @id @default(autoincrement())
+  requirementId Int
+  criteriaText  String
+  createdAt     DateTime @default(now())
+
+  // Relations
+  requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+}
+
+model TestCase {
+  id             Int      @id @default(autoincrement())
+  requirementId  Int
+  testTitle      String
+  testSteps      String
+  expectedResult String
+  status         String   @default("pending") // pending, passed, failed
+  createdAt      DateTime @default(now())
+
+  // Relations
+  requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id            Int       @id @default(autoincrement())
+  projectId     Int
+  assignedTo    Int?
+  title         String
+  description   String?
+  priority      String    @default("medium") // low, medium, high
+  status        String    @default("todo")   // todo, in_progress, review, completed, rejected
+  deadline      DateTime?
+  completedAt   DateTime?
+  requirementId Int?
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee    User?         @relation(fields: [assignedTo], references: [id])
+  requirement Requirement?  @relation(fields: [requirementId], references: [id])
+  evidence    TaskEvidence[]
+}
+
+model TaskEvidence {
+  id        Int      @id @default(autoincrement())
+  taskId    Int
+  fileId    Int?
+  note      String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  file File? @relation(fields: [fileId], references: [id])
+}
+
+model ProgressLog {
+  id          Int      @id @default(autoincrement())
+  projectId   Int
+  userId      Int
+  logText     String
+  weekNumber  Int?
+  submittedAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model PeerReview {
+  id                        Int      @id @default(autoincrement())
+  projectId                 Int
+  reviewerId                Int
+  reviewedUserId            Int
+  reliability               Int      @default(3) // 1-5
+  technicalContribution     Int      @default(3)
+  communication             Int      @default(3)
+  meetingAttendance          Int      @default(3)
+  documentationContribution Int      @default(3)
+  overallRating             Int      @default(3)
+  comment                   String?
+  createdAt                 DateTime @default(now())
+
+  // Relations
+  project      Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reviewer     User    @relation("Reviewer", fields: [reviewerId], references: [id])
+  reviewedUser User    @relation("ReviewedUser", fields: [reviewedUserId], references: [id])
+
+  @@unique([projectId, reviewerId, reviewedUserId])
+}
+
+model File {
+  id         Int      @id @default(autoincrement())
+  projectId  Int
+  uploadedBy Int
+  fileName   String
+  filePath   String
+  fileType   String   // proposal, report, slides, code, evidence, screenshot, diagram
+  mimeType   String?
+  size       Int?
+  uploadedAt DateTime @default(now())
+
+  // Relations
+  project  Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploader User           @relation(fields: [uploadedBy], references: [id])
+  evidence TaskEvidence[]
+}
+
+model VivaQuestion {
+  id              Int      @id @default(autoincrement())
+  projectId       Int
+  category        String   // requirements, architecture, database, testing, security, scalability, contribution, originality, limitations, future_work
+  difficulty      String   // basic, intermediate, advanced, brutal
+  questionText    String
+  suggestedAnswer String?
+  createdAt       DateTime @default(now())
+
+  // Relations
+  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  answers VivaAnswer[]
+}
+
+model VivaAnswer {
+  id         Int      @id @default(autoincrement())
+  questionId Int
+  userId     Int
+  answerText String
+  aiScore    Int?
+  aiFeedback String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  question VivaQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id])
+}
+
+model ReadinessScore {
+  id                 Int      @id @default(autoincrement())
+  projectId          Int
+  requirementsScore  Int      @default(0)
+  contributionScore  Int      @default(0)
+  documentationScore Int      @default(0)
+  testingScore       Int      @default(0)
+  vivaScore          Int      @default(0)
+  overallScore       Int      @default(0)
+  generatedAt        DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model SupervisorComment {
+  id          Int      @id @default(autoincrement())
+  projectId   Int
+  userId      Int
+  targetType  String   // requirement, task, document, contribution, viva
+  targetId    Int?
+  commentText String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+}

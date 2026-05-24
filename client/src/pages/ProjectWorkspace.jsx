@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import CoolLoader from '../components/CoolLoader';
@@ -20,6 +20,7 @@ import {
 export const ProjectWorkspace = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
 
   const [project, setProject] = useState(null);
@@ -92,6 +93,18 @@ export const ProjectWorkspace = () => {
   useEffect(() => {
     fetchWorkspaceData();
   }, [id]);
+
+  useEffect(() => {
+    const hashTab = location.hash.replace('#', '');
+    if (['requirements', 'tasks', 'contribution', 'readiness', 'comments'].includes(hashTab)) {
+      setActiveTab(hashTab);
+    }
+  }, [location.hash]);
+
+  const switchTab = (tab) => {
+    setActiveTab(tab);
+    navigate(`/projects/${id}#${tab}`, { replace: true });
+  };
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -218,7 +231,7 @@ export const ProjectWorkspace = () => {
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border-medium)', gap: '8px', paddingBottom: '2px' }}>
         <button 
           className={`btn ${activeTab === 'requirements' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveTab('requirements')}
+          onClick={() => switchTab('requirements')}
           style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <Sparkles size={16} />
@@ -227,7 +240,7 @@ export const ProjectWorkspace = () => {
 
         <button 
           className={`btn ${activeTab === 'tasks' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveTab('tasks')}
+          onClick={() => switchTab('tasks')}
           style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <ListTodo size={16} />
@@ -236,7 +249,7 @@ export const ProjectWorkspace = () => {
 
         <button 
           className={`btn ${activeTab === 'contribution' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveTab('contribution')}
+          onClick={() => switchTab('contribution')}
           style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <BarChart3 size={16} />
@@ -245,7 +258,7 @@ export const ProjectWorkspace = () => {
 
         <button 
           className={`btn ${activeTab === 'readiness' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveTab('readiness')}
+          onClick={() => switchTab('readiness')}
           style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <Download size={16} />
@@ -254,7 +267,7 @@ export const ProjectWorkspace = () => {
 
         <button 
           className={`btn ${activeTab === 'comments' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setActiveTab('comments')}
+          onClick={() => switchTab('comments')}
           style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <MessageSquare size={16} />

@@ -106,29 +106,34 @@ select {
 .app-container {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-columns: 318px minmax(0, 1fr);
 }
 
 .sidebar {
   position: sticky;
   top: 0;
   height: 100vh;
-  padding: 24px 18px;
+  padding: 22px 18px;
   border-right: 1px solid var(--line-subtle);
-  background: color-mix(in oklab, var(--bg-app) 87%, white);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--bg-app) 94%, white), color-mix(in oklab, var(--bg-soft) 58%, white)),
+    var(--bg-app);
   display: grid;
   grid-template-rows: auto 1fr auto;
-  gap: 20px;
+  gap: 18px;
+  overflow: hidden;
+}
+
+.sidebar-head {
+  display: grid;
+  gap: 14px;
 }
 
 .sidebar-logo {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px;
-  border-radius: var(--radius-md);
-  background: color-mix(in oklab, var(--brand-1) 10%, white);
-  border: 1px solid color-mix(in oklab, var(--brand-1) 22%, transparent);
+  padding: 8px 6px;
 }
 
 .sidebar-logo-text {
@@ -148,22 +153,81 @@ select {
   box-shadow: inset 0 0 0 1px color-mix(in oklab, black 10%, transparent);
 }
 
+.sidebar-search {
+  min-height: 46px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 13px;
+  background: color-mix(in oklab, white 84%, var(--bg-app));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  color: var(--ink-soft);
+  box-shadow: 0 1px 0 color-mix(in oklab, white 80%, transparent);
+}
+
+.sidebar-search input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink-strong);
+  min-width: 0;
+}
+
+.sidebar-search input::placeholder {
+  color: color-mix(in oklab, var(--ink-soft) 75%, transparent);
+}
+
+.sidebar-search kbd {
+  border: 1px solid var(--line-subtle);
+  border-radius: 7px;
+  padding: 2px 6px;
+  color: var(--ink-soft);
+  background: color-mix(in oklab, var(--bg-soft) 60%, white);
+  font-size: 0.72rem;
+  font-family: var(--font-sans);
+}
+
 .sidebar-menu {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: block;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--ink-soft) 28%, transparent) transparent;
+}
+
+.sidebar-section {
   display: grid;
   gap: 8px;
-  align-content: start;
+  margin-bottom: 17px;
+}
+
+.sidebar-eyebrow {
+  color: var(--ink-soft);
+  font-size: 0.73rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  padding: 0 4px;
+}
+
+.sidebar-tree-group {
+  display: grid;
+  gap: 2px;
 }
 
 .sidebar-link {
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: 11px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 12px;
+  min-height: 39px;
+  padding: 9px 10px;
   color: var(--ink-soft);
   transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
 }
@@ -177,8 +241,61 @@ select {
 
 .sidebar-link.active {
   color: var(--ink-strong);
-  background: color-mix(in oklab, var(--brand-2) 18%, white);
-  border-color: color-mix(in oklab, var(--brand-1) 30%, transparent);
+  background: color-mix(in oklab, var(--brand-3) 18%, white);
+  border-color: color-mix(in oklab, var(--brand-1) 23%, transparent);
+  box-shadow: 0 7px 18px color-mix(in oklab, var(--ink-strong) 7%, transparent);
+}
+
+.sidebar-parent {
+  color: var(--ink-strong);
+  font-weight: 700;
+}
+
+.sidebar-parent .sidebar-chevron {
+  margin-left: auto;
+  color: var(--ink-soft);
+}
+
+.sidebar-branch {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  margin-left: 17px;
+  padding: 3px 0 5px 16px;
+}
+
+.sidebar-branch::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -2px;
+  bottom: 18px;
+  width: 1px;
+  background: color-mix(in oklab, var(--ink-soft) 22%, transparent);
+}
+
+.sidebar-child {
+  position: relative;
+  min-height: 35px;
+  padding: 7px 10px;
+  font-size: 0.92rem;
+}
+
+.sidebar-child::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 17px;
+  width: 14px;
+  height: 10px;
+  border-left: 1px solid color-mix(in oklab, var(--ink-soft) 22%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--ink-soft) 22%, transparent);
+  border-bottom-left-radius: 7px;
+}
+
+.sidebar-child.active {
+  background: white;
+  border-color: var(--line-subtle);
 }
 
 .sidebar-footer {
@@ -684,6 +801,14 @@ select {
     border-right: 0;
     border-bottom: 1px solid var(--line-subtle);
     grid-template-rows: auto auto auto;
+    overflow: visible;
+  }
+
+  .sidebar-menu {
+    overflow: visible;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
   }
 
   .board-lanes,

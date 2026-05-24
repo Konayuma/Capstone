@@ -5,9 +5,14 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "prestart": "npm run prisma:generate && npm run prisma:migrate:deploy",
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node --test"
+    "test": "node --test",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:status": "prisma migrate status"
   },
   "keywords": [],
   "author": "",
@@ -25,10 +30,10 @@
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "pdfkit": "^0.18.0",
+    "prisma": "^5.22.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "prisma": "^5.22.0"
+    "nodemon": "^3.1.14"
   }
 }

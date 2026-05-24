@@ -95,7 +95,7 @@ export const ProjectWorkspace = () => {
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  // Tab 1: AI Requirements Generator
+  // Tab 1: Requirements Generator
   const handleAIRefinement = async () => {
     setRefining(true);
     setAmbiguities([]);
@@ -105,9 +105,9 @@ export const ProjectWorkspace = () => {
       });
       setRequirements(res.data.requirements);
       setAmbiguities(res.data.ambiguityWarnings);
-      alert('AI requirements generation completed successfully! Review functional requirements below.');
+      alert('Requirements draft created. Review the list below before assigning work.');
     } catch (err) {
-      alert(err.response?.data?.error || 'AI refinement failed.');
+      alert(err.response?.data?.error || 'Unable to draft requirements right now.');
     } finally {
       setRefining(false);
     }
@@ -210,7 +210,7 @@ export const ProjectWorkspace = () => {
               style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <GraduationCap size={20} />
-              <span>Launch AI Viva Practice</span>
+              <span>Open Viva Practice</span>
             </button>
       </div>
 
@@ -270,13 +270,13 @@ export const ProjectWorkspace = () => {
             <div className="grid-2">
               {/* Requirements Generator Console */}
               <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <h3>Gemini AI Requirements Console</h3>
+                    <h3>Requirements Drafting</h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                  Paste a vague user request or project concept. Gemini will process it, filter out subjective terms, and compile functional & measurable non-functional requirements.
+                  Paste a project idea, feature request, or rough scope note. We will turn it into measurable functional and non-functional requirements.
                 </p>
                 <textarea 
                   className="form-input"
-                  placeholder="Paste raw vague inputs here..."
+                  placeholder="Paste the rough project description or requested feature..."
                   value={rawDesc}
                   onChange={(e) => setRawDesc(e.target.value)}
                   style={{ minHeight: '120px', resize: 'vertical' }}
@@ -287,21 +287,21 @@ export const ProjectWorkspace = () => {
                   disabled={refining}
                   style={{ alignSelf: 'flex-start' }}
                 >
-                  {refining ? <><Loader2 className="spinner-icon" size={15} /> Engineering Specifications...</> : 'Generate AI Specifications'}
+                  {refining ? <><Loader2 className="spinner-icon" size={15} /> Drafting requirements...</> : 'Draft Requirements'}
                 </button>
               </div>
 
               {/* Ambiguity warnings display */}
               <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <h3>Ambiguity Warnings Detectors</h3>
+                    <h3>Clarity Checks</h3>
                 {ambiguities.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)' }}>No recent warnings. Run AI analysis to identify non-testable descriptions.</p>
+                  <p style={{ color: 'var(--text-muted)' }}>No clarity checks yet. Draft requirements to highlight vague or hard-to-test wording.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '250px', overflowY: 'auto' }}>
                     {ambiguities.map((warn, i) => (
                       <div key={i} style={{ borderLeft: '3px solid var(--color-warning)', paddingLeft: '12px' }}>
                         <div style={{ fontWeight: 600, color: 'var(--color-warning)', fontSize: '0.9rem' }}>
-                          Vague term found: "{warn.vagueTerm}"
+                          Needs clarification: "{warn.vagueTerm}"
                         </div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{warn.explanation}</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--color-success)', fontWeight: 500 }}>
@@ -609,7 +609,7 @@ export const ProjectWorkspace = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3>Defense Readiness Audit</h3>
+                <h3>Viva Readiness</h3>
                 {readiness ? (
                   <div style={{ display: 'flex', gap: '40px', marginTop: '16px' }}>
                     <div>
@@ -619,8 +619,8 @@ export const ProjectWorkspace = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.9rem' }}>
                       <div>Requirements Quality: {readiness.requirementsScore}%</div>
                       <div>Testing Evidence: {readiness.testingScore}%</div>
-                      <div>Documentation completeness: {readiness.documentationScore}%</div>
-                      <div>Individual Contribution evenness: {readiness.contributionScore}%</div>
+                      <div>Documentation Completeness: {readiness.documentationScore}%</div>
+                      <div>Contribution Balance: {readiness.contributionScore}%</div>
                     </div>
                   </div>
                 ) : (
@@ -636,15 +636,15 @@ export const ProjectWorkspace = () => {
                 }}
                 className="btn btn-primary"
               >
-                Compute Score
+                Update Score
               </button>
             </div>
 
             {/* Document PDF Exports card */}
             <div className="card">
-              <h3>Export Official Review Documents</h3>
+              <h3>Export Review Documents</h3>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-                Download compiled, publication-grade academic PDF reports of requirements tracking, contribution details, and AI examiner readiness summaries.
+                Download academic PDF reports for requirements, contribution records, viva practice, and overall readiness.
               </p>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                 <button onClick={() => handleDownloadReport('requirements')} className="btn btn-secondary">

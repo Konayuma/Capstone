@@ -53,8 +53,8 @@ export const Landing = () => {
             <span className="landing-eyebrow">Studio workflow</span>
             <h1>Run your capstone like a structured design board.</h1>
             <p className="landing-lead">
-              Capstone Studio gives teams and supervisors one consistent command surface for requirements,
-              progress, contribution insight, and readiness reporting.
+              Capstone Studio gives teams and supervisors one shared workspace for requirements,
+              progress, contribution reviews, and readiness reports.
             </p>
             <div className="landing-cta-row">
               {user ? (
@@ -75,7 +75,7 @@ export const Landing = () => {
                 <CheckCircle2 size={16} />
                 <div>
                   <h3>Students stay aligned</h3>
-                  <p>Scope, tasks, and completion signals stay visible to the full team.</p>
+                  <p>Scope, tasks, and progress stay visible to the full team.</p>
                 </div>
               </div>
               <div className="landing-summary-item">

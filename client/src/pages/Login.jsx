@@ -33,7 +33,7 @@ export const Login = () => {
         <aside className="auth-side">
           <h1>Welcome Back to the Studio</h1>
           <p style={{ marginTop: '12px' }}>
-            Enter your account to resume project execution, monitor completion signals, and prep your team for review sessions.
+            Sign in to continue your project work, review progress, and prepare your team for supervision sessions.
           </p>
 
           <div className="auth-points">

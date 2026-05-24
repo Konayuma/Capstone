@@ -51,9 +51,9 @@ export const VivaPractice = () => {
       setCurrentIdx(0);
       setEvaluation(null);
       setAnswerText('');
-      alert('Veteran panel assembled! 8 brutal viva defense questions generated.');
+      alert('Practice questions are ready. Review them with your team before the viva.');
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to assemble AI panel.');
+      alert(err.response?.data?.error || 'Unable to prepare practice questions right now.');
     } finally {
       setLoading(false);
     }
@@ -73,15 +73,18 @@ export const VivaPractice = () => {
       setEvaluation(res.data);
       fetchQuestions(); // reload to register answer in list
     } catch (err) {
-      alert(err.response?.data?.error || 'Answer grading failed.');
+      alert(err.response?.data?.error || 'Unable to review this answer right now.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) return <CoolLoader title="Assembling panel" subtitle="Generating AI viva questions from your project data..." />;
+  if (loading) return <CoolLoader title="Preparing viva practice" subtitle="Reviewing your project materials and building focused questions..." />;
 
   const activeQuestion = questions[currentIdx];
+  const difficultyLabel = activeQuestion?.difficulty === 'brutal'
+    ? 'challenge'
+    : activeQuestion?.difficulty;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
@@ -99,9 +102,9 @@ export const VivaPractice = () => {
 
       {/* Title */}
       <div>
-        <h1>VivaBoss AI Examiner Panel</h1>
+        <h1>Viva Practice</h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Practice defending your project against a strict virtual panel chair. Get tested on database choices, architectural patterns, individual code modules, and originality.
+          Rehearse the questions your team is likely to face on design choices, architecture, code ownership, testing evidence, and originality.
         </p>
       </div>
 
@@ -109,12 +112,12 @@ export const VivaPractice = () => {
       {questions.length === 0 ? (
         <div className="card" style={{ padding: '60px', textAlign: 'center', maxWidth: '600px', marginInline: 'auto' }}>
           <HelpCircle size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
-          <h3>AI Examiner Panel is Offline</h3>
+          <h3>No practice questions yet</h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
-            To begin, trigger the AI panel assembly. Gemini will review your active functional requirements, uploaded codes, and group contributions to draft 8 unique examiner viva questions.
+            Create a set of viva questions from your current requirements, uploaded files, and contribution records.
           </p>
           <button onClick={handleGenerateQuestions} className="btn btn-primary">
-            Assemble Panel
+            Create Practice Set
           </button>
         </div>
       ) : (
@@ -123,7 +126,7 @@ export const VivaPractice = () => {
           <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <h4 style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <HelpCircle size={18} />
-              Questions List
+              Practice Questions
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {questions.map((q, idx) => {
@@ -168,7 +171,7 @@ export const VivaPractice = () => {
               className="btn btn-secondary"
               style={{ marginTop: '16px', fontSize: '0.85rem', width: '100%', padding: '10px' }}
             >
-              Regenerate Panel
+              Refresh Questions
             </button>
           </div>
 
@@ -180,7 +183,7 @@ export const VivaPractice = () => {
                   {activeQuestion.category}
                 </span>
                 <span className="badge badge-danger" style={{ textTransform: 'uppercase', background: activeQuestion.difficulty === 'brutal' ? 'var(--color-danger-bg)' : 'var(--color-warning-bg)', color: activeQuestion.difficulty === 'brutal' ? 'var(--color-danger)' : 'var(--color-warning)' }}>
-                  {activeQuestion.difficulty} examiner
+                  {difficultyLabel} level
                 </span>
               </div>
               <h2 style={{ fontSize: '1.5rem', lineHeight: 1.4 }}>"{activeQuestion.questionText}"</h2>
@@ -188,11 +191,11 @@ export const VivaPractice = () => {
 
             {/* Answer Box */}
             <div className="card">
-              <h3>Your Answer Response</h3>
+              <h3>Your Answer</h3>
               <form onSubmit={handleSubmitAnswer} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
                 <textarea
                   className="form-input"
-                  placeholder="Type your response. Mention specific architectural choices, tech terms, and evidence..."
+                  placeholder="Answer as you would in the viva. Include specific choices, trade-offs, and evidence from your project..."
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
                   style={{ minHeight: '150px', resize: 'vertical' }}
@@ -206,7 +209,7 @@ export const VivaPractice = () => {
                     disabled={submitting}
                   >
                     <Send size={16} />
-                    {submitting ? <><Loader2 className="spinner-icon" size={15} /> Examiner grading response...</> : 'Submit Response to Panel'}
+                    {submitting ? <><Loader2 className="spinner-icon" size={15} /> Reviewing answer...</> : 'Submit Answer'}
                   </button>
 
                   <button
@@ -214,7 +217,7 @@ export const VivaPractice = () => {
                     onClick={() => setShowAnswerOutline(!showAnswerOutline)}
                     className="btn btn-secondary"
                   >
-                    {showAnswerOutline ? 'Hide Answer Outline' : 'View Recommended Outline'}
+                    {showAnswerOutline ? 'Hide Answer Guide' : 'View Answer Guide'}
                   </button>
                 </div>
               </form>
@@ -225,7 +228,7 @@ export const VivaPractice = () => {
               <div className="card" style={{ borderLeft: '4px solid var(--accent-secondary)' }}>
                 <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-secondary)' }}>
                   <CheckSquare size={18} />
-                  Suggested Concept Check-offs
+                  Answer Guide
                 </h4>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '8px', whiteSpace: 'pre-line' }}>
                   {activeQuestion.suggestedAnswer}
@@ -238,7 +241,7 @@ export const VivaPractice = () => {
               <div className="card" style={{ borderLeft: '4px solid var(--color-success)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-success)' }}>
                   <Award size={20} />
-                  Examiner Panel Feedback & Grading
+                  Feedback
                 </h3>
                 
                 {(() => {
@@ -250,11 +253,11 @@ export const VivaPractice = () => {
                           <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--color-success)' }}>
                             {evalData.aiScore}/100
                           </div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Grading Score</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Answer score</div>
                         </div>
                       </div>
                       <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '16px' }}>
-                        <h4 style={{ marginBottom: '8px' }}>Detailed Conceptual Feedback:</h4>
+                        <h4 style={{ marginBottom: '8px' }}>What to strengthen</h4>
                         <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
                           {evalData.aiFeedback}
                         </p>

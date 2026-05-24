@@ -20,7 +20,7 @@ export const Sidebar = () => {
         <div className="user-avatar">CS</div>
         <div>
           <div className="sidebar-logo-text">Capstone Studio</div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>Workspace command center</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>Project workspace</div>
         </div>
       </div>
 

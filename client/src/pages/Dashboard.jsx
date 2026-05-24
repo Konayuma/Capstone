@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 const STATUS_META = {
-  active: { lane: 'ongoing', label: 'On Going', score: 55 },
+  active: { lane: 'ongoing', label: 'In Progress', score: 55 },
   completed: { lane: 'done', label: 'Complete', score: 100 },
   archived: { lane: 'done', label: 'Archived', score: 90 },
   draft: { lane: 'todo', label: 'To Do', score: 18 },
@@ -22,7 +22,7 @@ const STATUS_META = {
 
 const laneTitles = {
   todo: 'To Do',
-  ongoing: 'On Going',
+  ongoing: 'In Progress',
   done: 'Complete',
 };
 
@@ -128,7 +128,7 @@ export const Dashboard = () => {
           <h1>Studio Board</h1>
           <p>
             Signed in as <strong>{user.name}</strong> ({user.role}).
-            Keep track of active work, see completion signals, and jump directly into each workspace.
+            Track active work, review progress, and jump directly into each project workspace.
           </p>
         </div>
 
@@ -152,7 +152,7 @@ export const Dashboard = () => {
           <strong>{completionAverage}%</strong>
         </article>
         <article className="status-chip">
-          <span style={{ color: 'var(--ink-soft)', fontSize: '0.82rem' }}>Projects on going</span>
+          <span style={{ color: 'var(--ink-soft)', fontSize: '0.82rem' }}>Projects in progress</span>
           <strong>{ongoingCount}</strong>
         </article>
         <article className="status-chip">
@@ -197,7 +197,7 @@ export const Dashboard = () => {
 
                   <div className="project-progress">
                     <div className="completion-label">
-                      <span>Completion signal</span>
+                      <span>Estimated completion</span>
                       <strong>{project.completion}%</strong>
                     </div>
                     <div className="progress-track">

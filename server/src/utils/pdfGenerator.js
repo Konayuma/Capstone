@@ -110,12 +110,12 @@ export const pdfGenerator = {
     doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor('#e2e8f0').stroke();
     doc.moveDown(1.5);
 
-    // Defense readiness score overview
-    doc.fontSize(16).fillColor('#2b6cb0').text('Defense Readiness Analysis', { underline: true });
+    // Viva readiness score overview
+    doc.fontSize(16).fillColor('#2b6cb0').text('Viva Readiness Overview', { underline: true });
     doc.moveDown(1);
     
     if (score) {
-      doc.fontSize(12).fillColor('#1a202c').text(`Overall Defense Readiness Score: ${score.overallScore}%`);
+      doc.fontSize(12).fillColor('#1a202c').text(`Overall Viva Readiness Score: ${score.overallScore}%`);
       doc.fontSize(10).fillColor('#4a5568').text(`- Requirements Quality Score: ${score.requirementsScore}%`);
       doc.fontSize(10).fillColor('#4a5568').text(`- Testing Evidence Score: ${score.testingScore}%`);
       doc.fontSize(10).fillColor('#4a5568').text(`- Documentation Completeness Score: ${score.documentationScore}%`);
@@ -125,14 +125,15 @@ export const pdfGenerator = {
     }
 
     // Viva Questions
-    doc.fontSize(16).fillColor('#2b6cb0').text('Generated Viva Questions & Recommended Answers', { underline: true });
+    doc.fontSize(16).fillColor('#2b6cb0').text('Viva Practice Questions & Answer Guides', { underline: true });
     doc.moveDown(1);
 
     questions.forEach((q, idx) => {
-      doc.fontSize(11).fillColor('#2d3748').text(`Q${idx + 1}. [Category: ${q.category.toUpperCase()}] [Difficulty: ${q.difficulty.toUpperCase()}]`);
+      const difficulty = q.difficulty === 'brutal' ? 'challenge' : q.difficulty;
+      doc.fontSize(11).fillColor('#2d3748').text(`Q${idx + 1}. [Category: ${q.category.toUpperCase()}] [Difficulty: ${difficulty.toUpperCase()}]`);
       doc.fontSize(10).fillColor('#1a202c').text(`Question: "${q.questionText}"`, { indent: 10 });
       doc.moveDown(0.5);
-      doc.fontSize(9.5).fillColor('#4a5568').text(`Recommended Answer Guide outline:`, { indent: 10, underline: true });
+      doc.fontSize(9.5).fillColor('#4a5568').text(`Answer guide outline:`, { indent: 10, underline: true });
       doc.fontSize(9).fillColor('#718096').text(q.suggestedAnswer || 'Outline not provided.', { indent: 20 });
       doc.moveDown(1.5);
     });
@@ -146,8 +147,8 @@ export const pdfGenerator = {
     doc.pipe(res);
 
     // Title Page
-    doc.fontSize(28).fillColor('#2b6cb0').text('CapstoneGuard AI', { align: 'center', stroke: true });
-    doc.fontSize(20).fillColor('#2d3748').text('Full Project Quality & Defense Audit Report', { align: 'center' });
+    doc.fontSize(28).fillColor('#2b6cb0').text('Capstone Studio', { align: 'center', stroke: true });
+    doc.fontSize(20).fillColor('#2d3748').text('Full Project Quality & Viva Readiness Report', { align: 'center' });
     doc.moveDown(2);
     
     doc.fontSize(14).fillColor('#4a5568').text(`Project Title: ${project.title}`, { align: 'center' });
@@ -155,10 +156,10 @@ export const pdfGenerator = {
     doc.moveDown(4);
 
     if (score) {
-      doc.fontSize(16).fillColor('#1a202c').text(`Defense Readiness Score: ${score.overallScore}%`, { align: 'center', underline: true });
+      doc.fontSize(16).fillColor('#1a202c').text(`Viva Readiness Score: ${score.overallScore}%`, { align: 'center', underline: true });
       doc.moveDown(0.5);
       let level = 'High Risk';
-      if (score.overallScore >= 80) level = 'Strong Defense Readiness';
+      if (score.overallScore >= 80) level = 'Strong Viva Readiness';
       else if (score.overallScore >= 60) level = 'Moderate Readiness';
       else if (score.overallScore >= 40) level = 'Weak Readiness';
       doc.fontSize(12).fillColor('#e53e3e').text(`Status: ${level}`, { align: 'center' });

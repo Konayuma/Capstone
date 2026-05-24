@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { ArrowRight, ShieldCheck, LayoutPanelLeft } from 'lucide-react';
 
 export const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,11 +16,12 @@ export const Login = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
     try {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err || 'Failed to login. Please check credentials.');
+      setError(err || 'Unable to sign in. Please verify your credentials.');
     } finally {
       setLoading(false);
     }
@@ -27,61 +29,66 @@ export const Login = () => {
 
   return (
     <div className="auth-wrapper">
-      <div className="card auth-card">
-        <div className="auth-header">
-          <h1 className="auth-logo">Capstone Studio</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>
-            Track requirements, tasks, viva prep, and reports in one place.
+      <div className="auth-shell">
+        <aside className="auth-side">
+          <h1>Welcome Back to the Studio</h1>
+          <p style={{ marginTop: '12px' }}>
+            Enter your account to resume project execution, monitor completion signals, and prep your team for review sessions.
           </p>
-        </div>
 
-        {error && (
-          <div className="badge badge-danger" style={{ width: '100%', padding: '12px', borderRadius: '12px', marginBottom: '20px', justifyContent: 'center' }}>
-            {error}
+          <div className="auth-points">
+            <div className="auth-point"><ShieldCheck size={15} /> Secure role-based workspace access</div>
+            <div className="auth-point"><LayoutPanelLeft size={15} /> Board-based project progress view</div>
           </div>
-        )}
+        </aside>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Email Address</label>
-            <input 
-              type="email" 
-              className="form-input" 
-              placeholder="e.g. sepo@student.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+        <section className="auth-card">
+          <header className="auth-header">
+            <h2 className="auth-logo">Sign In</h2>
+            <p>Use your account details to continue.</p>
+          </header>
 
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input 
-              type="password" 
-              className="form-input" 
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          {error && (
+            <div className="badge badge-danger" style={{ marginBottom: '10px' }}>
+              {error}
+            </div>
+          )}
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            style={{ width: '100%', marginTop: '12px' }}
-            disabled={loading}
-          >
-            {loading ? 'Securing Session...' : 'Sign In'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '12px' }}>
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                className="form-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@domain.com"
+                required
+              />
+            </div>
 
-        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-          Don't have an account?{' '}
-          <Link to="/register" style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
-            Create one now
-          </Link>
-        </div>
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Signing in...' : 'Continue'}
+              <ArrowRight size={15} />
+            </button>
+          </form>
+
+          <p style={{ marginTop: '14px', fontSize: '0.9rem' }}>
+            New here? <Link to="/register" style={{ fontWeight: 700 }}>Create your account</Link>
+          </p>
+        </section>
       </div>
     </div>
   );

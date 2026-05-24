@@ -1,16 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { 
-  FolderPlus, 
-  ChevronRight, 
-  AlertTriangle,
-  GraduationCap,
-  Layers,
+import {
+  FolderPlus,
+  Clock3,
+  Activity,
   CheckCircle2,
-  Calendar
+  CalendarDays,
+  Layers,
 } from 'lucide-react';
+
+const STATUS_META = {
+  active: { lane: 'ongoing', label: 'On Going', score: 55 },
+  completed: { lane: 'done', label: 'Complete', score: 100 },
+  archived: { lane: 'done', label: 'Archived', score: 90 },
+  draft: { lane: 'todo', label: 'To Do', score: 18 },
+};
+
+const laneTitles = {
+  todo: 'To Do',
+  ongoing: 'On Going',
+  done: 'Complete',
+};
+
+const toDisplayDate = () => new Date().toLocaleDateString(undefined, {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+});
+
+const estimateCompletion = (project) => {
+  const base = STATUS_META[project.status]?.score ?? 38;
+  const reqCount = project._count?.requirements || 0;
+  const taskCount = project._count?.tasks || 0;
+  const maturityBoost = Math.min(22, reqCount * 2 + taskCount);
+  return Math.min(100, base + maturityBoost);
+};
 
 export const Dashboard = () => {
   const { user } = useAuth();
@@ -18,8 +45,6 @@ export const Dashboard = () => {
 
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // New project modal states
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -54,6 +79,7 @@ export const Dashboard = () => {
         department,
         academicYear,
       });
+
       setShowModal(false);
       setTitle('');
       setDescription('');
@@ -66,171 +92,186 @@ export const Dashboard = () => {
     }
   };
 
+  const boardData = useMemo(() => {
+    const normalized = projects.map((project) => {
+      const meta = STATUS_META[project.status] || STATUS_META.active;
+      return {
+        ...project,
+        lane: meta.lane,
+        statusLabel: meta.label,
+        completion: estimateCompletion(project),
+      };
+    });
+
+    return {
+      todo: normalized.filter((item) => item.lane === 'todo'),
+      ongoing: normalized.filter((item) => item.lane === 'ongoing'),
+      done: normalized.filter((item) => item.lane === 'done'),
+    };
+  }, [projects]);
+
+  const completionAverage = useMemo(() => {
+    if (!projects.length) return 0;
+    const total = projects.reduce((sum, project) => sum + estimateCompletion(project), 0);
+    return Math.round(total / projects.length);
+  }, [projects]);
+
+  const ongoingCount = boardData.ongoing.length;
+  const doneCount = boardData.done.length;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-      {/* Upper Welcome Banner */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ textAlign: 'left' }}>
-          <h1>Welcome back, {user.name}</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>
-            {user.role === 'student' 
-              ? 'Track your project deliverable timelines and refine specifications for panel presentation.'
-              : 'Audit student groups, check individual tasks contribution metrics, and leave review comments.'}
+    <div>
+      <section className="board-header">
+        <div className="board-title">
+          <h1>Studio Board</h1>
+          <p>
+            Signed in as <strong>{user.name}</strong> ({user.role}).
+            Keep track of active work, see completion signals, and jump directly into each workspace.
           </p>
         </div>
-        
-        {user.role === 'student' && (
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
-            <FolderPlus size={18} />
-            <span>Create Workspace</span>
-          </button>
-        )}
-      </div>
 
-      {/* Main Workspace List */}
-      <section style={{ textAlign: 'left' }}>
-        <h2 style={{ marginBottom: '20px' }}>Active Capstone Workspaces</h2>
-        
-        {loading ? (
-          <div style={{ color: 'var(--text-secondary)' }}>Scanning active workspaces...</div>
-        ) : projects.length === 0 ? (
-          <div className="card" style={{ padding: '40px', textAlign: 'center' }}>
-            <FolderPlus size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
-            <h3>No Active Workspaces Found</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', maxWidth: '400px', marginInline: 'auto' }}>
-              Create a new workspace project to start mapping functional requirements, recording contribution tasks, and running AI viva simulations.
-            </p>
-            {user.role === 'student' && (
-              <button onClick={() => setShowModal(true)} className="btn btn-primary">
-                Initialize First Workspace
-              </button>
-            )}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {projects.map((proj) => (
-              <div 
-                key={proj.id} 
-                className="card"
-                onClick={() => navigate(`/projects/${proj.id}`)}
-                style={{ 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '24px'
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <h3 style={{ margin: 0 }}>{proj.title}</h3>
-                    <span className="badge badge-info" style={{ textTransform: 'capitalize' }}>
-                      {proj.status}
-                    </span>
-                  </div>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '700px' }}>
-                    {proj.description.substring(0, 150)}...
-                  </p>
-                  <div style={{ display: 'flex', gap: '20px', fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Layers size={14} />
-                      {proj._count?.requirements || 0} Requirements
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <CheckCircle2 size={14} />
-                      {proj._count?.tasks || 0} Tasks
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Calendar size={14} />
-                      Term: {proj.academicYear || '2025/2026'}
-                    </span>
-                  </div>
-                </div>
-                <ChevronRight size={24} style={{ color: 'var(--text-muted)' }} />
-              </div>
-            ))}
-          </div>
-        )}
+        <div style={{ display: 'grid', gap: '10px', minWidth: '220px', alignSelf: 'start' }}>
+          <span className="badge badge-info">
+            <CalendarDays size={14} />
+            {toDisplayDate()}
+          </span>
+          {user.role === 'student' && (
+            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+              <FolderPlus size={16} />
+              New Project
+            </button>
+          )}
+        </div>
       </section>
 
-      {/* Creation Modal (Standard HTML overlay styled beautifully) */}
+      <section className="status-row" style={{ marginTop: '14px' }}>
+        <article className="status-chip">
+          <span style={{ color: 'var(--ink-soft)', fontSize: '0.82rem' }}>Average completion</span>
+          <strong>{completionAverage}%</strong>
+        </article>
+        <article className="status-chip">
+          <span style={{ color: 'var(--ink-soft)', fontSize: '0.82rem' }}>Projects on going</span>
+          <strong>{ongoingCount}</strong>
+        </article>
+        <article className="status-chip">
+          <span style={{ color: 'var(--ink-soft)', fontSize: '0.82rem' }}>Projects complete</span>
+          <strong>{doneCount}</strong>
+        </article>
+      </section>
+
+      <section className="board-lanes">
+        {['todo', 'ongoing', 'done'].map((laneKey) => (
+          <article key={laneKey} className="lane">
+            <div className="lane-header">
+              <h3>{laneTitles[laneKey]}</h3>
+              <span className="badge badge-info">{boardData[laneKey].length}</span>
+            </div>
+
+            <div className="lane-list">
+              {loading && <p>Loading projects...</p>}
+
+              {!loading && boardData[laneKey].length === 0 && (
+                <div className="project-tile" style={{ cursor: 'default' }}>
+                  <p style={{ color: 'var(--ink-soft)' }}>No projects in this lane yet.</p>
+                </div>
+              )}
+
+              {!loading && boardData[laneKey].map((project) => (
+                <article
+                  key={project.id}
+                  className="project-tile"
+                  onClick={() => navigate(`/projects/${project.id}`)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
+                    <h3 style={{ fontSize: '1rem' }}>{project.title}</h3>
+                    <span className="badge badge-warning">{project.statusLabel}</span>
+                  </div>
+
+                  <p style={{ fontSize: '0.9rem' }}>
+                    {project.description?.length > 105
+                      ? `${project.description.slice(0, 105)}...`
+                      : project.description}
+                  </p>
+
+                  <div className="project-progress">
+                    <div className="completion-label">
+                      <span>Completion signal</span>
+                      <strong>{project.completion}%</strong>
+                    </div>
+                    <div className="progress-track">
+                      <div className="progress-fill" style={{ width: `${project.completion}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="project-meta">
+                    <span><Layers size={13} /> {project._count?.requirements || 0} reqs</span>
+                    <span><CheckCircle2 size={13} /> {project._count?.tasks || 0} tasks</span>
+                    <span><Clock3 size={13} /> {project.academicYear || 'Current term'}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </article>
+        ))}
+      </section>
+
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          backdropFilter: 'blur(8px)'
-        }}>
-          <div className="card" style={{ width: '100%', maxWidth: '600px', padding: '40px' }}>
-            <h2 style={{ marginBottom: '24px' }}>Create Capstone Workspace</h2>
-            
-            {error && (
-              <div className="badge badge-danger" style={{ width: '100%', padding: '12px', borderRadius: '12px', marginBottom: '20px', justifyContent: 'center' }}>
-                {error}
-              </div>
-            )}
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(22, 19, 37, 0.36)',
+            backdropFilter: 'blur(5px)',
+            display: 'grid',
+            placeItems: 'center',
+            zIndex: 90,
+            padding: '18px',
+          }}
+        >
+          <div className="card" style={{ width: 'min(620px, 100%)' }}>
+            <h2 style={{ marginBottom: '14px' }}>Create a New Project</h2>
+            {error && <div className="badge badge-danger" style={{ marginBottom: '12px' }}>{error}</div>}
 
-            <form onSubmit={handleCreateProject} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form onSubmit={handleCreateProject} style={{ display: 'grid', gap: '12px' }}>
               <div className="form-group">
-                <label className="form-label">Project Title</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="e.g. Autonomous Agrobot Router"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
+                <label className="form-label">Project title</label>
+                <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
               </div>
 
               <div className="form-group">
-                <label className="form-label">Raw Scope Description (At least 10 characters)</label>
-                <textarea 
-                  className="form-input" 
-                  placeholder="A robot navigating fields automatically avoiding obstacles and recording crop health..."
+                <label className="form-label">Description</label>
+                <textarea
+                  className="form-input"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  style={{ minHeight: '100px', resize: 'vertical' }}
+                  minLength={10}
                   required
+                  style={{ minHeight: '100px', resize: 'vertical' }}
                 />
               </div>
 
               <div className="grid-2">
                 <div className="form-group">
                   <label className="form-label">Category</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="e.g. Robotics, Blockchain"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                  />
+                  <input className="form-input" value={category} onChange={(e) => setCategory(e.target.value)} />
                 </div>
+
                 <div className="form-group">
                   <label className="form-label">Department</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="e.g. Computer Engineering"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                  />
+                  <input className="form-input" value={department} onChange={(e) => setDepartment(e.target.value)} />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">
-                  Cancel
-                </button>
+              <div className="form-group">
+                <label className="form-label">Academic year</label>
+                <input className="form-input" value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary">
-                  Launch Workspace
+                  <Activity size={15} />
+                  Create project
                 </button>
               </div>
             </form>

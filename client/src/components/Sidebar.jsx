@@ -1,92 +1,69 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
-  LayoutDashboard, 
-  FolderGit2, 
-  Sparkles, 
-  ShieldAlert, 
-  FileText, 
-  LogOut, 
-  User 
-} from 'lucide-react';
+import { LayoutDashboard, FolderGit2, ShieldAlert, LogOut, Sparkles } from 'lucide-react';
 
 export const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  if (!user) return null;
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  if (!user) return null;
-
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <div className="user-avatar">
-          🛡️
+        <div className="user-avatar">CS</div>
+        <div>
+          <div className="sidebar-logo-text">Capstone Studio</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>Workspace command center</div>
         </div>
-        <span className="sidebar-logo-text">Capstone Studio</span>
       </div>
 
       <nav className="sidebar-menu">
-        <NavLink 
-          to="/dashboard" 
-          className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-        >
-          <LayoutDashboard size={20} />
-          <span>Dashboard</span>
+        <NavLink to="/dashboard" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <LayoutDashboard size={18} />
+          Dashboard
         </NavLink>
 
-        <NavLink 
-          to="/projects" 
-          className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-        >
-          <FolderGit2 size={20} />
-          <span>Workspaces</span>
+        <NavLink to="/projects" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <FolderGit2 size={18} />
+          Projects
         </NavLink>
 
         {user.role === 'admin' && (
-          <NavLink 
-            to="/admin" 
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-          >
-            <ShieldAlert size={20} />
-            <span>Admin Control</span>
+          <NavLink to="/admin" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+            <ShieldAlert size={18} />
+            Admin Control
           </NavLink>
         )}
       </nav>
 
       <div className="sidebar-footer">
-        <div className="user-profile-widget" style={{ marginBottom: '16px' }}>
-          <div className="user-avatar">
-            {user.name.charAt(0).toUpperCase()}
-          </div>
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{user.name}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>
-              {user.role}
+        <div className="user-profile-widget">
+          <div className="user-avatar">{user.name.charAt(0).toUpperCase()}</div>
+          <div>
+            <div style={{ fontWeight: 700 }}>{user.name}</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', textTransform: 'capitalize' }}>
+              Signed in as {user.role}
             </div>
           </div>
         </div>
 
-        <button 
-          onClick={handleLogout}
-          className="sidebar-link" 
-          style={{ 
-            width: '100%', 
-            border: 'none', 
-            background: 'none', 
-            cursor: 'pointer',
-            textAlign: 'left',
-            color: 'var(--color-danger)'
-          }}
-        >
-          <LogOut size={20} />
-          <span>Logout</span>
-        </button>
+        <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
+          <button className="btn btn-secondary" type="button" onClick={() => navigate('/dashboard')}>
+            <Sparkles size={15} />
+            Open board
+          </button>
+          <button className="btn btn-danger" type="button" onClick={handleLogout}>
+            <LogOut size={15} />
+            Logout
+          </button>
+        </div>
       </div>
     </aside>
   );

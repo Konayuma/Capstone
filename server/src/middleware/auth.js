@@ -5,11 +5,19 @@ import prisma from '../config/db.js';
 export const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const queryToken = typeof req.query.token === 'string' ? req.query.token : null;
+
+    let token = null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (queryToken) {
+      token = queryToken;
+    }
+
+    if (!token) {
       return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
 
-    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, env.JWT_SECRET);
 
     const user = await prisma.user.findUnique({

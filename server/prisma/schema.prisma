@@ -1,12 +1,12 @@
 // CapstoneGuard AI — Prisma Schema
-// Provider: SQLite (dev) / PostgreSQL (prod)
+// Provider: PostgreSQL
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

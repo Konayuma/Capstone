@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import CoolLoader from '../components/CoolLoader';
 import { 
   Sparkles, 
   ListTodo, 
@@ -12,7 +13,8 @@ import {
   TrendingUp, 
   AlertTriangle,
   GraduationCap,
-  Play
+  Play,
+  Loader2
 } from 'lucide-react';
 
 export const ProjectWorkspace = () => {
@@ -189,7 +191,7 @@ export const ProjectWorkspace = () => {
     window.open(`${API_BASE}/api/projects/${id}/reports/${reportType}?token=${localStorage.getItem('token')}`);
   };
 
-  if (loading) return <div>Scaffolding workspace dashboard...</div>;
+  if (loading) return <CoolLoader title="Scaffolding workspace" subtitle="Loading project data and team signals..." />;
   if (!project) return <div>Workspace not found.</div>;
 
   return (
@@ -285,7 +287,7 @@ export const ProjectWorkspace = () => {
                   disabled={refining}
                   style={{ alignSelf: 'flex-start' }}
                 >
-                  {refining ? 'Engineering Specifications...' : 'Generate AI Specifications'}
+                  {refining ? <><Loader2 className="spinner-icon" size={15} /> Engineering Specifications...</> : 'Generate AI Specifications'}
                 </button>
               </div>
 

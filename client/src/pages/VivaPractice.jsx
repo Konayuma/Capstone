@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import CoolLoader from '../components/CoolLoader';
 import axios from 'axios';
 import { 
   Sparkles, 
@@ -8,7 +9,8 @@ import {
   Send,
   HelpCircle,
   Award,
-  CheckSquare
+  CheckSquare,
+  Loader2
 } from 'lucide-react';
 
 export const VivaPractice = () => {
@@ -77,7 +79,7 @@ export const VivaPractice = () => {
     }
   };
 
-  if (loading) return <div>Assembling academic review panel...</div>;
+  if (loading) return <CoolLoader title="Assembling panel" subtitle="Generating AI viva questions from your project data..." />;
 
   const activeQuestion = questions[currentIdx];
 
@@ -204,7 +206,7 @@ export const VivaPractice = () => {
                     disabled={submitting}
                   >
                     <Send size={16} />
-                    {submitting ? 'Examiner grading response...' : 'Submit Response to Panel'}
+                    {submitting ? <><Loader2 className="spinner-icon" size={15} /> Examiner grading response...</> : 'Submit Response to Panel'}
                   </button>
 
                   <button

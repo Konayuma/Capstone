@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
+import CoolLoader from './components/CoolLoader';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -14,11 +15,7 @@ const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)' }}>
-        <div style={{ color: 'var(--text-secondary)' }}>Verifying secure session credentials...</div>
-      </div>
-    );
+    return <CoolLoader compact title="Verifying session" subtitle="Checking your credentials..." />;
   }
 
   if (!user) {
@@ -32,11 +29,7 @@ const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)' }}>
-        <div style={{ color: 'var(--text-secondary)' }}>Opening the workspace...</div>
-      </div>
-    );
+    return <CoolLoader compact title="Opening workspace" subtitle="Preparing your experience..." />;
   }
 
   if (user) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArrowRight, ShieldCheck, LayoutPanelLeft } from 'lucide-react';
+import { ArrowRight, ShieldCheck, LayoutPanelLeft, Loader2 } from 'lucide-react';
 
 export const Login = () => {
   const { login } = useAuth();
@@ -80,7 +80,7 @@ export const Login = () => {
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Signing in...' : 'Continue'}
+              {loading ? <><Loader2 className="spinner-icon" size={15} /> Signing in...</> : 'Continue'}
               <ArrowRight size={15} />
             </button>
           </form>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, Users, ArrowRight } from 'lucide-react';
+import { UserPlus, Users, ArrowRight, Loader2 } from 'lucide-react';
 
 export const Register = () => {
   const { register } = useAuth();
@@ -81,7 +81,7 @@ export const Register = () => {
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create account'}
+              {loading ? <><Loader2 className="spinner-icon" size={15} /> Creating account...</> : 'Create account'}
               <ArrowRight size={15} />
             </button>
           </form>

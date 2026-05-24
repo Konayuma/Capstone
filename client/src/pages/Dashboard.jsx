@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import CoolLoader from '../components/CoolLoader';
 import {
   FolderPlus,
   Clock3,
@@ -9,6 +10,7 @@ import {
   CheckCircle2,
   CalendarDays,
   Layers,
+  Loader2,
 } from 'lucide-react';
 
 const STATUS_META = {
@@ -168,7 +170,7 @@ export const Dashboard = () => {
             </div>
 
             <div className="lane-list">
-              {loading && <p>Loading projects...</p>}
+              {loading && <CoolLoader compact title="Loading projects..." />}
 
               {!loading && boardData[laneKey].length === 0 && (
                 <div className="project-tile" style={{ cursor: 'default' }}>

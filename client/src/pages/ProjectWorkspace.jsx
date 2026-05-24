@@ -91,6 +91,8 @@ export const ProjectWorkspace = () => {
     fetchWorkspaceData();
   }, [id]);
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   // Tab 1: AI Requirements Generator
   const handleAIRefinement = async () => {
     setRefining(true);
@@ -184,7 +186,7 @@ export const ProjectWorkspace = () => {
 
   // Reports
   const handleDownloadReport = (reportType) => {
-    window.open(`http://localhost:5000/api/projects/${id}/reports/${reportType}?token=${localStorage.getItem('token')}`);
+    window.open(`${API_BASE}/api/projects/${id}/reports/${reportType}?token=${localStorage.getItem('token')}`);
   };
 
   if (loading) return <div>Scaffolding workspace dashboard...</div>;

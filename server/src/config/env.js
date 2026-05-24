@@ -12,6 +12,7 @@ const env = {
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   SUPABASE_BUCKET_NAME: process.env.SUPABASE_BUCKET_NAME || 'capstone-files',
+  CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
   UPLOAD_DIR: process.env.UPLOAD_DIR || './uploads',
   MAX_FILE_SIZE: parseInt(process.env.MAX_FILE_SIZE || '20971520', 10),
 };

@@ -3,23 +3,29 @@ import path from 'path';
 import fs from 'fs';
 import env from '../config/env.js';
 
-// Ensure upload directory exists
+const useSupabaseStorage = Boolean(
+  env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY && env.SUPABASE_BUCKET_NAME
+);
+
+// Keep local uploads available for development when Supabase storage is not configured.
 const uploadDir = env.UPLOAD_DIR || './uploads';
-if (!fs.existsSync(uploadDir)) {
+if (!useSupabaseStorage && !fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Multer Storage Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-  },
-});
+const storage = useSupabaseStorage
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = path.extname(file.originalname);
+        cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+      },
+    });
 
 // File Type Validation Filter
 const fileFilter = (req, file, cb) => {

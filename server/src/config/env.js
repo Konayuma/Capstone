@@ -9,6 +9,9 @@ const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   GEMINI_MODEL: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_BUCKET_NAME: process.env.SUPABASE_BUCKET_NAME || 'capstone-files',
   UPLOAD_DIR: process.env.UPLOAD_DIR || './uploads',
   MAX_FILE_SIZE: parseInt(process.env.MAX_FILE_SIZE || '20971520', 10),
 };

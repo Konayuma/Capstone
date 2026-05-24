@@ -1,6 +1,36 @@
 import fs from 'fs';
 import path from 'path';
+import { randomUUID } from 'crypto';
 import prisma from '../config/db.js';
+import env from '../config/env.js';
+import supabase from '../config/supabase.js';
+
+const usingSupabaseStorage = Boolean(supabase);
+
+const createStoragePath = (projectId, originalName) => {
+  const extension = path.extname(originalName).toLowerCase();
+  const baseName = path
+    .basename(originalName, extension)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'file';
+
+  return `projects/${projectId}/${Date.now()}-${randomUUID()}-${baseName}${extension}`;
+};
+
+const getStoragePathFromPublicUrl = (publicUrl) => {
+  if (!publicUrl) {
+    return null;
+  }
+
+  const bucketPrefix = `/storage/v1/object/public/${env.SUPABASE_BUCKET_NAME}/`;
+  const prefixIndex = publicUrl.indexOf(bucketPrefix);
+  if (prefixIndex === -1) {
+    return null;
+  }
+
+  return decodeURIComponent(publicUrl.slice(prefixIndex + bucketPrefix.length));
+};
 
 export const fileController = {
   async uploadFile(req, res, next) {
@@ -12,13 +42,36 @@ export const fileController = {
         return res.status(400).json({ error: 'No file uploaded.' });
       }
 
+      let storedFilePath;
+
+      if (usingSupabaseStorage) {
+        const storagePath = createStoragePath(projectId, req.file.originalname);
+        const { error: uploadError } = await supabase.storage
+          .from(env.SUPABASE_BUCKET_NAME)
+          .upload(storagePath, req.file.buffer, {
+            contentType: req.file.mimetype,
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw Object.assign(new Error(uploadError.message), { status: 502 });
+        }
+
+        storedFilePath = supabase.storage
+          .from(env.SUPABASE_BUCKET_NAME)
+          .getPublicUrl(storagePath).data.publicUrl;
+      } else {
+        storedFilePath = `/uploads/${req.file.filename}`;
+      }
+
       // Save file details to database
       const dbFile = await prisma.file.create({
         data: {
           projectId,
           uploadedBy: req.user.id,
           fileName: req.file.originalname,
-          filePath: `/uploads/${req.file.filename}`, // web-accessible path
+          filePath: storedFilePath,
           fileType,
           mimeType: req.file.mimetype,
           size: req.file.size,
@@ -67,10 +120,23 @@ export const fileController = {
         return res.status(403).json({ error: 'You do not have permission to delete this file.' });
       }
 
-      // Delete physical file from disk
-      const physicalPath = path.join(process.cwd(), fileRecord.filePath);
-      if (fs.existsSync(physicalPath)) {
-        fs.unlinkSync(physicalPath);
+      if (usingSupabaseStorage) {
+        const storagePath = getStoragePathFromPublicUrl(fileRecord.filePath);
+        if (storagePath) {
+          const { error: deleteError } = await supabase.storage
+            .from(env.SUPABASE_BUCKET_NAME)
+            .remove([storagePath]);
+
+          if (deleteError) {
+            throw Object.assign(new Error(deleteError.message), { status: 502 });
+          }
+        }
+      } else {
+        // Delete physical file from disk
+        const physicalPath = path.join(process.cwd(), fileRecord.filePath);
+        if (fs.existsSync(physicalPath)) {
+          fs.unlinkSync(physicalPath);
+        }
       }
 
       // Delete from database

@@ -10,12 +10,46 @@ import {
   Download, 
   MessageSquare,
   Plus, 
-  TrendingUp, 
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
   AlertTriangle,
   GraduationCap,
-  Play,
-  Loader2
+  Loader2,
+  UserRound
 } from 'lucide-react';
+
+const taskStatusLabel = {
+  todo: 'Open',
+  in_progress: 'In progress',
+  review: 'In review',
+  completed: 'Closed',
+  rejected: 'Needs changes',
+};
+
+const formatTaskDeadline = (deadline) => {
+  if (!deadline) return 'No deadline';
+
+  const date = new Date(deadline);
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+};
+
+const toDateTimeInputValue = (deadline) => {
+  if (!deadline) return '';
+  const date = new Date(deadline);
+  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return offsetDate.toISOString().slice(0, 16);
+};
+
+const isOverdueTask = (task) => (
+  task.deadline && task.status !== 'completed' && new Date(task.deadline) < new Date()
+);
 
 export const ProjectWorkspace = () => {
   const { id } = useParams();
@@ -41,6 +75,9 @@ export const ProjectWorkspace = () => {
   const [taskDesc, setTaskDesc] = useState('');
   const [taskPriority, setTaskPriority] = useState('medium');
   const [taskReqId, setTaskReqId] = useState('');
+  const [taskAssignee, setTaskAssignee] = useState('');
+  const [taskDeadline, setTaskDeadline] = useState('');
+  const [taskFilter, setTaskFilter] = useState('all');
 
   // Contribution stats state
   const [contribData, setContribData] = useState(null);
@@ -107,6 +144,21 @@ export const ProjectWorkspace = () => {
   };
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const openTasks = tasks.filter((task) => !['completed', 'rejected'].includes(task.status));
+  const closedTasks = tasks.filter((task) => task.status === 'completed');
+  const overdueTasks = tasks.filter(isOverdueTask);
+  const visibleTasks = tasks.filter((task) => {
+    if (taskFilter === 'open') return !['completed', 'rejected'].includes(task.status);
+    if (taskFilter === 'closed') return task.status === 'completed';
+    if (taskFilter === 'overdue') return isOverdueTask(task);
+    return true;
+  });
+  const taskFilters = [
+    { id: 'all', label: 'All', count: tasks.length },
+    { id: 'open', label: 'Open', count: openTasks.length },
+    { id: 'closed', label: 'Closed', count: closedTasks.length },
+    { id: 'overdue', label: 'Overdue', count: overdueTasks.length },
+  ];
 
   // Tab 1: Requirements Generator
   const handleAIRefinement = async () => {
@@ -134,11 +186,16 @@ export const ProjectWorkspace = () => {
         title: taskTitle,
         description: taskDesc,
         priority: taskPriority,
+        assignedTo: taskAssignee ? parseInt(taskAssignee, 10) : null,
+        deadline: taskDeadline || null,
         requirementId: taskReqId ? parseInt(taskReqId, 10) : null
       });
       setShowTaskModal(false);
       setTaskTitle('');
       setTaskDesc('');
+      setTaskReqId('');
+      setTaskAssignee('');
+      setTaskDeadline('');
       fetchWorkspaceData();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to create task');
@@ -392,45 +449,121 @@ export const ProjectWorkspace = () => {
 
         {/* TAB 2: Deliverables & Tasks */}
         {activeTab === 'tasks' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3>Team Task Workspace</h3>
-              <button onClick={() => setShowTaskModal(true)} className="btn btn-primary">
-                <Plus size={16} />
-                Create Task
-              </button>
-            </div>
+          <div className="task-board-shell">
+            <div className="task-board-panel">
+              <div className="task-top-tabs" aria-label="Task workspace sections">
+                <button type="button" className="task-top-tab muted">Messages</button>
+                <button type="button" className="task-top-tab active">Project Tasks</button>
+                <button type="button" className="task-top-tab muted">Last Activity</button>
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {tasks.map((task) => (
-                <div key={task.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px' }}>
-                  <div>
-                    <h4 style={{ margin: 0 }}>{task.title}</h4>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
-                      {task.description || 'No description provided.'}
-                    </p>
-                    <div style={{ display: 'flex', gap: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-                      <span>Assignee: {task.assignee?.name || 'Unassigned'}</span>
-                      <span>Priority: {task.priority}</span>
-                      <span>Status: {task.status}</span>
-                    </div>
-                  </div>
-
-                  <select 
-                    className="form-input" 
-                    value={task.status} 
-                    onChange={async (e) => {
-                      await axios.put(`/projects/tasks/${task.id}`, { status: e.target.value });
-                      fetchWorkspaceData();
-                    }}
-                    style={{ background: 'var(--bg-secondary)', padding: '6px 12px', fontSize: '0.85rem' }}
-                  >
-                    <option value="todo">Todo</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                  </select>
+              <div className="task-board-head">
+                <div>
+                  <h2>Project Tasks</h2>
+                  <p>Plan work across the full project timeline.</p>
                 </div>
-              ))}
+                <button onClick={() => setShowTaskModal(true)} className="btn btn-primary task-new-button">
+                  <Plus size={16} />
+                  New Task
+                </button>
+              </div>
+
+              <div className="task-filter-row" aria-label="Task filters">
+                {taskFilters.map((filter) => (
+                  <button
+                    key={filter.id}
+                    type="button"
+                    className={`task-filter ${taskFilter === filter.id ? 'active' : ''}`}
+                    onClick={() => setTaskFilter(filter.id)}
+                  >
+                    {filter.label}
+                    <span>{filter.count}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="task-list">
+                {visibleTasks.length === 0 ? (
+                  <div className="task-empty-state">
+                    <ListTodo size={28} />
+                    <h3>No tasks here</h3>
+                    <p>Create a task or switch filters to review the rest of the work.</p>
+                  </div>
+                ) : (
+                  visibleTasks.map((task) => {
+                    const isClosed = task.status === 'completed';
+                    const isOverdue = isOverdueTask(task);
+                    const assigneeName = task.assignee?.name || 'Unassigned';
+
+                    return (
+                      <article key={task.id} className={`task-item ${isClosed ? 'closed' : ''} ${isOverdue ? 'overdue' : ''}`}>
+                        <div className="task-item-main">
+                          <div>
+                            <h3>{task.title}</h3>
+                            <p>{task.description || task.requirement?.title || 'No description provided.'}</p>
+                          </div>
+                          <button
+                            type="button"
+                            className={`task-check ${isClosed ? 'checked' : ''}`}
+                            aria-label={isClosed ? 'Mark task open' : 'Mark task completed'}
+                            onClick={async () => {
+                              await axios.put(`/projects/tasks/${task.id}`, {
+                                status: isClosed ? 'todo' : 'completed',
+                              });
+                              fetchWorkspaceData();
+                            }}
+                          >
+                            <CheckCircle2 size={18} />
+                          </button>
+                        </div>
+
+                        <div className="task-item-meta">
+                          <span className="task-date">
+                            <CalendarDays size={15} />
+                            {formatTaskDeadline(task.deadline)}
+                          </span>
+                          <span className="task-assignee" title={assigneeName}>
+                            <UserRound size={15} />
+                            {assigneeName}
+                          </span>
+                          <span className={`task-priority ${task.priority}`}>{task.priority}</span>
+                        </div>
+
+                        <div className="task-item-controls">
+                          <label>
+                            <Clock3 size={14} />
+                            <input
+                              type="datetime-local"
+                              value={toDateTimeInputValue(task.deadline)}
+                              onChange={async (e) => {
+                                await axios.put(`/projects/tasks/${task.id}`, {
+                                  deadline: e.target.value || null,
+                                });
+                                fetchWorkspaceData();
+                              }}
+                            />
+                          </label>
+
+                          <select
+                            value={task.status}
+                            onChange={async (e) => {
+                              await axios.put(`/projects/tasks/${task.id}`, { status: e.target.value });
+                              fetchWorkspaceData();
+                            }}
+                          >
+                            <option value="todo">Open</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="review">In Review</option>
+                            <option value="completed">Closed</option>
+                            <option value="rejected">Needs Changes</option>
+                          </select>
+                          <span className="task-status-text">{taskStatusLabel[task.status] || task.status}</span>
+                        </div>
+                      </article>
+                    );
+                  })
+                )}
+              </div>
             </div>
 
             {/* Task creation modal */}
@@ -473,6 +606,48 @@ export const ProjectWorkspace = () => {
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
                         <option value="high">High</option>
+                      </select>
+                    </div>
+
+                    <div className="grid-2">
+                      <div className="form-group">
+                        <label className="form-label">Assignee</label>
+                        <select
+                          className="form-input"
+                          value={taskAssignee}
+                          onChange={(e) => setTaskAssignee(e.target.value)}
+                          style={{ background: 'var(--bg-secondary)' }}
+                        >
+                          <option value="">Unassigned</option>
+                          {project.members.map((member) => (
+                            <option key={member.userId} value={member.userId}>{member.user.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Deadline</label>
+                        <input
+                          type="datetime-local"
+                          className="form-input"
+                          value={taskDeadline}
+                          onChange={(e) => setTaskDeadline(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Linked requirement</label>
+                      <select
+                        className="form-input"
+                        value={taskReqId}
+                        onChange={(e) => setTaskReqId(e.target.value)}
+                        style={{ background: 'var(--bg-secondary)' }}
+                      >
+                        <option value="">No requirement link</option>
+                        {requirements.map((requirement) => (
+                          <option key={requirement.id} value={requirement.id}>{requirement.title}</option>
+                        ))}
                       </select>
                     </div>
 

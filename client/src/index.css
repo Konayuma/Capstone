@@ -432,6 +432,277 @@ select {
   justify-content: space-between;
 }
 
+.task-board-shell {
+  display: grid;
+  place-items: start center;
+}
+
+.task-board-panel {
+  width: min(760px, 100%);
+  border: 1px solid var(--line-subtle);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, white 88%, var(--brand-3)), var(--bg-elevated) 34%),
+    var(--bg-elevated);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+
+.task-top-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.task-top-tab {
+  border: 0;
+  background: transparent;
+  min-height: 62px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-weight: 700;
+  position: relative;
+}
+
+.task-top-tab.active {
+  color: var(--ink-strong);
+}
+
+.task-top-tab.active::after {
+  content: '';
+  position: absolute;
+  left: 28%;
+  right: 28%;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--ink-strong);
+}
+
+.task-board-head {
+  padding: 28px clamp(18px, 4vw, 36px) 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.task-board-head h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  letter-spacing: 0;
+}
+
+.task-board-head p {
+  margin-top: 3px;
+  color: var(--ink-soft);
+}
+
+.task-new-button {
+  background: color-mix(in oklab, var(--brand-3) 45%, white);
+  color: color-mix(in oklab, var(--brand-1) 70%, var(--ink-strong));
+  box-shadow: none;
+}
+
+.task-filter-row {
+  padding: 8px clamp(18px, 4vw, 36px) 22px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  flex-wrap: wrap;
+}
+
+.task-filter {
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 5px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.task-filter + .task-filter {
+  margin-left: 8px;
+}
+
+.task-filter + .task-filter::before {
+  content: '';
+  width: 1px;
+  height: 18px;
+  margin-right: 8px;
+  background: var(--line-medium);
+}
+
+.task-filter span {
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 6px;
+  background: color-mix(in oklab, var(--ink-soft) 16%, white);
+  color: color-mix(in oklab, var(--ink-soft) 80%, black);
+  font-size: 0.72rem;
+}
+
+.task-filter.active {
+  color: color-mix(in oklab, var(--brand-1) 75%, var(--ink-strong));
+}
+
+.task-filter.active span {
+  background: color-mix(in oklab, var(--brand-1) 82%, white);
+  color: white;
+}
+
+.task-list {
+  padding: 0 clamp(16px, 4vw, 34px) 34px;
+  display: grid;
+  gap: 14px;
+}
+
+.task-item {
+  border: 1px solid color-mix(in oklab, var(--line-subtle) 72%, transparent);
+  border-radius: 16px;
+  background: color-mix(in oklab, white 86%, var(--bg-elevated));
+  padding: 18px clamp(16px, 3vw, 24px);
+  display: grid;
+  gap: 13px;
+  transition: transform var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.task-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-medium);
+  box-shadow: var(--shadow-soft);
+}
+
+.task-item.closed h3 {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.task-item.overdue {
+  border-color: color-mix(in oklab, var(--danger) 32%, transparent);
+}
+
+.task-item-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.task-item-main h3 {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  font-size: 1.04rem;
+  line-height: 1.25;
+}
+
+.task-item-main p {
+  margin-top: 3px;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.task-check {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--brand-1) 24%, transparent);
+  background: color-mix(in oklab, var(--brand-3) 22%, white);
+  color: color-mix(in oklab, var(--brand-1) 80%, var(--ink-strong));
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.task-check.checked {
+  background: color-mix(in oklab, var(--success) 82%, black 8%);
+  border-color: transparent;
+  color: white;
+}
+
+.task-item-meta,
+.task-item-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.task-date,
+.task-assignee,
+.task-priority,
+.task-status-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.task-priority {
+  border-radius: 999px;
+  padding: 3px 8px;
+  text-transform: capitalize;
+  font-weight: 800;
+}
+
+.task-priority.low {
+  background: color-mix(in oklab, var(--success) 14%, white);
+  color: color-mix(in oklab, var(--success) 80%, black);
+}
+
+.task-priority.medium {
+  background: color-mix(in oklab, var(--warning) 16%, white);
+  color: color-mix(in oklab, var(--warning) 75%, black);
+}
+
+.task-priority.high {
+  background: color-mix(in oklab, var(--danger) 13%, white);
+  color: color-mix(in oklab, var(--danger) 82%, black);
+}
+
+.task-item-controls {
+  padding-top: 11px;
+  border-top: 1px solid var(--line-subtle);
+}
+
+.task-item-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-soft);
+}
+
+.task-item-controls input,
+.task-item-controls select {
+  border: 1px solid var(--line-subtle);
+  border-radius: 10px;
+  padding: 7px 9px;
+  background: color-mix(in oklab, white 86%, var(--bg-soft));
+  color: var(--ink-strong);
+  font-size: 0.82rem;
+}
+
+.task-empty-state {
+  min-height: 210px;
+  border: 1px dashed var(--line-medium);
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--ink-soft);
+  background: color-mix(in oklab, white 55%, transparent);
+}
+
 .card {
   background: var(--bg-elevated);
   border-radius: var(--radius-md);
@@ -828,6 +1099,32 @@ select {
   .status-row,
   .grid-2 {
     grid-template-columns: 1fr;
+  }
+
+  .task-board-head {
+    display: grid;
+  }
+
+  .task-new-button {
+    width: 100%;
+  }
+
+  .task-top-tab {
+    min-height: 52px;
+    font-size: 0.86rem;
+  }
+
+  .task-filter + .task-filter {
+    margin-left: 0;
+  }
+
+  .task-filter + .task-filter::before {
+    display: none;
+  }
+
+  .task-item-controls input,
+  .task-item-controls select {
+    width: 100%;
   }
 
   .landing-actions,

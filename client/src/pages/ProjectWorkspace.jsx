@@ -1448,7 +1448,10 @@ export const ProjectWorkspace = () => {
                             <div className="task-evidence-list">
                               {task.evidence.map((item) => (
                                 <div key={item.id} className="task-evidence-item">
-                                  <span>{item.note || item.file?.fileName || 'Evidence note'}</span>
+                                  <div className="task-evidence-copy">
+                                    <strong>{item.note || item.file?.fileName || 'Evidence note'}</strong>
+                                    {item.file?.fileName && item.note && <span>{item.file.fileName}</span>}
+                                  </div>
                                   {item.file?.filePath && (
                                     <button type="button" className="btn btn-secondary" onClick={() => window.open(getFileUrl(item.file), '_blank')}>
                                       <Download size={14} />
@@ -1463,6 +1466,7 @@ export const ProjectWorkspace = () => {
                           <form className="task-evidence-form" onSubmit={(event) => handleSubmitTaskEvidence(event, task.id)}>
                             <input
                               className="form-input"
+                              value={evidenceDrafts[task.id]?.note || ''}
                               placeholder="Short evidence note or link"
                               onChange={(event) => setEvidenceDraft(task.id, { note: event.target.value })}
                             />

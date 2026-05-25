@@ -408,43 +408,6 @@ export const ProjectWorkspace = () => {
     counts[comment.targetType] = (counts[comment.targetType] || 0) + 1;
     return counts;
   }, { project: 0, requirement: 0, task: 0, document: 0, contribution: 0, viva: 0 });
-  const taskOverviewCards = [
-    { label: 'Open tasks', value: openTasks.length, hint: 'Ready for assignment or completion.' },
-    { label: 'Overdue', value: overdueTasks.length, hint: 'Needs attention before it slips further.' },
-    { label: 'Unassigned', value: unassignedTasks.length, hint: 'Waiting for an owner.' },
-  ];
-  const analysisSections = fileAnalysis ? parseAnalysisSections(fileAnalysis) : [];
-  const documentOverviewItems = [
-    { title: 'What is incomplete', section: analysisSections.find((section) => /completeness|gaps/i.test(section.title)) },
-    { title: 'What to upload next', section: analysisSections.find((section) => /recommended next uploads|fixes/i.test(section.title)) },
-    { title: 'What may hurt viva', section: analysisSections.find((section) => /viva defense risks/i.test(section.title)) },
-  ].filter((item) => item.section);
-  const taskFilters = [
-    { id: 'all', label: 'All', count: tasks.length },
-    { id: 'open', label: 'Open', count: openTasks.length },
-    { id: 'closed', label: 'Closed', count: closedTasks.length },
-    { id: 'overdue', label: 'Overdue', count: overdueTasks.length },
-  ];
-  const fileTypeOptions = [
-    { value: 'proposal', label: 'Project proposal' },
-    { value: 'report', label: 'Project report' },
-    { value: 'slides', label: 'Presentation slides' },
-    { value: 'code', label: 'Source code ZIP' },
-    { value: 'screenshot', label: 'Screenshot' },
-    { value: 'evidence', label: 'Testing evidence' },
-    { value: 'diagram', label: 'Diagram' },
-  ];
-  const getFileUrl = (file) => (
-    file.filePath?.startsWith('http')
-      ? file.filePath
-      : `${API_ORIGIN}${file.filePath}`
-  );
-  const formatFileSize = (size) => {
-    if (!size) return 'Unknown size';
-    if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
-    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
   const parseAnalysisSections = (analysisText) => {
     const lines = analysisText.split(/\r?\n/);
     const sections = [];
@@ -490,6 +453,42 @@ export const ProjectWorkspace = () => {
 
     flushSection();
     return sections.filter((section) => section.items.length > 0);
+  };
+  const taskOverviewCards = [
+    { label: 'Open tasks', value: openTasks.length, hint: 'Ready for assignment or completion.' },
+    { label: 'Overdue', value: overdueTasks.length, hint: 'Needs attention before it slips further.' },
+    { label: 'Unassigned', value: unassignedTasks.length, hint: 'Waiting for an owner.' },
+  ];
+  const analysisSections = fileAnalysis ? parseAnalysisSections(fileAnalysis) : [];
+  const documentOverviewItems = [
+    { title: 'What is incomplete', section: analysisSections.find((section) => /completeness|gaps/i.test(section.title)) },
+    { title: 'What to upload next', section: analysisSections.find((section) => /recommended next uploads|fixes/i.test(section.title)) },
+    { title: 'What may hurt viva', section: analysisSections.find((section) => /viva defense risks/i.test(section.title)) },
+  ].filter((item) => item.section);
+  const taskFilters = [
+    { id: 'all', label: 'All', count: tasks.length },
+    { id: 'open', label: 'Open', count: openTasks.length },
+    { id: 'closed', label: 'Closed', count: closedTasks.length },
+    { id: 'overdue', label: 'Overdue', count: overdueTasks.length },
+  ];
+  const fileTypeOptions = [
+    { value: 'proposal', label: 'Project proposal' },
+    { value: 'report', label: 'Project report' },
+    { value: 'slides', label: 'Presentation slides' },
+    { value: 'code', label: 'Source code ZIP' },
+    { value: 'screenshot', label: 'Screenshot' },
+    { value: 'evidence', label: 'Testing evidence' },
+    { value: 'diagram', label: 'Diagram' },
+  ];
+  const getFileUrl = (file) => (
+    file.filePath?.startsWith('http')
+      ? file.filePath
+      : `${API_ORIGIN}${file.filePath}`
+  );
+  const formatFileSize = (size) => {
+    if (!size) return 'Unknown size';
+    if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const delightCopy = {

@@ -101,7 +101,7 @@ export const Landing = () => {
               <span />
               <span />
               <span />
-              <strong>AI Powered Student Timetable</strong>
+              <strong>Capstone Studio workspace</strong>
             </div>
             <div className="landing-preview-grid">
               <aside className="landing-preview-sidebar">

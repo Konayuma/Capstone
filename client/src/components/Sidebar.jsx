@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -28,6 +28,11 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [query, setQuery] = useState('');
+  const [openGroups, setOpenGroups] = useState({
+    'Studio Board': true,
+    'Project Tools': true,
+    'Settings': true,
+  });
   const userRole = user?.role;
 
   const projectMatch = location.pathname.match(/^\/projects\/(\d+)/);
@@ -117,6 +122,19 @@ export const Sidebar = () => {
     navigate('/login');
   };
 
+  useEffect(() => {
+    const nextOpenGroups = {
+      'Studio Board': location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/projects'),
+      'Project Tools': location.pathname.startsWith('/projects'),
+      'Settings': location.pathname.startsWith('/profile') || location.pathname.startsWith('/admin'),
+    };
+
+    setOpenGroups((current) => ({
+      ...current,
+      ...nextOpenGroups,
+    }));
+  }, [location.pathname]);
+
   if (!user) return null;
 
   return (
@@ -149,19 +167,31 @@ export const Sidebar = () => {
 
             {section.items.map((item) => {
               const Icon = item.icon;
+              const isOpen = openGroups[item.label] ?? true;
 
               return (
-                <div className="sidebar-tree-group" key={item.label}>
-                  <NavLink
-                    to={item.to}
-                    className={({ isActive }) => `sidebar-link sidebar-parent ${isActive ? 'active' : ''}`}
-                  >
-                    <Icon size={17} />
-                    <span>{item.label}</span>
-                    <ChevronDown size={15} className="sidebar-chevron" />
-                  </NavLink>
+                <div className={`sidebar-tree-group ${isOpen ? '' : 'is-collapsed'}`} key={item.label}>
+                  <div className="sidebar-parent-row">
+                    <NavLink
+                      to={item.to}
+                      className={({ isActive }) => `sidebar-link sidebar-parent ${isActive ? 'active' : ''}`}
+                    >
+                      <Icon size={17} />
+                      <span>{item.label}</span>
+                    </NavLink>
 
-                  <div className="sidebar-branch">
+                    <button
+                      type="button"
+                      className="sidebar-collapse-toggle"
+                      onClick={() => setOpenGroups((current) => ({ ...current, [item.label]: !isOpen }))}
+                      aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.label}`}
+                      aria-expanded={isOpen}
+                    >
+                      <ChevronDown size={15} className="sidebar-chevron" />
+                    </button>
+                  </div>
+
+                  <div className="sidebar-branch" aria-hidden={!isOpen}>
                     {item.children.map((child) => {
                       const ChildIcon = child.icon;
 

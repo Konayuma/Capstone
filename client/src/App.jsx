@@ -3,12 +3,15 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import CoolLoader from './components/CoolLoader';
+import SystemNotifications from './components/SystemNotifications';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ProjectWorkspace from './pages/ProjectWorkspace';
 import VivaPractice from './pages/VivaPractice';
+import UserProfile from './pages/UserProfile';
+import JoinProject from './pages/JoinProject';
 
 // Protection Shell Component
 const ProtectedRoute = ({ children }) => {
@@ -55,6 +58,7 @@ export const App = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <SystemNotifications />
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -103,6 +107,28 @@ export const App = () => {
                 </AppLayout>
               </ProtectedRoute>
             } 
+          />
+
+          <Route
+            path="/users/:userId"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <UserProfile />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/join/:code"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <JoinProject />
+                </AppLayout>
+              </ProtectedRoute>
+            }
           />
 
           {/* Fallback */}

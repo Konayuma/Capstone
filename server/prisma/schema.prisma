@@ -30,6 +30,7 @@ model User {
   uploadedFiles    File[]
   vivaAnswers      VivaAnswer[]
   comments         SupervisorComment[]
+  createdInvites   TeamInvite[]
 }
 
 model Project {
@@ -56,6 +57,22 @@ model Project {
   vivaQuestions VivaQuestion[]
   readinessScores ReadinessScore[]
   comments     SupervisorComment[]
+  invites      TeamInvite[]
+}
+
+model TeamInvite {
+  id          Int       @id @default(autoincrement())
+  projectId   Int
+  code        String    @unique
+  createdBy   Int
+  expiresAt   DateTime?
+  usedAt      DateTime?
+  usedBy      Int?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator User    @relation(fields: [createdBy], references: [id])
 }
 
 model ProjectMember {

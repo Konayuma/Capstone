@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import env from './config/env.js';
 import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
 import projectRoutes from './routes/project.routes.js';
 import memberRoutes from './routes/member.routes.js';
 import requirementRoutes from './routes/requirement.routes.js';
@@ -52,6 +53,7 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/projects', memberRoutes);
 app.use('/api/projects', requirementRoutes);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import CoolLoader from '../components/CoolLoader';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { 
   Sparkles, 
   ArrowLeft, 
@@ -51,9 +52,9 @@ export const VivaPractice = () => {
       setCurrentIdx(0);
       setEvaluation(null);
       setAnswerText('');
-      alert('Practice questions are ready. Review them with your team before the viva.');
+      toast.success('Practice questions are ready. Review them with your team before the viva.');
     } catch (err) {
-      alert(err.response?.data?.error || 'Unable to prepare practice questions right now.');
+      toast.error(err.response?.data?.error || 'Unable to prepare practice questions right now.');
     } finally {
       setLoading(false);
     }
@@ -72,8 +73,9 @@ export const VivaPractice = () => {
       });
       setEvaluation(res.data);
       fetchQuestions(); // reload to register answer in list
+      toast.success('Answer reviewed. Feedback is ready below.');
     } catch (err) {
-      alert(err.response?.data?.error || 'Unable to review this answer right now.');
+      toast.error(err.response?.data?.error || 'Unable to review this answer right now.');
     } finally {
       setSubmitting(false);
     }

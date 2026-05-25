@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import CoolLoader from '../components/CoolLoader';
 import { 
@@ -9,7 +10,15 @@ import {
   BarChart3, 
   Download, 
   MessageSquare,
+  Users,
+  UserPlus,
   Plus, 
+  Copy,
+  Search,
+  ShieldCheck,
+  Trash2,
+  ExternalLink,
+  KeyRound,
   CalendarDays,
   CheckCircle2,
   Clock3,
@@ -83,6 +92,31 @@ const formatCommentDate = (value) => new Intl.DateTimeFormat(undefined, {
 
 const getCommentTargetLabel = (targetType) => commentTargetLabels[targetType] || targetType;
 
+const projectRoleOptions = [
+  { value: 'project_manager', label: 'Project Manager' },
+  { value: 'frontend_dev', label: 'Frontend Developer' },
+  { value: 'backend_dev', label: 'Backend Developer' },
+  { value: 'fullstack_dev', label: 'Full-stack Developer' },
+  { value: 'ui_ux', label: 'UI/UX Designer' },
+  { value: 'tester', label: 'Tester' },
+  { value: 'researcher', label: 'Researcher' },
+  { value: 'doc_lead', label: 'Documentation Lead' },
+];
+
+const roleLabelMap = projectRoleOptions.reduce((labels, option) => {
+  labels[option.value] = option.label;
+  return labels;
+}, {});
+
+const getInitials = (name = '') => name
+  .split(' ')
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((part) => part[0]?.toUpperCase())
+  .join('') || '?';
+
+const getProjectRoleLabel = (role) => roleLabelMap[role] || 'Team Member';
+
 export const ProjectWorkspace = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -92,13 +126,23 @@ export const ProjectWorkspace = () => {
   const [project, setProject] = useState(null);
   const [activeTab, setActiveTab] = useState('requirements');
   const [loading, setLoading] = useState(true);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [canManageTeam, setCanManageTeam] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
+  const [recentInvites, setRecentInvites] = useState([]);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [memberSearchResults, setMemberSearchResults] = useState([]);
+  const [searchingMembers, setSearchingMembers] = useState(false);
 
   // Requirements state
   const [requirements, setRequirements] = useState([]);
-  const [selectedReq, setSelectedReq] = useState(null);
+  const [selectedRequirementId, setSelectedRequirementId] = useState(null);
+  const [selectedRequirementIds, setSelectedRequirementIds] = useState([]);
   const [rawDesc, setRawDesc] = useState('');
   const [refining, setRefining] = useState(false);
   const [ambiguities, setAmbiguities] = useState([]);
+  const [expandingRequirements, setExpandingRequirements] = useState(false);
+  const requirementsPromptRef = useRef(null);
 
   // Tasks state
   const [tasks, setTasks] = useState([]);
@@ -133,10 +177,16 @@ export const ProjectWorkspace = () => {
   // Readiness Score
   const [readiness, setReadiness] = useState(null);
 
+  const selectedReq = requirements.find((requirement) => requirement.id === selectedRequirementId) || null;
+
   const fetchWorkspaceData = async () => {
     try {
       const projRes = await axios.get(`/projects/${id}`);
       setProject(projRes.data);
+
+      const memberRes = await axios.get(`/projects/${id}/members`);
+      setTeamMembers(memberRes.data.members || []);
+      setCanManageTeam(Boolean(memberRes.data.canManageTeam));
 
       const reqRes = await axios.get(`/projects/${id}/requirements`);
       setRequirements(reqRes.data);
@@ -152,6 +202,11 @@ export const ProjectWorkspace = () => {
 
       const readinessRes = await axios.get(`/projects/${id}/readiness-score`);
       setReadiness(readinessRes.data);
+
+      if (memberRes.data.canManageTeam) {
+        const invitesRes = await axios.get(`/projects/${id}/invites`);
+        setRecentInvites(invitesRes.data);
+      }
     } catch (err) {
       console.error('Failed to load workspace:', err);
     } finally {
@@ -164,8 +219,25 @@ export const ProjectWorkspace = () => {
   }, [id]);
 
   useEffect(() => {
+    if (requirements.length === 0) {
+      setSelectedRequirementId(null);
+      setSelectedRequirementIds([]);
+      return;
+    }
+
+    setSelectedRequirementIds((currentIds) => currentIds.filter((requirementId) => requirements.some((requirement) => requirement.id === requirementId)));
+    setSelectedRequirementId((currentId) => {
+      if (currentId && requirements.some((requirement) => requirement.id === currentId)) {
+        return currentId;
+      }
+
+      return requirements[0].id;
+    });
+  }, [requirements]);
+
+  useEffect(() => {
     const hashTab = location.hash.replace('#', '');
-    if (['requirements', 'tasks', 'contribution', 'readiness', 'comments'].includes(hashTab)) {
+    if (['requirements', 'tasks', 'team', 'contribution', 'readiness', 'comments'].includes(hashTab)) {
       setActiveTab(hashTab);
     }
   }, [location.hash]);
@@ -175,7 +247,57 @@ export const ProjectWorkspace = () => {
     navigate(`/projects/${id}#${tab}`, { replace: true });
   };
 
+  const focusRequirementsPrompt = () => {
+    requirementsPromptRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    requirementsPromptRef.current?.focus();
+  };
+
+  const toggleRequirementSelection = (requirementId) => {
+    setSelectedRequirementIds((currentIds) => (
+      currentIds.includes(requirementId)
+        ? currentIds.filter((selectedId) => selectedId !== requirementId)
+        : [...currentIds, requirementId]
+    ));
+  };
+
+  const selectAllRequirements = () => {
+    setSelectedRequirementIds(requirements.map((requirement) => requirement.id));
+  };
+
+  const clearRequirementSelection = () => {
+    setSelectedRequirementIds([]);
+  };
+
+  const handleGenerateRequirementArtifacts = async (requirementIds = selectedRequirementIds) => {
+    const uniqueIds = [...new Set(requirementIds)].filter((requirementId) => requirements.some((requirement) => requirement.id === requirementId));
+
+    if (uniqueIds.length === 0) {
+      toast.error('Select one or more requirements first.');
+      return;
+    }
+
+    setExpandingRequirements(true);
+    try {
+      for (const requirementId of uniqueIds) {
+        await axios.post(`/projects/requirements/${requirementId}/acceptance-criteria/generate`);
+        await axios.post(`/projects/requirements/${requirementId}/test-cases/generate`);
+      }
+
+      await fetchWorkspaceData();
+      setSelectedRequirementId((currentId) => (uniqueIds.includes(currentId) ? currentId : uniqueIds[0]));
+      toast.success(`Expanded ${uniqueIds.length} requirement${uniqueIds.length === 1 ? '' : 's'} with acceptance criteria and test cases.`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to expand the selected requirements right now.');
+    } finally {
+      setExpandingRequirements(false);
+    }
+  };
+
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const activeInviteCode = inviteCode || recentInvites[0]?.code || '';
+  const inviteLink = activeInviteCode ? `${window.location.origin}/join/${activeInviteCode}` : '';
+  const visibleTeamStack = teamMembers.slice(0, 5);
+  const extraTeamCount = Math.max(0, teamMembers.length - visibleTeamStack.length);
   const openTasks = tasks.filter((task) => !['completed', 'rejected'].includes(task.status));
   const closedTasks = tasks.filter((task) => task.status === 'completed');
   const overdueTasks = tasks.filter(isOverdueTask);
@@ -199,6 +321,91 @@ export const ProjectWorkspace = () => {
     { id: 'overdue', label: 'Overdue', count: overdueTasks.length },
   ];
 
+  const refreshTeam = async () => {
+    const memberRes = await axios.get(`/projects/${id}/members`);
+    setTeamMembers(memberRes.data.members || []);
+    setCanManageTeam(Boolean(memberRes.data.canManageTeam));
+
+    if (memberRes.data.canManageTeam) {
+      const invitesRes = await axios.get(`/projects/${id}/invites`);
+      setRecentInvites(invitesRes.data);
+    }
+  };
+
+  const handleCreateInvite = async () => {
+    try {
+      const res = await axios.post(`/projects/${id}/invites`);
+      setInviteCode(res.data.code);
+      setRecentInvites((current) => [res.data, ...current].slice(0, 8));
+      toast.success('Invite code created. Share it with your teammate.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to create invite code.');
+    }
+  };
+
+  const handleCopyInvite = async () => {
+    if (!inviteCode) return;
+
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      toast.success('Invite link copied.');
+    } catch {
+      toast.error('Unable to copy invite link. Select and copy it manually.');
+    }
+  };
+
+  const handleSearchUsers = async (e) => {
+    e.preventDefault();
+    if (memberSearch.trim().length < 2) {
+      toast.error('Type at least two characters to search.');
+      return;
+    }
+
+    setSearchingMembers(true);
+    try {
+      const res = await axios.get(`/users/search?q=${encodeURIComponent(memberSearch.trim())}`);
+      setMemberSearchResults(res.data);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to search users.');
+    } finally {
+      setSearchingMembers(false);
+    }
+  };
+
+  const handleAddMember = async (userId, projectRole = 'researcher') => {
+    try {
+      await axios.post(`/projects/${id}/members`, { userId, projectRole });
+      await refreshTeam();
+      toast.success('Team member added.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to add this user.');
+    }
+  };
+
+  const handleUpdateMember = async (member, updates) => {
+    try {
+      const nextRole = updates.projectRole ?? member.projectRole;
+      await axios.put(`/projects/${id}/members/${member.userId}`, {
+        projectRole: nextRole,
+        isLeader: nextRole === 'project_manager',
+      });
+      await refreshTeam();
+      toast.success('Team role updated.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to update this member.');
+    }
+  };
+
+  const handleRemoveMember = async (member) => {
+    try {
+      await axios.delete(`/projects/${id}/members/${member.userId}`);
+      await refreshTeam();
+      toast.success(`${member.user.name} was removed from the team.`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to remove this member.');
+    }
+  };
+
   // Tab 1: Requirements Generator
   const handleAIRefinement = async () => {
     setRefining(true);
@@ -209,9 +416,11 @@ export const ProjectWorkspace = () => {
       });
       setRequirements(res.data.requirements);
       setAmbiguities(res.data.ambiguityWarnings);
-      alert('Requirements draft created. Review the list below before assigning work.');
+      setSelectedRequirementIds(res.data.requirements.map((requirement) => requirement.id));
+      setSelectedRequirementId(res.data.requirements[0]?.id || null);
+      toast.success('Requirements draft created. Select one or more items to expand them, or refine the prompt and regenerate.');
     } catch (err) {
-      alert(err.response?.data?.error || 'Unable to draft requirements right now.');
+      toast.error(err.response?.data?.error || 'Unable to draft requirements right now.');
     } finally {
       setRefining(false);
     }
@@ -236,8 +445,9 @@ export const ProjectWorkspace = () => {
       setTaskAssignee('');
       setTaskDeadline('');
       fetchWorkspaceData();
+      toast.success('Task created and added to the board.');
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to create task');
+      toast.error(err.response?.data?.error || 'Failed to create task.');
     }
   };
 
@@ -251,9 +461,9 @@ export const ProjectWorkspace = () => {
       });
       setProgressLogText('');
       fetchWorkspaceData();
-      alert('Weekly progress log submitted successfully.');
+      toast.success('Weekly progress log submitted successfully.');
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to submit log');
+      toast.error(err.response?.data?.error || 'Failed to submit log.');
     }
   };
 
@@ -274,9 +484,9 @@ export const ProjectWorkspace = () => {
         comment: ''
       });
       fetchWorkspaceData();
-      alert('Peer review registered successfully.');
+      toast.success('Peer review registered successfully.');
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to submit review');
+      toast.error(err.response?.data?.error || 'Failed to submit review.');
     }
   };
 
@@ -290,8 +500,9 @@ export const ProjectWorkspace = () => {
       });
       setNewComment('');
       fetchWorkspaceData();
+      toast.success('Comment added to the review stream.');
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to add comment');
+      toast.error(err.response?.data?.error || 'Failed to add comment.');
     }
   };
 
@@ -313,6 +524,21 @@ export const ProjectWorkspace = () => {
           <p style={{ color: 'var(--text-secondary)', maxWidth: '800px' }}>{project.description}</p>
         </div>
 
+        <div className="workspace-actions">
+          <button
+            type="button"
+            className="member-stack"
+            onClick={() => switchTab('team')}
+            aria-label="Open team members"
+            title="Open team members"
+          >
+            {visibleTeamStack.map((member) => (
+              <span key={member.userId} className="member-stack-avatar" title={member.user.name}>
+                {getInitials(member.user.name)}
+              </span>
+            ))}
+            {extraTeamCount > 0 && <span className="member-stack-more">+{extraTeamCount}</span>}
+          </button>
             <button 
               onClick={() => navigate(`/projects/${id}/viva`)}
               className="btn btn-primary"
@@ -321,11 +547,12 @@ export const ProjectWorkspace = () => {
               <GraduationCap size={20} />
               <span>Open Viva Practice</span>
             </button>
+        </div>
       </div>
 
       {/* Tabs Selector */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border-medium)', gap: '8px', paddingBottom: '2px' }}>
-        <button 
+        <button
           className={`btn ${activeTab === 'requirements' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('requirements')}
           style={{ padding: '8px 16px', fontSize: '0.9rem' }}
@@ -334,13 +561,22 @@ export const ProjectWorkspace = () => {
               Requirements
         </button>
 
-        <button 
+        <button
           className={`btn ${activeTab === 'tasks' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('tasks')}
           style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <ListTodo size={16} />
               Tasks
+        </button>
+
+        <button
+          className={`btn ${activeTab === 'team' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => switchTab('team')}
+          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+        >
+          <Users size={16} />
+              Team
         </button>
 
         <button 
@@ -388,6 +624,7 @@ export const ProjectWorkspace = () => {
                   placeholder="Paste the rough project description or requested feature..."
                   value={rawDesc}
                   onChange={(e) => setRawDesc(e.target.value)}
+                  ref={requirementsPromptRef}
                   style={{ minHeight: '120px', resize: 'vertical' }}
                 />
                 <button 
@@ -423,61 +660,206 @@ export const ProjectWorkspace = () => {
               </div>
             </div>
 
-            {/* List of current requirements */}
-            <div>
-              <h3 style={{ marginBottom: '16px' }}>Project Specification Tree</h3>
-              <div className="grid-2">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {requirements.map((req) => (
-                    <div 
-                      key={req.id} 
-                      className="card"
-                      onClick={() => setSelectedReq(req)}
-                      style={{ 
-                        cursor: 'pointer', 
-                        padding: '16px',
-                        borderColor: selectedReq?.id === req.id ? 'var(--accent-primary)' : 'var(--border-medium)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span className={`badge ${req.type === 'functional' ? 'badge-info' : 'badge-warning'}`}>
-                          {req.type === 'functional' ? 'Functional' : 'Non-Functional'}
-                        </span>
-                        <span className="badge badge-success" style={{ textTransform: 'uppercase' }}>
-                          {req.status}
-                        </span>
-                      </div>
-                      <h4 style={{ margin: 0 }}>{req.title}</h4>
-                      <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                        {req.description}
-                      </p>
-                    </div>
-                  ))}
+            <div className="requirements-workbench">
+              <div className="requirements-workbench-header card">
+                <div>
+                  <span className="badge badge-info">Review queue</span>
+                  <h3>Inspect the generated requirements</h3>
+                  <p className="requirements-workbench-copy">
+                    Click a card to inspect its detail view, select several requirements for batch expansion, or jump back to the prompt if the draft needs another pass.
+                  </p>
                 </div>
 
-                {/* Selected requirement details (Acceptance Criteria + Test cases) */}
-                <div className="card">
-                  {selectedReq ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      <h3>Requirement Detail View</h3>
-                      <h2>{selectedReq.title}</h2>
-                      <p style={{ color: 'var(--text-secondary)' }}>{selectedReq.description}</p>
-                      
-                      {/* Acceptance Criteria */}
-                      <div>
-                        <h4 style={{ color: 'var(--accent-secondary)', marginBottom: '8px' }}>Acceptance Criteria</h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {selectedReq.acceptanceCriteria?.map((ac, idx) => (
-                            <div key={ac.id} style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                              {idx + 1}. {ac.criteriaText}
-                            </div>
-                          ))}
+                <div className="requirements-workbench-actions">
+                  <button type="button" className="btn btn-secondary" onClick={focusRequirementsPrompt}>
+                    Refine prompt
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={selectAllRequirements} disabled={requirements.length === 0}>
+                    Select all
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={clearRequirementSelection} disabled={selectedRequirementIds.length === 0}>
+                    Clear selection
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleGenerateRequirementArtifacts()}
+                    disabled={selectedRequirementIds.length === 0 || expandingRequirements}
+                  >
+                    {expandingRequirements ? <><Loader2 className="spinner-icon" size={15} /> Expanding selected...</> : 'Generate details for selected'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="requirements-selection-summary">
+                <span>{selectedRequirementIds.length} selected</span>
+                <span>{requirements.length} total requirements</span>
+                <span>{selectedReq ? `Viewing: ${selectedReq.title}` : 'Pick a requirement to inspect'}</span>
+              </div>
+
+              <div className="grid-2">
+                <div className="requirements-list-column">
+                  <div className="requirements-list-head">
+                    <h3>Project Specification Tree</h3>
+                    <p>Choose requirements to expand, or use the right panel to review the active one in detail.</p>
+                  </div>
+
+                  <div className="requirements-list">
+                    {requirements.length === 0 ? (
+                      <div className="requirements-empty-state card">
+                        <Sparkles size={22} />
+                        <h4>No requirements drafted yet</h4>
+                        <p>Generate a draft above to build the review queue.</p>
+                      </div>
+                    ) : requirements.map((req) => {
+                      const isSelected = selectedRequirementId === req.id;
+                      const isQueued = selectedRequirementIds.includes(req.id);
+
+                      return (
+                        <div
+                          key={req.id}
+                          className={`card requirement-item ${isSelected ? 'active' : ''}`}
+                          onClick={() => setSelectedRequirementId(req.id)}
+                        >
+                          <div className="requirement-item-top">
+                            <label className="requirement-item-select" onClick={(event) => event.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={isQueued}
+                                onChange={() => toggleRequirementSelection(req.id)}
+                              />
+                              <span>{isQueued ? 'Queued' : 'Queue'}</span>
+                            </label>
+                            <span className={`badge ${req.type === 'functional' ? 'badge-info' : 'badge-warning'}`}>
+                              {req.type === 'functional' ? 'Functional' : 'Non-Functional'}
+                            </span>
+                            <span className="badge badge-success" style={{ textTransform: 'uppercase' }}>
+                              {req.status}
+                            </span>
+                          </div>
+
+                          <h4>{req.title}</h4>
+                          <p className="requirement-item-copy">{req.description}</p>
+
+                          <div className="requirement-item-meta">
+                            <span>Priority: {req.priority}</span>
+                            <span>Criteria: {req.acceptanceCriteria?.length || 0}</span>
+                            <span>Tests: {req.testCases?.length || 0}</span>
+                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="card requirement-detail-shell">
+                  {selectedReq ? (
+                    <div className="requirement-detail-view">
+                      <div className="requirement-detail-header">
+                        <div>
+                          <span className={`badge ${selectedReq.type === 'functional' ? 'badge-info' : 'badge-warning'}`}>
+                            {selectedReq.type === 'functional' ? 'Functional' : 'Non-Functional'}
+                          </span>
+                          <h2>{selectedReq.title}</h2>
+                          <p>{selectedReq.description}</p>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => handleGenerateRequirementArtifacts([selectedReq.id])}
+                          disabled={expandingRequirements}
+                        >
+                          {expandingRequirements ? 'Working...' : 'Expand this requirement'}
+                        </button>
+                      </div>
+
+                      <div className="requirement-detail-metrics">
+                        <div><span>Priority</span><strong>{selectedReq.priority}</strong></div>
+                        <div><span>Status</span><strong>{selectedReq.status}</strong></div>
+                        <div><span>Acceptance criteria</span><strong>{selectedReq.acceptanceCriteria?.length || 0}</strong></div>
+                        <div><span>Test cases</span><strong>{selectedReq.testCases?.length || 0}</strong></div>
+                        <div><span>Linked tasks</span><strong>{selectedReq.tasks?.length || 0}</strong></div>
+                        <div><span>Type</span><strong>{selectedReq.type === 'functional' ? 'Functional' : 'Non-Functional'}</strong></div>
+                      </div>
+
+                      <div className="requirement-detail-section">
+                        <div className="requirement-detail-section-head">
+                          <h4>Acceptance Criteria</h4>
+                          <span>{selectedReq.acceptanceCriteria?.length || 0} items</span>
+                        </div>
+                        {selectedReq.acceptanceCriteria?.length ? (
+                          <div className="requirement-detail-list">
+                            {selectedReq.acceptanceCriteria.map((ac, idx) => (
+                              <div key={ac.id} className="requirement-detail-item">
+                                <span>{idx + 1}</span>
+                                <p>{ac.criteriaText}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="requirement-detail-empty">
+                            <p>No acceptance criteria generated yet.</p>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              onClick={() => handleGenerateRequirementArtifacts([selectedReq.id])}
+                              disabled={expandingRequirements}
+                            >
+                              Generate criteria and test cases
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="requirement-detail-section">
+                        <div className="requirement-detail-section-head">
+                          <h4>Test Cases</h4>
+                          <span>{selectedReq.testCases?.length || 0} items</span>
+                        </div>
+                        {selectedReq.testCases?.length ? (
+                          <div className="requirement-detail-list">
+                            {selectedReq.testCases.map((testCase, idx) => (
+                              <div key={testCase.id} className="requirement-detail-item requirement-testcase-item">
+                                <span>{idx + 1}</span>
+                                <div>
+                                  <strong>{testCase.testTitle}</strong>
+                                  <p>{testCase.testSteps}</p>
+                                  <small>Expected: {testCase.expectedResult}</small>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="requirement-detail-empty">
+                            <p>No test cases generated yet.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="requirement-detail-section">
+                        <div className="requirement-detail-section-head">
+                          <h4>Linked Tasks</h4>
+                          <span>{selectedReq.tasks?.length || 0} items</span>
+                        </div>
+                        {selectedReq.tasks?.length ? (
+                          <div className="requirement-detail-tags">
+                            {selectedReq.tasks.map((task) => (
+                              <span key={task.id} className="requirement-task-pill">
+                                {task.title} · {task.status}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="requirement-detail-empty">
+                            <p>No tasks are linked to this requirement yet.</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ) : (
                     <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px' }}>
-                      Select a requirement from the list to view its Acceptance Criteria, Test Cases, and connected tasks.
+                      Select a requirement from the list to inspect its parameters, acceptance criteria, test cases, and linked tasks.
                     </div>
                   )}
                 </div>
@@ -658,7 +1040,7 @@ export const ProjectWorkspace = () => {
                           style={{ background: 'var(--bg-secondary)' }}
                         >
                           <option value="">Unassigned</option>
-                          {project.members.map((member) => (
+                          {teamMembers.map((member) => (
                             <option key={member.userId} value={member.userId}>{member.user.name}</option>
                           ))}
                         </select>
@@ -705,7 +1087,192 @@ export const ProjectWorkspace = () => {
           </div>
         )}
 
-        {/* TAB 3: Contribution Audits */}
+        {/* TAB 3: Team Management */}
+        {activeTab === 'team' && (
+          <div className="team-layout">
+            <section className="team-main">
+              <div className="team-head">
+                <div>
+                  <span className="badge badge-info">
+                    <Users size={14} />
+                    {teamMembers.length} member{teamMembers.length === 1 ? '' : 's'}
+                  </span>
+                  <h2>Team members</h2>
+                  <p>Manage project roles, add teammates, and keep the working group visible.</p>
+                </div>
+                {canManageTeam && (
+                  <button type="button" className="btn btn-primary" onClick={handleCreateInvite}>
+                    <KeyRound size={16} />
+                    Create invite code
+                  </button>
+                )}
+              </div>
+
+              <div className="team-table">
+                <div className="team-table-row team-table-header">
+                  <span>Member</span>
+                  <span>Project role</span>
+                  <span>Joined</span>
+                  <span>Actions</span>
+                </div>
+
+                {teamMembers.map((member) => (
+                  <article key={member.userId} className="team-table-row">
+                    <button
+                      type="button"
+                      className="team-person"
+                      onClick={() => navigate(`/users/${member.userId}?projectId=${id}`)}
+                    >
+                      <span className="team-avatar">{getInitials(member.user.name)}</span>
+                      <span>
+                        <strong>{member.user.name}</strong>
+                        <small>{member.user.email}</small>
+                      </span>
+                    </button>
+
+                    <div>
+                      {canManageTeam ? (
+                        <select
+                          className="team-role-select"
+                          value={member.projectRole || 'researcher'}
+                          onChange={(e) => handleUpdateMember(member, { projectRole: e.target.value })}
+                        >
+                          {projectRoleOptions.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="badge badge-info">{getProjectRoleLabel(member.projectRole)}</span>
+                      )}
+                    </div>
+
+                    <span className="team-date">{formatCommentDate(member.joinedAt)}</span>
+
+                    <div className="team-actions">
+                      {member.isLeader && (
+                        <span className="badge badge-success">
+                          <ShieldCheck size={13} />
+                          Lead
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={() => navigate(`/users/${member.userId}?projectId=${id}`)}
+                        title="View profile"
+                      >
+                        <ExternalLink size={15} />
+                      </button>
+                      {canManageTeam && member.userId !== user.id && !member.isLeader && (
+                        <button
+                          type="button"
+                          className="icon-button danger"
+                          onClick={() => handleRemoveMember(member)}
+                          title="Remove member"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <aside className="team-side">
+              <section className="card team-invite-card">
+                <div>
+                  <span className="badge badge-info">Invite code</span>
+                  <h3>Bring someone in</h3>
+                  <p>Share a code link with a teammate so they can join after signing in.</p>
+                </div>
+
+                {canManageTeam ? (
+                  <>
+                    <div className="invite-code-box">
+                      <span>{activeInviteCode || 'No active code yet'}</span>
+                      <button type="button" className="icon-button" onClick={handleCopyInvite} disabled={!activeInviteCode}>
+                        <Copy size={15} />
+                      </button>
+                    </div>
+                    {inviteLink && <input className="form-input" value={inviteLink} readOnly />}
+                    <button type="button" className="btn btn-secondary" onClick={handleCreateInvite}>
+                      <KeyRound size={16} />
+                      Generate new code
+                    </button>
+                    {recentInvites.length > 0 && (
+                      <div className="recent-invites">
+                        {recentInvites.slice(0, 3).map((invite) => (
+                          <div key={invite.id}>
+                            <strong>{invite.code}</strong>
+                            <span>{invite.usedAt ? 'Used' : 'Ready'} · {formatCommentDate(invite.createdAt)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="team-muted">Only the project manager can create invite codes.</p>
+                )}
+              </section>
+
+              <section className="card team-search-card">
+                <div>
+                  <span className="badge badge-info">Directory search</span>
+                  <h3>Find a teammate</h3>
+                </div>
+
+                <form onSubmit={handleSearchUsers} className="team-search-form">
+                  <input
+                    className="form-input"
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    placeholder="Search by name or email"
+                  />
+                  <button type="submit" className="btn btn-secondary" disabled={searchingMembers}>
+                    {searchingMembers ? <Loader2 className="spinner-icon" size={15} /> : <Search size={15} />}
+                    Search
+                  </button>
+                </form>
+
+                <div className="team-search-results">
+                  {memberSearchResults.map((candidate) => {
+                    const alreadyMember = teamMembers.some((member) => member.userId === candidate.id);
+                    return (
+                      <article key={candidate.id} className="team-search-result">
+                        <button
+                          type="button"
+                          className="team-person"
+                          onClick={() => navigate(`/users/${candidate.id}?projectId=${id}`)}
+                        >
+                          <span className="team-avatar">{getInitials(candidate.name)}</span>
+                          <span>
+                            <strong>{candidate.name}</strong>
+                            <small>{candidate.email}</small>
+                          </span>
+                        </button>
+                        {canManageTeam && !alreadyMember ? (
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => handleAddMember(candidate.id)}
+                          >
+                            <UserPlus size={15} />
+                            Add
+                          </button>
+                        ) : (
+                          <span className="badge badge-info">{alreadyMember ? 'On team' : candidate.role}</span>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            </aside>
+          </div>
+        )}
+
+        {/* TAB 4: Contribution Audits */}
         {activeTab === 'contribution' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             <div className="grid-2">
@@ -797,7 +1364,7 @@ export const ProjectWorkspace = () => {
                       required
                     >
                       <option value="">-- Choose Peer --</option>
-                      {project.members.filter(m => m.userId !== user.id).map(m => (
+                      {teamMembers.filter(m => m.userId !== user.id).map(m => (
                         <option key={m.userId} value={m.userId}>{m.user.name}</option>
                       ))}
                     </select>
@@ -857,9 +1424,13 @@ export const ProjectWorkspace = () => {
 
               <button 
                 onClick={async () => {
-                  const res = await axios.post(`/projects/${id}/readiness-score/generate`);
-                  setReadiness(res.data);
-                  alert('Readiness score updated successfully.');
+                  try {
+                    const res = await axios.post(`/projects/${id}/readiness-score/generate`);
+                    setReadiness(res.data);
+                    toast.success('Readiness score updated successfully.');
+                  } catch (err) {
+                    toast.error(err.response?.data?.error || 'Unable to update readiness score.');
+                  }
                 }}
                 className="btn btn-primary"
               >

@@ -170,6 +170,8 @@ export const ProjectWorkspace = () => {
   const [deletingProject, setDeletingProject] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [evidenceDrafts, setEvidenceDrafts] = useState({});
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const inviteCopyTimeoutRef = useRef(null);
 
   // Requirements state
   const [requirements, setRequirements] = useState([]);
@@ -265,6 +267,12 @@ export const ProjectWorkspace = () => {
   useEffect(() => {
     fetchWorkspaceData();
   }, [id]);
+
+  useEffect(() => () => {
+    if (inviteCopyTimeoutRef.current) {
+      clearTimeout(inviteCopyTimeoutRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     if (requirements.length === 0) {
@@ -404,6 +412,7 @@ export const ProjectWorkspace = () => {
       const res = await axios.post(`/projects/${id}/invites`);
       setInviteCode(res.data.code);
       setRecentInvites((current) => [res.data, ...current].slice(0, 8));
+      setInviteCopied(false);
       toast.success('Invite code created. Share it with your teammate.');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Unable to create invite code.');
@@ -415,6 +424,16 @@ export const ProjectWorkspace = () => {
 
     try {
       await navigator.clipboard.writeText(inviteLink);
+      setInviteCopied(true);
+
+      if (inviteCopyTimeoutRef.current) {
+        clearTimeout(inviteCopyTimeoutRef.current);
+      }
+
+      inviteCopyTimeoutRef.current = setTimeout(() => {
+        setInviteCopied(false);
+      }, 1400);
+
       toast.success('Invite link copied.');
     } catch {
       toast.error('Unable to copy invite link. Select and copy it manually.');
@@ -1446,8 +1465,15 @@ export const ProjectWorkspace = () => {
                   <>
                     <div className="invite-code-box">
                       <span>{activeInviteCode || 'No active code yet'}</span>
-                      <button type="button" className="icon-button" onClick={handleCopyInvite} disabled={!activeInviteCode}>
-                        <Copy size={15} />
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={handleCopyInvite}
+                        disabled={!activeInviteCode}
+                        aria-label={inviteCopied ? 'Invite link copied' : 'Copy invite link'}
+                        title={inviteCopied ? 'Copied' : 'Copy invite link'}
+                      >
+                        {inviteCopied ? <CheckCircle2 size={15} /> : <Copy size={15} />}
                       </button>
                     </div>
                     {inviteLink && <input className="form-input" value={inviteLink} readOnly />}

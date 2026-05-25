@@ -254,9 +254,11 @@ select {
 }
 
 .team-person {
-  border: 0;
-  padding: 0;
-  background: transparent;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: color-mix(in oklab, var(--bg-app) 54%, white);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -264,6 +266,19 @@ select {
   color: inherit;
   cursor: pointer;
   min-width: 0;
+  transition: transform var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+}
+
+.team-person:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--brand-1) 16%, var(--line-subtle));
+  background: color-mix(in oklab, var(--bg-elevated) 92%, white);
+  box-shadow: var(--shadow-soft);
+}
+
+.team-person:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--brand-1) 52%, white);
+  outline-offset: 2px;
 }
 
 .team-person strong,
@@ -313,6 +328,10 @@ select {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.team-table-row .team-person {
+  align-self: stretch;
 }
 
 .team-invite-card,
@@ -412,11 +431,17 @@ select {
 
 .documents-layout {
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: start;
 }
 
 .documents-upload-form {
   display: grid;
   gap: 14px;
+}
+
+.documents-upload-card,
+.documents-list-card {
+  align-self: start;
 }
 
 .documents-analysis {
@@ -459,6 +484,10 @@ select {
 
 .documents-analysis-section li {
   padding-left: 4px;
+}
+
+.documents-list-card {
+  min-width: 0;
 }
 
 .documents-empty {
@@ -2594,6 +2623,10 @@ select {
   .team-layout,
   .documents-layout {
     grid-template-columns: 1fr;
+  }
+
+  .documents-layout {
+    align-items: stretch;
   }
 
   .requirements-hero,

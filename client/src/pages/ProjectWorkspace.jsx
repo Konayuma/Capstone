@@ -177,8 +177,11 @@ export const ProjectWorkspace = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [evidenceDrafts, setEvidenceDrafts] = useState({});
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [workspacePulse, setWorkspacePulse] = useState(false);
   const inviteCopyTimeoutRef = useRef(null);
   const delightTimeoutRef = useRef(null);
+  const workspacePulseTimeoutRef = useRef(null);
+  const workspaceSnapshotRef = useRef('');
 
   // Requirements state
   const [requirements, setRequirements] = useState([]);
@@ -318,8 +321,8 @@ export const ProjectWorkspace = () => {
 
   useEffect(() => {
     const hashTab = location.hash.replace('#', '');
-    if (['requirements', 'tasks', 'team', 'documents', 'contribution', 'readiness', 'comments', 'settings'].includes(hashTab)) {
-      setActiveTab(hashTab);
+    if (['requirements', 'tasks', 'team', 'documents', 'contribution', 'readiness', 'notes', 'comments', 'settings'].includes(hashTab)) {
+      setActiveTab(hashTab === 'comments' ? 'notes' : hashTab);
     }
   }, [location.hash]);
 
@@ -408,6 +411,68 @@ export const ProjectWorkspace = () => {
     counts[comment.targetType] = (counts[comment.targetType] || 0) + 1;
     return counts;
   }, { project: 0, requirement: 0, task: 0, document: 0, contribution: 0, viva: 0 });
+  const workspaceSignals = [
+    {
+      id: 'tasks',
+      label: 'Tasks',
+      value: tasks.length,
+      detail: openTasks.length ? `${openTasks.length} open` : 'All caught up',
+    },
+    {
+      id: 'documents',
+      label: 'Documents',
+      value: files.length,
+      detail: fileAnalysis ? 'Reviewed' : 'Waiting for review',
+    },
+    {
+      id: 'notes',
+      label: 'Notes',
+      value: comments.length,
+      detail: comments.length ? 'Live review thread' : 'No notes yet',
+    },
+  ];
+  const workspaceProgress = Math.max(0, Math.min(100, Math.round(
+    (requirements.length ? Math.min(requirements.length, 10) * 4 : 0)
+    + (tasks.length ? Math.round((closedTasks.length / tasks.length) * 35) : 0)
+    + (files.length ? Math.min(files.length, 5) * 6 : 0)
+    + (comments.length ? Math.min(comments.length, 6) * 3 : 0)
+  )));
+  const workspaceProgressLabel = workspaceProgress >= 75
+    ? 'Strong momentum'
+    : workspaceProgress >= 45
+      ? 'Taking shape'
+      : 'Just getting started';
+
+  useEffect(() => {
+    const snapshot = `${requirements.length}-${tasks.length}-${files.length}-${comments.length}-${closedTasks.length}`;
+
+    if (!workspaceSnapshotRef.current) {
+      workspaceSnapshotRef.current = snapshot;
+      return undefined;
+    }
+
+    if (workspaceSnapshotRef.current === snapshot) {
+      return undefined;
+    }
+
+    workspaceSnapshotRef.current = snapshot;
+    setWorkspacePulse(true);
+
+    if (workspacePulseTimeoutRef.current) {
+      clearTimeout(workspacePulseTimeoutRef.current);
+    }
+
+    workspacePulseTimeoutRef.current = setTimeout(() => {
+      setWorkspacePulse(false);
+    }, 520);
+
+    return () => {
+      if (workspacePulseTimeoutRef.current) {
+        clearTimeout(workspacePulseTimeoutRef.current);
+      }
+    };
+  }, [requirements.length, tasks.length, files.length, comments.length, closedTasks.length]);
+
   const stripMarkdownEmphasis = (text) => text
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/__(.*?)__/g, '$1')
@@ -930,78 +995,108 @@ export const ProjectWorkspace = () => {
         </div>
       </div>
 
+      <section className={`card workspace-live-hero ${workspacePulse ? 'is-updating' : ''}`} aria-live="polite">
+        <div className="workspace-live-hero-copy">
+          <span className="badge badge-info">Live board</span>
+          <h2>Progress updates as the workspace changes.</h2>
+          <p>
+            Tasks, documents, and notes stay in sync with uploads, status changes, and review activity.
+          </p>
+        </div>
+
+        <div className="workspace-live-hero-panel">
+          <div className="workspace-live-hero-head">
+            <span>{workspaceProgressLabel}</span>
+            <strong>{workspaceProgress}%</strong>
+          </div>
+
+          <div className="workspace-progress-track workspace-progress-track--live" aria-hidden="true">
+            <div
+              className="workspace-progress-fill workspace-progress-fill--live"
+              style={{ width: `${workspaceProgress}%` }}
+            />
+          </div>
+
+          <div className="workspace-live-metrics" aria-label="Live workspace counts">
+            {workspaceSignals.map((signal) => (
+              <article key={signal.id} className="workspace-live-metric">
+                <strong>{signal.value}</strong>
+                <span>{signal.label}</span>
+                <small>{signal.detail}</small>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Tabs Selector */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border-medium)', gap: '8px', paddingBottom: '2px' }}>
+      <div className={`workspace-tabs ${workspacePulse ? 'is-updating' : ''}`}>
         <button
-          className={`btn ${activeTab === 'requirements' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`btn workspace-tab ${activeTab === 'requirements' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('requirements')}
-          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <Sparkles size={16} />
-              Requirements
+          <span>Requirements</span>
+          <span className="workspace-tab-badge">{requirements.length}</span>
         </button>
 
         <button
-          className={`btn ${activeTab === 'tasks' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`btn workspace-tab ${activeTab === 'tasks' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('tasks')}
-          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <ListTodo size={16} />
-              Tasks
+          <span>Tasks</span>
+          <span className="workspace-tab-badge">{tasks.length}</span>
         </button>
 
         <button
-          className={`btn ${activeTab === 'team' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`btn workspace-tab ${activeTab === 'team' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('team')}
-          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <Users size={16} />
-              Team
+          <span>Team</span>
         </button>
 
         <button 
-          className={`btn ${activeTab === 'contribution' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`btn workspace-tab ${activeTab === 'contribution' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('contribution')}
-          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <BarChart3 size={16} />
-              Contributions
+          <span>Contributions</span>
         </button>
 
         <button 
-          className={`btn ${activeTab === 'readiness' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`btn workspace-tab ${activeTab === 'readiness' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('readiness')}
-          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <Download size={16} />
-              Readiness & Reports
+          <span>Readiness & Reports</span>
         </button>
 
         <button
-          className={`btn ${activeTab === 'documents' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`btn workspace-tab ${activeTab === 'documents' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('documents')}
-          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <FileText size={16} />
-              Documents
+          <span>Documents</span>
+          <span className="workspace-tab-badge">{files.length}</span>
         </button>
 
         <button 
-          className={`btn ${activeTab === 'comments' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => switchTab('comments')}
-          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+          className={`btn workspace-tab ${activeTab === 'notes' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => switchTab('notes')}
         >
           <MessageSquare size={16} />
-              Comments
+          <span>Notes</span>
+          <span className="workspace-tab-badge">{comments.length}</span>
         </button>
 
         <button
-          className={`btn ${activeTab === 'settings' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`btn workspace-tab ${activeTab === 'settings' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('settings')}
-          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
         >
           <Settings size={16} />
-              Settings
+          <span>Settings</span>
         </button>
       </div>
 
@@ -2118,7 +2213,7 @@ export const ProjectWorkspace = () => {
         )}
 
         {/* TAB 6: Comments */}
-        {activeTab === 'comments' && (
+        {activeTab === 'notes' && (
           <div className="comments-page">
             <section className="card comments-hero">
               <div className="comments-hero-copy">
@@ -2141,7 +2236,7 @@ export const ProjectWorkspace = () => {
 
                 <button type="button" className="btn btn-primary comments-new-button" onClick={() => setShowCommentModal(true)}>
                   <Plus size={16} />
-                  New comment
+                  New note
                 </button>
               </div>
             </section>
@@ -2163,9 +2258,9 @@ export const ProjectWorkspace = () => {
               {sortedComments.length === 0 ? (
                 <div className="comments-empty comments-empty--tight">
                   <MessageSquare size={24} />
-                  <h4>No comments yet</h4>
+                  <h4>No notes yet</h4>
                   <p>
-                    Use the new comment button to leave the first review note. It will appear here as a structured feed.
+                    Use the new note button to leave the first review note. It will appear here as a structured feed.
                   </p>
                 </div>
               ) : (
@@ -2202,7 +2297,7 @@ export const ProjectWorkspace = () => {
                   <div className="comments-modal-head">
                     <div>
                       <span className="badge badge-info">New note</span>
-                      <h3 id="comment-modal-title">Add a review comment</h3>
+                      <h3 id="comment-modal-title">Add a review note</h3>
                       <p>Choose the target surface, then capture the next action clearly and directly.</p>
                     </div>
                     <button type="button" className="icon-button" onClick={() => setShowCommentModal(false)} aria-label="Close comment composer">
@@ -2213,9 +2308,9 @@ export const ProjectWorkspace = () => {
                   <form onSubmit={handleAddComment} className="comments-modal-form">
                     <div className="comments-modal-grid">
                       <div className="comments-modal-aside">
-                        <h4>Comment targets</h4>
+                        <h4>Note targets</h4>
                         <p>Pick the exact surface you want to discuss so the note lands in the right place.</p>
-                        <div className="comments-modal-targets" aria-label="Choose a comment target">
+                        <div className="comments-modal-targets" aria-label="Choose a note target">
                           {commentTargetOptions.map((option) => (
                             <button
                               key={option.id}
@@ -2233,7 +2328,7 @@ export const ProjectWorkspace = () => {
 
                       <div className="comments-modal-body">
                         <div className="form-group">
-                          <label className="form-label">Review comment</label>
+                          <label className="form-label">Review note</label>
                           <textarea
                             className="form-input comments-textarea comments-textarea--modal"
                             placeholder="Explain what should change, why it matters, and where the team should look next."

@@ -82,13 +82,16 @@ export const vivaService = {
   },
 
   // 2. Submit and grade a student's answer using NVIDIA AI
-  async evaluateVivaAnswer(userId, questionId, answerText) {
+  async evaluateVivaAnswer(userId, questionId, answerText, projectId = null) {
     const question = await prisma.vivaQuestion.findUnique({
       where: { id: questionId },
     });
 
     if (!question) {
       throw Object.assign(new Error('Viva question not found'), { status: 404 });
+    }
+    if (projectId && question.projectId !== projectId) {
+      throw Object.assign(new Error('Viva question does not belong to this project.'), { status: 403 });
     }
 
     const prompt = buildVivaEvaluationPrompt(

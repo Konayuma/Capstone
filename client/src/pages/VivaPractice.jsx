@@ -68,7 +68,7 @@ export const VivaPractice = () => {
     setEvaluation(null);
     try {
       const q = questions[currentIdx];
-      const res = await axios.post(`/viva/questions/${q.id}/answer`, {
+      const res = await axios.post(`/projects/${id}/viva/questions/${q.id}/answer`, {
         answerText
       });
       setEvaluation(res.data);

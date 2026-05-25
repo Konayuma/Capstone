@@ -14,6 +14,7 @@ router.post('/:id/viva/generate', requireProjectAccess, vivaController.generateV
 router.get('/:id/viva/questions', requireProjectAccess, vivaController.getVivaQuestions);
 
 // Submit answer for single question
+router.post('/:id/viva/questions/:questionId/answer', requireProjectAccess, vivaController.answerVivaQuestion);
 router.post('/viva/questions/:questionId/answer', vivaController.answerVivaQuestion);
 
 // Calculate readiness score

@@ -23,13 +23,18 @@ export const vivaController = {
 
   async answerVivaQuestion(req, res, next) {
     try {
+      const projectId = req.params.id ? parseInt(req.params.id, 10) : null;
       const questionId = parseInt(req.params.questionId, 10);
       const { answerText } = req.body;
       if (!answerText) {
         return res.status(400).json({ error: 'answerText is required.' });
       }
 
-      const evaluation = await vivaService.evaluateVivaAnswer(req.user.id, questionId, answerText);
+      if (projectId && req.project?.id !== projectId) {
+        return res.status(403).json({ error: 'You do not have access to this project.' });
+      }
+
+      const evaluation = await vivaService.evaluateVivaAnswer(req.user.id, questionId, answerText, projectId);
       res.status(201).json(evaluation);
     } catch (error) {
       next(error);

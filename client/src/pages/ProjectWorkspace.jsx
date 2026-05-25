@@ -51,6 +51,38 @@ const isOverdueTask = (task) => (
   task.deadline && task.status !== 'completed' && new Date(task.deadline) < new Date()
 );
 
+const commentTargetOptions = [
+  {
+    id: 'project',
+    label: 'Project / General Dashboard',
+    note: 'Use this for direction, scope, or whole-workspace feedback.',
+  },
+  {
+    id: 'requirement',
+    label: 'Requirements Specification',
+    note: 'Use this for spec gaps, unclear wording, or testability issues.',
+  },
+  {
+    id: 'contribution',
+    label: 'Contribution Score Audit',
+    note: 'Use this for contribution reviews and peer assessment notes.',
+  },
+];
+
+const commentTargetLabels = commentTargetOptions.reduce((labels, option) => {
+  labels[option.id] = option.label;
+  return labels;
+}, {});
+
+const formatCommentDate = (value) => new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+}).format(new Date(value));
+
+const getCommentTargetLabel = (targetType) => commentTargetLabels[targetType] || targetType;
+
 export const ProjectWorkspace = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -153,6 +185,13 @@ export const ProjectWorkspace = () => {
     if (taskFilter === 'overdue') return isOverdueTask(task);
     return true;
   });
+  const sortedComments = [...comments].sort(
+    (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+  );
+  const commentCounts = comments.reduce((counts, comment) => {
+    counts[comment.targetType] = (counts[comment.targetType] || 0) + 1;
+    return counts;
+  }, { project: 0, requirement: 0, contribution: 0 });
   const taskFilters = [
     { id: 'all', label: 'All', count: tasks.length },
     { id: 'open', label: 'Open', count: openTasks.length },
@@ -858,53 +897,120 @@ export const ProjectWorkspace = () => {
 
         {/* TAB 5: Comments */}
         {activeTab === 'comments' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div className="card">
-              <h3>Post Review Comment</h3>
-              <form onSubmit={handleAddComment} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '12px' }}>
-                <div className="form-group">
-                  <label className="form-label">Category</label>
-                  <select 
-                    className="form-input" 
-                    value={commentTarget} 
-                    onChange={(e) => setCommentTarget(e.target.value)}
-                    style={{ background: 'var(--bg-secondary)' }}
-                  >
-                    <option value="project">Project / General Dashboard</option>
-                    <option value="requirement">Requirements Specification</option>
-                    <option value="contribution">Contribution Score Audit</option>
-                  </select>
+          <div className="comments-layout">
+            <section className="card comments-compose">
+              <div className="comments-panel-head">
+                <div>
+                  <span className="badge badge-info">Review notes</span>
+                  <h3>Compose a comment</h3>
+                  <p className="comments-panel-copy">
+                    Pick the surface first, then leave feedback that is specific enough to act on.
+                  </p>
                 </div>
+                <div className="comments-summary">
+                  {commentTargetOptions.map((option) => (
+                    <div key={option.id} className="comments-summary-item">
+                      <span>{option.label}</span>
+                      <strong>{commentCounts[option.id] || 0}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <form onSubmit={handleAddComment} className="comments-form">
+                <div className="form-group">
+                  <label className="form-label">Comment target</label>
+                  <div className="comment-target-toggle" aria-label="Choose a comment target">
+                    {commentTargetOptions.map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        className={`comment-target-option ${commentTarget === option.id ? 'active' : ''}`}
+                        onClick={() => setCommentTarget(option.id)}
+                        aria-pressed={commentTarget === option.id}
+                      >
+                        <span>{option.label}</span>
+                        <small>{option.note}</small>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="form-group">
                   <label className="form-label">Review comment</label>
-                  <textarea 
-                    className="form-input" 
-                    placeholder="Provide professional instruction or critical feedback..."
-                    value={newComment} 
+                  <textarea
+                    className="form-input comments-textarea"
+                    placeholder="Explain what should change, why it matters, and where the team should look next."
+                    value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     required
                   />
+                  <p className="comments-helper">
+                    Short, direct comments work best. Keep the note tied to the selected target.
+                  </p>
                 </div>
-                <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>
-                  Post Comment
-                </button>
-              </form>
-            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {comments.map((comment) => (
-                <div key={comment.id} className="card" style={{ padding: '16px', borderLeft: '4px solid var(--accent-primary)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
-                    <strong>{comment.user.name} ({comment.user.role})</strong>
-                    <span style={{ color: 'var(--text-muted)' }}>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                <div className="comments-form-actions">
+                  <div className="comments-active-target">
+                    <span className="comments-active-target-label">Posting to</span>
+                    <strong>{getCommentTargetLabel(commentTarget)}</strong>
                   </div>
-                  <span className="badge badge-info" style={{ marginBottom: '8px', textTransform: 'capitalize' }}>
-                    Target: {comment.targetType}
-                  </span>
-                  <p style={{ color: 'var(--text-primary)' }}>{comment.commentText}</p>
+                  <button type="submit" className="btn btn-primary" disabled={!newComment.trim()}>
+                    Post Comment
+                  </button>
                 </div>
-              ))}
-            </div>
+              </form>
+            </section>
+
+            <section className="card comments-feed">
+              <div className="comments-panel-head comments-feed-head">
+                <div>
+                  <span className="badge badge-info">Latest updates</span>
+                  <h3>Comment stream</h3>
+                  <p className="comments-panel-copy">
+                    Newest notes appear first so the feed reads like an active review thread.
+                  </p>
+                </div>
+                <div className="comments-feed-count">
+                  {sortedComments.length} note{sortedComments.length === 1 ? '' : 's'}
+                </div>
+              </div>
+
+              {sortedComments.length === 0 ? (
+                <div className="comments-empty">
+                  <MessageSquare size={24} />
+                  <h4>No comments yet</h4>
+                  <p>
+                    Use the compose panel to leave the first review note. It will appear here as a structured feed.
+                  </p>
+                </div>
+              ) : (
+                <div className="comment-stream">
+                  {sortedComments.map((comment) => (
+                    <article key={comment.id} className="comment-item">
+                      <div className="comment-item-top">
+                        <div className="comment-author">
+                          <span className="comment-avatar">
+                            <UserRound size={14} />
+                          </span>
+                          <div>
+                            <strong>{comment.user.name}</strong>
+                            <span>{comment.user.role}</span>
+                          </div>
+                        </div>
+                        <span className="comment-date">{formatCommentDate(comment.createdAt)}</span>
+                      </div>
+
+                      <div className="comment-item-meta">
+                        <span className="badge badge-info">{getCommentTargetLabel(comment.targetType)}</span>
+                      </div>
+
+                      <p className="comment-item-body">{comment.commentText}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
         )}
       </main>

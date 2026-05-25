@@ -805,6 +805,255 @@ select {
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand-2) 24%, transparent);
 }
 
+.comments-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.comments-compose,
+.comments-feed {
+  display: grid;
+  gap: 18px;
+}
+
+.comments-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.comments-panel-copy {
+  margin-top: 8px;
+  max-width: 52ch;
+}
+
+.comments-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  min-width: min(100%, 320px);
+}
+
+.comments-summary-item {
+  border: 1px solid var(--line-subtle);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: color-mix(in oklab, var(--bg-soft) 36%, white);
+  display: grid;
+  gap: 4px;
+}
+
+.comments-summary-item span {
+  font-size: 0.74rem;
+  line-height: 1.2;
+  color: var(--ink-soft);
+}
+
+.comments-summary-item strong {
+  font-size: 1.16rem;
+  color: var(--ink-strong);
+}
+
+.comments-form {
+  display: grid;
+  gap: 16px;
+}
+
+.comment-target-toggle {
+  display: grid;
+  gap: 10px;
+}
+
+.comment-target-option {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line-subtle);
+  border-radius: 16px;
+  background: color-mix(in oklab, white 80%, var(--bg-soft));
+  color: var(--ink-strong);
+  padding: 12px 14px;
+  display: grid;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform var(--t-fast), border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+}
+
+.comment-target-option:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--brand-1) 24%, var(--line-subtle));
+}
+
+.comment-target-option.active {
+  border-color: color-mix(in oklab, var(--brand-1) 40%, transparent);
+  background: color-mix(in oklab, var(--brand-2) 12%, white);
+  box-shadow: 0 10px 24px color-mix(in oklab, var(--ink-strong) 7%, transparent);
+}
+
+.comment-target-option span {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.comment-target-option small {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.comments-textarea {
+  min-height: 164px;
+  resize: vertical;
+}
+
+.comments-helper {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.comments-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.comments-active-target {
+  display: grid;
+  gap: 2px;
+}
+
+.comments-active-target-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.comments-feed {
+  min-height: 100%;
+}
+
+.comments-feed-head {
+  align-items: flex-end;
+}
+
+.comments-feed-count {
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-subtle);
+  background: var(--bg-soft);
+  font-weight: 700;
+  color: var(--ink-strong);
+  white-space: nowrap;
+}
+
+.comment-stream {
+  display: grid;
+  gap: 12px;
+}
+
+.comment-item {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line-subtle);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--bg-elevated) 88%, white), var(--bg-elevated));
+  box-shadow: 0 1px 0 color-mix(in oklab, white 55%, transparent);
+}
+
+.comment-item-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.comment-author {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.comment-avatar {
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in oklab, var(--brand-3) 18%, white);
+  color: color-mix(in oklab, var(--ink-strong) 80%, var(--brand-1));
+  flex: none;
+}
+
+.comment-author strong,
+.comment-author span {
+  display: block;
+}
+
+.comment-author strong {
+  font-size: 0.92rem;
+  color: var(--ink-strong);
+}
+
+.comment-author span {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  margin-top: 1px;
+}
+
+.comment-date {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.comment-item-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.comment-item-body {
+  color: var(--ink-body);
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.comments-empty {
+  min-height: 280px;
+  border: 1px dashed var(--line-medium);
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+  background: color-mix(in oklab, var(--bg-soft) 34%, white);
+  color: var(--ink-soft);
+}
+
+.comments-empty svg {
+  color: color-mix(in oklab, var(--ink-soft) 80%, var(--brand-1));
+}
+
+.comments-empty h4 {
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  color: var(--ink-strong);
+}
+
+.comments-empty p {
+  max-width: 34ch;
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1086,7 +1335,8 @@ select {
   .auth-shell,
   .landing-hero,
   .landing-grid,
-  .grid-3 {
+  .grid-3,
+  .comments-layout {
     grid-template-columns: 1fr;
   }
 
@@ -1125,6 +1375,26 @@ select {
   .task-item-controls input,
   .task-item-controls select {
     width: 100%;
+  }
+
+  .comments-panel-head {
+    flex-direction: column;
+  }
+
+  .comments-feed-head {
+    align-items: flex-start;
+  }
+
+  .comments-form-actions {
+    align-items: flex-start;
+  }
+
+  .comment-item-top {
+    flex-direction: column;
+  }
+
+  .comment-date {
+    white-space: normal;
   }
 
   .landing-actions,

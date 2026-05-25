@@ -1,5 +1,5 @@
 import prisma from '../config/db.js';
-import { generateStructuredContent } from '../ai/gemini.js';
+import { generateStructuredContent } from '../ai/nvidia.js';
 import {
   REQUIREMENTS_SYSTEM_INSTRUCTION,
   requirementsGenSchema,
@@ -64,7 +64,7 @@ export const requirementService = {
     return prisma.requirement.delete({ where: { id } });
   },
 
-  // 1. Convert raw description to complete requirements using Gemini
+  // 1. Convert raw description to complete requirements using NVIDIA AI
   async generateAIRequirements(projectId, rawDescription) {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -76,7 +76,7 @@ export const requirementService = {
 
     const prompt = buildRequirementsGenPrompt(project.title, rawDescription, project.category);
     
-    // Call Gemini
+    // Call NVIDIA AI
     const aiResult = await generateStructuredContent(
       prompt,
       requirementsGenSchema,
@@ -135,7 +135,7 @@ export const requirementService = {
 
     const prompt = buildAcceptanceCriteriaPrompt(req.title, req.description);
     
-    // Call Gemini
+    // Call NVIDIA AI
     const aiResult = await generateStructuredContent(
       prompt,
       acceptanceCriteriaSchema,
@@ -176,7 +176,7 @@ export const requirementService = {
     const criteriaTexts = req.acceptanceCriteria.map(c => c.criteriaText);
     const prompt = buildTestCasesPrompt(req.title, req.description, criteriaTexts);
 
-    // Call Gemini
+    // Call NVIDIA AI
     const aiResult = await generateStructuredContent(
       prompt,
       testCasesSchema,

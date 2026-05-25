@@ -1,5 +1,5 @@
 import prisma from '../config/db.js';
-import { generateStructuredContent } from '../ai/gemini.js';
+import { generateStructuredContent } from '../ai/nvidia.js';
 import contributionService from './contribution.service.js';
 import {
   VIVA_SYSTEM_INSTRUCTION,
@@ -10,7 +10,7 @@ import {
 } from '../ai/prompts/viva.js';
 
 export const vivaService = {
-  // 1. Generate new examiner questions using Gemini based on project content
+  // 1. Generate new examiner questions using NVIDIA AI based on project content
   async generateVivaQuestions(projectId) {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -39,7 +39,7 @@ export const vivaService = {
       taskStats
     );
 
-    // Call Gemini
+    // Call NVIDIA AI
     const aiResult = await generateStructuredContent(
       prompt,
       vivaQuestionsSchema,
@@ -81,7 +81,7 @@ export const vivaService = {
     });
   },
 
-  // 2. Submit and grade a student's answer using Gemini
+  // 2. Submit and grade a student's answer using NVIDIA AI
   async evaluateVivaAnswer(userId, questionId, answerText) {
     const question = await prisma.vivaQuestion.findUnique({
       where: { id: questionId },
@@ -97,7 +97,7 @@ export const vivaService = {
       answerText
     );
 
-    // Call Gemini to evaluate
+    // Call NVIDIA AI to evaluate
     const aiResult = await generateStructuredContent(
       prompt,
       vivaEvaluationSchema,

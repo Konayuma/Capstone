@@ -16,9 +16,9 @@ const JoinProject = () => {
       try {
         const res = await axios.post(`/projects/join/${code}`);
         setResult(res.data);
-        toast.success(`Joined ${res.data.project.title}.`);
+        toast.success(`Joined ${res.data.project.title}. You can open the team workspace now.`);
       } catch (err) {
-        toast.error(err.response?.data?.error || 'Unable to join with this invite code.');
+        toast.error(err.response?.data?.error || 'This invite code is invalid or expired.');
       } finally {
         setLoading(false);
       }
@@ -28,7 +28,7 @@ const JoinProject = () => {
   }, [code]);
 
   if (loading) {
-    return <CoolLoader title="Checking invite" subtitle="Adding you to the project team..." />;
+    return <CoolLoader title="Verifying invite code" subtitle="Adding you to the project workspace..." />;
   }
 
   return (
@@ -41,14 +41,14 @@ const JoinProject = () => {
         <h1>{result ? 'You are on the team' : 'Invite could not be accepted'}</h1>
         <p>
           {result
-            ? `You joined ${result.project.title}. You can now open the workspace and start collaborating.`
-            : 'The code may be expired, mistyped, or already invalid.'}
+            ? `You joined ${result.project.title}. Open the workspace to see members, tasks, and files.`
+            : 'That invite code is no longer usable. Ask the project lead for a fresh one.'}
         </p>
         <button
           className="btn btn-primary"
           onClick={() => navigate(result ? `/projects/${result.project.id}#team` : '/dashboard')}
         >
-          {result ? 'Open team workspace' : 'Back to dashboard'}
+          {result ? 'Open team workspace' : 'Return to dashboard'}
           <ArrowRight size={16} />
         </button>
       </section>

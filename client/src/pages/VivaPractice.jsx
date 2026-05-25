@@ -184,12 +184,12 @@ export const VivaPractice = () => {
       {questions.length === 0 ? (
         <div className="card" style={{ padding: '60px', textAlign: 'center', maxWidth: '600px', marginInline: 'auto' }}>
           <HelpCircle size={48} style={{ color: 'var(--ink-soft)', marginBottom: '16px' }} />
-          <h3>No practice questions yet</h3>
+          <h3>No viva questions yet</h3>
           <p style={{ color: 'var(--ink-soft)', marginBottom: '24px' }}>
-            Create a set of viva questions from your current requirements, uploaded files, and contribution records.
+            Generate a practice set from your requirements, uploaded files, and contribution record to start rehearsing.
           </p>
           <button onClick={handleGenerateQuestions} className="btn btn-primary">
-            Create Practice Set
+            Generate practice set
           </button>
         </div>
       ) : (

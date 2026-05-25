@@ -2039,7 +2039,7 @@ export const ProjectWorkspace = () => {
                 ) : (
                   <div className="documents-overview-empty">
                     <Sparkles size={18} />
-                    <p>Upload files, then run analysis to surface gaps, missing evidence, and the next upload to tackle.</p>
+                    <p>Add a proposal, report, or evidence file, then run a review to surface the next gap worth closing.</p>
                   </div>
                 )}
               </section>
@@ -2053,17 +2053,17 @@ export const ProjectWorkspace = () => {
                 </div>
                 <div className="documents-list-actions">
                   <button type="button" className="btn btn-secondary" onClick={refreshProjectFiles} disabled={refreshingFiles}>
-                    {refreshingFiles ? <><Loader2 className="spinner-icon" size={15} /> Refreshing...</> : <><ArrowDownToLine size={15} /> Resync</>}
+                    {refreshingFiles ? <><Loader2 className="spinner-icon" size={15} /> Refreshing...</> : <><ArrowDownToLine size={15} /> Refresh list</>}
                   </button>
                   <button type="button" className="btn btn-secondary" onClick={handleAnalyzeFiles} disabled={analyzingFiles || files.length === 0}>
-                    {analyzingFiles ? <><Loader2 className="spinner-icon" size={15} /> Analyzing...</> : <><Sparkles size={15} /> Analyze documents</>}
+                    {analyzingFiles ? <><Loader2 className="spinner-icon" size={15} /> Reviewing...</> : <><Sparkles size={15} /> Run review</>}
                   </button>
                 </div>
               </div>
 
               {fileAnalysis && (
                 <div className="documents-analysis">
-                  <strong>AI document analysis</strong>
+                  <strong>Document review</strong>
                   <div className="documents-analysis-body">
                     {analysisSections.length ? analysisSections.map((section) => (
                       <section key={section.title} className="documents-analysis-section">
@@ -2084,8 +2084,8 @@ export const ProjectWorkspace = () => {
               {files.length === 0 ? (
                 <div className="documents-empty">
                   <FileText size={28} />
-                  <h4>No documents uploaded yet</h4>
-                  <p>Upload proposal, report, slide, source, or evidence files to build the project record.</p>
+                  <h4>No files in this project yet</h4>
+                  <p>Add a proposal, report, slide deck, source archive, or evidence file to start the project record.</p>
                 </div>
               ) : (
                 <div className="documents-list">

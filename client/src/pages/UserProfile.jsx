@@ -228,7 +228,7 @@ const UserProfile = () => {
                 </span>
               </button>
             )) : (
-              <p>No project memberships yet.</p>
+              <p>No project memberships yet. Join a team or ask a supervisor to add you.</p>
             )}
           </div>
         </article>
@@ -253,7 +253,7 @@ const UserProfile = () => {
                 </span>
               </button>
             )) : (
-              <p>No assigned tasks yet.</p>
+              <p>No assigned tasks yet. Tasks will appear here once the project lead assigns work.</p>
             )}
           </div>
         </article>

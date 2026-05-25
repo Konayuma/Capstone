@@ -271,7 +271,7 @@ export const Dashboard = () => {
 
               {!loading && boardData[laneKey].length === 0 && (
                 <div className="project-tile" style={{ cursor: 'default' }}>
-                  <p style={{ color: 'var(--ink-soft)' }}>No projects in this lane yet.</p>
+                  <p style={{ color: 'var(--ink-soft)' }}>Nothing here yet. Add a project or move work into this lane.</p>
                 </div>
               )}
 
@@ -328,7 +328,7 @@ export const Dashboard = () => {
           }}
         >
           <div className="card dashboard-modal-card" style={{ width: 'min(620px, 100%)' }}>
-            <h2 style={{ marginBottom: '14px' }}>Create a New Project</h2>
+            <h2 style={{ marginBottom: '14px' }}>Create a project workspace</h2>
             {error && <div className="badge badge-danger" style={{ marginBottom: '12px' }}>{error}</div>}
 
             <form onSubmit={handleCreateProject} className="dashboard-modal-form">
@@ -370,7 +370,7 @@ export const Dashboard = () => {
                 <button type="button" className="btn btn-secondary" onClick={closeCreateProjectModal} disabled={creatingProject}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={creatingProject} aria-busy={creatingProject}>
                   {creatingProject ? <Loader2 className="spinner-icon" size={15} /> : <Activity size={15} />}
-                  {creatingProject ? 'Creating...' : 'Create project'}
+                  {creatingProject ? 'Creating workspace...' : 'Create workspace'}
                 </button>
               </div>
             </form>

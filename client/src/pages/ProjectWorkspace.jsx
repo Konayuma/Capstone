@@ -408,6 +408,14 @@ export const ProjectWorkspace = () => {
     counts[comment.targetType] = (counts[comment.targetType] || 0) + 1;
     return counts;
   }, { project: 0, requirement: 0, task: 0, document: 0, contribution: 0, viva: 0 });
+  const stripMarkdownEmphasis = (text) => text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/_(.*?)_/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .trim();
+
   const parseAnalysisSections = (analysisText) => {
     const lines = analysisText.split(/\r?\n/);
     const sections = [];
@@ -421,7 +429,7 @@ export const ProjectWorkspace = () => {
       const headingMatch = line.match(/^#{1,3}\s+(.+)/);
       if (headingMatch) {
         flushSection();
-        currentSection = { title: headingMatch[1].trim(), items: [] };
+        currentSection = { title: stripMarkdownEmphasis(headingMatch[1]), items: [] };
         return;
       }
 
@@ -434,20 +442,20 @@ export const ProjectWorkspace = () => {
 
       const bulletMatch = trimmed.match(/^[-*+]\s+(.+)/);
       if (bulletMatch) {
-        currentSection.items.push(bulletMatch[1].trim());
+        currentSection.items.push(stripMarkdownEmphasis(bulletMatch[1]));
         return;
       }
 
       const numberedMatch = trimmed.match(/^\d+[.)]\s+(.+)/);
       if (numberedMatch) {
-        currentSection.items.push(numberedMatch[1].trim());
+        currentSection.items.push(stripMarkdownEmphasis(numberedMatch[1]));
         return;
       }
 
       if (currentSection.items.length === 0) {
-        currentSection.items.push(trimmed);
+        currentSection.items.push(stripMarkdownEmphasis(trimmed));
       } else {
-        currentSection.items[currentSection.items.length - 1] += ` ${trimmed}`;
+        currentSection.items[currentSection.items.length - 1] += ` ${stripMarkdownEmphasis(trimmed)}`;
       }
     });
 

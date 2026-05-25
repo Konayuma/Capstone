@@ -310,23 +310,6 @@ select {
   margin-bottom: 10px;
 }
 
-.profile-widget-button {
-  width: 100%;
-  border: 0;
-  border-radius: 14px;
-  padding: 6px;
-  background: transparent;
-  color: var(--ink-strong);
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--t-fast), transform var(--t-fast);
-}
-
-.profile-widget-button:hover {
-  background: color-mix(in oklab, var(--brand-3) 14%, white);
-  transform: translateY(-1px);
-}
-
 .main-content {
   min-height: 100vh;
   padding: clamp(20px, 2.8vw, 40px);
@@ -349,75 +332,6 @@ select {
   color: color-mix(in oklab, var(--ink-strong) 75%, transparent);
   margin-top: 8px;
   max-width: 62ch;
-}
-
-.dashboard-action-stack {
-  display: grid;
-  gap: 10px;
-  min-width: min(260px, 100%);
-  align-self: start;
-}
-
-.dashboard-profile-button {
-  border: 1px solid color-mix(in oklab, white 62%, transparent);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.55);
-  color: var(--ink-strong);
-  padding: 10px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  text-align: left;
-  cursor: pointer;
-  transition: transform var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
-}
-
-.dashboard-profile-button:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 10px 24px color-mix(in oklab, var(--ink-strong) 10%, transparent);
-}
-
-.dashboard-profile-button strong,
-.dashboard-profile-button small {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dashboard-profile-button small {
-  color: color-mix(in oklab, var(--ink-strong) 58%, transparent);
-  font-size: 0.78rem;
-}
-
-.dashboard-invite-card {
-  margin-top: 14px;
-  border: 1px solid var(--line-subtle);
-  border-radius: 18px;
-  background: color-mix(in oklab, var(--bg-elevated) 88%, white);
-  padding: clamp(14px, 2vw, 18px);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
-  gap: 16px;
-  align-items: center;
-  box-shadow: var(--shadow-soft);
-}
-
-.dashboard-invite-card h3 {
-  margin-top: 7px;
-}
-
-.dashboard-invite-card p {
-  margin-top: 4px;
-  color: var(--ink-soft);
-}
-
-.dashboard-invite-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
 }
 
 .status-row {
@@ -787,46 +701,6 @@ select {
   text-align: center;
   color: var(--ink-soft);
   background: color-mix(in oklab, white 55%, transparent);
-}
-
-.task-evidence-panel {
-  border-top: 1px solid var(--line-subtle);
-  padding-top: 12px;
-  display: grid;
-  gap: 10px;
-}
-
-.task-evidence-head,
-.task-evidence-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-}
-
-.task-evidence-head span,
-.task-evidence-item span {
-  color: var(--ink-soft);
-  font-size: 0.82rem;
-}
-
-.task-evidence-list {
-  display: grid;
-  gap: 8px;
-}
-
-.task-evidence-item {
-  border: 1px solid var(--line-subtle);
-  border-radius: 12px;
-  background: color-mix(in oklab, white 70%, var(--bg-soft));
-  padding: 8px 10px;
-}
-
-.task-evidence-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.7fr) auto;
-  gap: 8px;
-  align-items: center;
 }
 
 .card {
@@ -1216,121 +1090,6 @@ select {
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   gap: 18px;
   align-items: start;
-}
-
-.documents-layout,
-.settings-layout {
-  display: grid;
-  gap: 18px;
-}
-
-.documents-upload-card,
-.documents-list-card,
-.settings-card,
-.danger-zone-card {
-  display: grid;
-  gap: 18px;
-}
-
-.documents-upload-card p,
-.settings-card p,
-.danger-zone-card p {
-  margin-top: 6px;
-  color: var(--ink-soft);
-  max-width: 66ch;
-}
-
-.documents-upload-form,
-.settings-form {
-  display: grid;
-  gap: 14px;
-}
-
-.documents-list-head,
-.documents-item,
-.documents-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.documents-list-head,
-.documents-item {
-  justify-content: space-between;
-}
-
-.documents-list {
-  display: grid;
-  gap: 10px;
-}
-
-.documents-item {
-  border: 1px solid var(--line-subtle);
-  border-radius: 16px;
-  background: color-mix(in oklab, white 78%, var(--bg-soft));
-  padding: 12px;
-}
-
-.documents-file-icon {
-  inline-size: 42px;
-  block-size: 42px;
-  border-radius: 14px;
-  background: color-mix(in oklab, var(--brand-3) 22%, white);
-  color: color-mix(in oklab, var(--brand-1) 68%, var(--ink-strong));
-  display: grid;
-  place-items: center;
-  flex: none;
-}
-
-.documents-item > div:nth-child(2) {
-  min-width: 0;
-  flex: 1;
-}
-
-.documents-item strong,
-.documents-item span {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.documents-item span {
-  color: var(--ink-soft);
-  font-size: 0.82rem;
-}
-
-.documents-empty {
-  min-height: 260px;
-  border: 1px dashed var(--line-medium);
-  border-radius: 18px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 9px;
-  padding: 24px;
-  text-align: center;
-  color: var(--ink-soft);
-  background: color-mix(in oklab, var(--bg-soft) 34%, white);
-}
-
-.documents-analysis {
-  border: 1px solid color-mix(in oklab, var(--brand-1) 22%, var(--line-subtle));
-  border-radius: 16px;
-  background: color-mix(in oklab, var(--brand-3) 14%, white);
-  padding: 14px 16px;
-  display: grid;
-  gap: 8px;
-}
-
-.documents-analysis p {
-  color: var(--ink-body);
-  white-space: pre-wrap;
-}
-
-.danger-zone-card {
-  border-color: color-mix(in oklab, var(--danger) 28%, transparent);
-  background: color-mix(in oklab, var(--danger) 5%, var(--bg-elevated));
 }
 
 .comments-compose,
@@ -1831,378 +1590,6 @@ select {
   animation: spin 0.7s linear infinite;
 }
 
-.workspace-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.member-stack {
-  border: 0;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  padding: 0 4px 0 0;
-  cursor: pointer;
-}
-
-.member-stack-avatar,
-.member-stack-more,
-.team-avatar,
-.profile-avatar-xl {
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  background: linear-gradient(145deg, var(--brand-1), color-mix(in oklab, var(--brand-2) 78%, var(--brand-1)));
-  color: white;
-  font-weight: 800;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
-}
-
-.member-stack-avatar,
-.member-stack-more {
-  width: 38px;
-  height: 38px;
-  border: 3px solid var(--bg-elevated);
-  margin-left: -10px;
-  font-size: 0.78rem;
-}
-
-.member-stack-avatar:first-child {
-  margin-left: 0;
-}
-
-.member-stack-more {
-  background: color-mix(in oklab, var(--ink-strong) 82%, var(--brand-1));
-}
-
-.team-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 324px);
-  gap: 16px;
-  align-items: start;
-}
-
-.team-main,
-.team-side {
-  display: grid;
-  gap: 16px;
-}
-
-.team-main {
-  min-width: 0;
-  border: 1px solid var(--line-subtle);
-  border-radius: 22px;
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-soft);
-  overflow: hidden;
-}
-
-.team-head {
-  padding: clamp(18px, 2.5vw, 28px);
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-  background: linear-gradient(180deg, color-mix(in oklab, var(--brand-3) 18%, white), transparent);
-}
-
-.team-head > div:first-child {
-  min-width: 0;
-}
-
-.team-head .btn {
-  flex: 0 0 auto;
-  max-width: 154px;
-  white-space: normal;
-  line-height: 1.25;
-}
-
-.team-head p,
-.team-invite-card p,
-.team-muted {
-  margin-top: 5px;
-  color: var(--ink-soft);
-}
-
-.team-table {
-  display: grid;
-  min-width: 0;
-  padding: 0 clamp(12px, 1.4vw, 18px) 18px;
-}
-
-.team-table-row {
-  display: grid;
-  grid-template-columns: minmax(178px, 1.25fr) minmax(138px, 0.82fr) minmax(86px, 0.48fr) minmax(98px, 0.55fr);
-  gap: 10px;
-  align-items: center;
-  min-height: 72px;
-  padding: 12px 6px;
-  border-top: 1px solid var(--line-subtle);
-}
-
-.team-table-header {
-  min-height: auto;
-  color: var(--ink-soft);
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.team-person {
-  border: 0;
-  background: transparent;
-  color: var(--ink-strong);
-  padding: 0;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  min-width: 0;
-  max-width: 100%;
-  text-align: left;
-  cursor: pointer;
-}
-
-.team-person strong,
-.team-person small {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.team-person small,
-.team-date,
-.recent-invites span,
-.profile-list-item small {
-  color: var(--ink-soft);
-  font-size: 0.78rem;
-}
-
-.team-avatar {
-  width: 40px;
-  height: 40px;
-  flex: none;
-  font-size: 0.84rem;
-}
-
-.team-role-select {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid var(--line-subtle);
-  border-radius: 11px;
-  padding: 9px 8px;
-  color: var(--ink-strong);
-  background: white;
-}
-
-.team-actions {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.icon-button {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  border: 1px solid var(--line-subtle);
-  border-radius: 10px;
-  background: color-mix(in oklab, white 84%, var(--bg-soft));
-  color: var(--ink-strong);
-  display: inline-grid;
-  place-items: center;
-  cursor: pointer;
-}
-
-.icon-button.danger {
-  color: var(--danger);
-  background: color-mix(in oklab, var(--danger) 9%, white);
-}
-
-.icon-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.team-invite-card,
-.team-search-card,
-.profile-panel {
-  display: grid;
-  gap: 16px;
-}
-
-.invite-code-box {
-  border: 1px dashed color-mix(in oklab, var(--brand-1) 42%, var(--line-medium));
-  border-radius: 16px;
-  padding: 12px 13px;
-  background: color-mix(in oklab, var(--brand-3) 16%, white);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.invite-code-box span {
-  font-weight: 900;
-  letter-spacing: 0.04em;
-}
-
-.recent-invites,
-.team-search-results,
-.profile-list {
-  display: grid;
-  gap: 10px;
-}
-
-.recent-invites div,
-.team-search-result,
-.profile-list-item {
-  border: 1px solid var(--line-subtle);
-  border-radius: 14px;
-  padding: 10px 12px;
-  background: color-mix(in oklab, white 78%, var(--bg-soft));
-}
-
-.recent-invites strong,
-.recent-invites span {
-  display: block;
-}
-
-.team-search-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-}
-
-.team-search-result {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-@media (max-width: 1320px) {
-  .team-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .team-side {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .team-head .btn {
-    max-width: none;
-  }
-
-  .team-table-row {
-    grid-template-columns: minmax(220px, 1.25fr) minmax(160px, 0.9fr) minmax(96px, 0.45fr) minmax(120px, 0.55fr);
-  }
-}
-
-@media (max-width: 1180px) {
-  .team-table-row {
-    grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.85fr);
-  }
-
-  .team-table-header {
-    display: none;
-  }
-}
-
-.profile-page {
-  display: grid;
-  gap: 18px;
-}
-
-.profile-hero {
-  border-radius: 24px;
-  padding: clamp(20px, 3vw, 34px);
-  border: 1px solid var(--line-subtle);
-  background:
-    linear-gradient(135deg, color-mix(in oklab, var(--brand-1) 76%, white), color-mix(in oklab, var(--brand-3) 66%, white)),
-    var(--bg-elevated);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 18px;
-  align-items: center;
-  box-shadow: var(--shadow-float);
-}
-
-.profile-hero p {
-  color: color-mix(in oklab, var(--ink-strong) 72%, transparent);
-}
-
-.profile-avatar-xl {
-  width: 88px;
-  height: 88px;
-  font-size: 1.45rem;
-}
-
-.profile-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.profile-stat {
-  display: grid;
-  gap: 5px;
-}
-
-.profile-stat span {
-  color: var(--ink-soft);
-  font-size: 0.84rem;
-}
-
-.profile-stat strong {
-  font-size: 1.7rem;
-}
-
-.profile-list-item {
-  width: 100%;
-  border-color: var(--line-subtle);
-  color: var(--ink-strong);
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  text-align: left;
-  cursor: pointer;
-}
-
-.profile-list-item strong,
-.profile-list-item small {
-  display: block;
-}
-
-.profile-edit-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: end;
-}
-
-.join-page {
-  min-height: 70vh;
-  display: grid;
-  place-items: center;
-}
-
-.join-card {
-  width: min(560px, 100%);
-  display: grid;
-  gap: 14px;
-  text-align: center;
-}
-
 @media (max-width: 1080px) {
   .app-container {
     grid-template-columns: 1fr;
@@ -2226,18 +1613,12 @@ select {
 
   .board-lanes,
   .auth-shell,
-  .dashboard-invite-card,
   .landing-hero,
   .landing-grid,
   .grid-3,
   .comments-layout,
-  .team-side,
-  .profile-grid {
+  .requirements-workbench .grid-2 {
     grid-template-columns: 1fr;
-  }
-
-  .team-actions {
-    justify-content: flex-start;
   }
 
   .main-content {
@@ -2281,13 +1662,25 @@ select {
     flex-direction: column;
   }
 
-  .task-evidence-form,
-  .documents-upload-form,
-  .documents-item,
-  .documents-actions {
-    display: grid;
+  .requirements-workbench-header {
+    flex-direction: column;
+  }
+
+  .requirements-workbench-actions {
+    justify-content: flex-start;
+  }
+
+  .requirement-detail-header {
+    flex-direction: column;
+  }
+
+  .requirement-detail-item {
     grid-template-columns: 1fr;
-    align-items: stretch;
+  }
+
+  .requirement-detail-item > span {
+    width: 26px;
+    height: 26px;
   }
 
   .comments-feed-head {
@@ -2306,27 +1699,10 @@ select {
     white-space: normal;
   }
 
-  .workspace-actions,
-  .team-head,
-  .team-search-result,
-  .profile-hero,
-  .profile-list-item {
-    align-items: flex-start;
-    grid-template-columns: 1fr;
-    flex-direction: column;
-  }
-
-  .team-search-form {
-    grid-template-columns: 1fr;
-  }
-
   .landing-actions,
-  .dashboard-invite-form,
-  .profile-edit-form,
   .landing-cta-row {
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr;
   }
 
   .landing-actions .btn,

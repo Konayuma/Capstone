@@ -1,0 +1,26 @@
+name: Deploy Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: cloudflare-pages-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trigger-deploy-hook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cloudflare Pages deploy hook
+        env:
+          CF_PAGES_DEPLOY_HOOK: ${{ secrets.CF_PAGES_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$CF_PAGES_DEPLOY_HOOK" ]; then
+            echo "CF_PAGES_DEPLOY_HOOK secret is not set."
+            exit 1
+          fi
+
+          curl --fail --show-error --silent -X POST -d "" "$CF_PAGES_DEPLOY_HOOK"

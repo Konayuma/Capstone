@@ -394,6 +394,13 @@ select {
   gap: 10px;
 }
 
+.documents-list-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .team-search-result,
 .documents-item {
   padding: 14px 16px;
@@ -414,6 +421,44 @@ select {
 
 .documents-analysis {
   padding: 12px 14px;
+}
+
+.documents-analysis-body {
+  display: grid;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.documents-analysis-section {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-subtle);
+}
+
+.documents-analysis-section:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.documents-analysis-section h4 {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-strong);
+}
+
+.documents-analysis-section ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  color: var(--ink-body);
+}
+
+.documents-analysis-section li {
+  padding-left: 4px;
 }
 
 .documents-empty {
@@ -2480,6 +2525,10 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .documents-list-actions {
+    justify-content: flex-start;
+  }
+
   .dashboard-action-stack,
   .dashboard-invite-form {
     justify-items: stretch;
@@ -2589,6 +2638,10 @@ select {
   .requirement-detail-item > span {
     width: 26px;
     height: 26px;
+  }
+
+  .documents-list-actions .btn {
+    width: 100%;
   }
 
   .dashboard-modal-actions {

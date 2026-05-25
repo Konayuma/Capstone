@@ -9,6 +9,7 @@ import {
   ListTodo, 
   BarChart3, 
   Download, 
+  ArrowDownToLine,
   MessageSquare,
   X,
   Users,
@@ -166,6 +167,7 @@ export const ProjectWorkspace = () => {
   const [uploadFileType, setUploadFileType] = useState('proposal');
   const [uploadingFile, setUploadingFile] = useState(false);
   const [analyzingFiles, setAnalyzingFiles] = useState(false);
+  const [refreshingFiles, setRefreshingFiles] = useState(false);
   const [fileAnalysis, setFileAnalysis] = useState('');
   const [savingProject, setSavingProject] = useState(false);
   const [deletingProject, setDeletingProject] = useState(false);
@@ -422,6 +424,68 @@ export const ProjectWorkspace = () => {
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const parseAnalysisSections = (analysisText) => {
+    const lines = analysisText.split(/\r?\n/);
+    const sections = [];
+    let currentSection = null;
+
+    const flushSection = () => {
+      if (currentSection) sections.push(currentSection);
+    };
+
+    lines.forEach((line) => {
+      const headingMatch = line.match(/^#{1,3}\s+(.+)/);
+      if (headingMatch) {
+        flushSection();
+        currentSection = { title: headingMatch[1].trim(), items: [] };
+        return;
+      }
+
+      if (!currentSection) {
+        currentSection = { title: 'Analysis', items: [] };
+      }
+
+      const trimmed = line.trim();
+      if (!trimmed) return;
+
+      const bulletMatch = trimmed.match(/^[-*+]\s+(.+)/);
+      if (bulletMatch) {
+        currentSection.items.push(bulletMatch[1].trim());
+        return;
+      }
+
+      const numberedMatch = trimmed.match(/^\d+[.)]\s+(.+)/);
+      if (numberedMatch) {
+        currentSection.items.push(numberedMatch[1].trim());
+        return;
+      }
+
+      if (currentSection.items.length === 0) {
+        currentSection.items.push(trimmed);
+      } else {
+        currentSection.items[currentSection.items.length - 1] += ` ${trimmed}`;
+      }
+    });
+
+    flushSection();
+    return sections.filter((section) => section.items.length > 0);
+  };
+
+  const analysisSections = fileAnalysis ? parseAnalysisSections(fileAnalysis) : [];
+
+  const refreshProjectFiles = async () => {
+    setRefreshingFiles(true);
+    try {
+      const filesRes = await axios.get(`/projects/${id}/files`);
+      setFiles(filesRes.data);
+      toast.success('Document library refreshed.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to refresh documents right now.');
+    } finally {
+      setRefreshingFiles(false);
+    }
+  };
+
   const refreshTeam = async () => {
     const memberRes = await axios.get(`/projects/${id}/members`);
     setTeamMembers(memberRes.data.members || []);
@@ -534,11 +598,10 @@ export const ProjectWorkspace = () => {
       await axios.post(`/projects/${id}/files/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const filesRes = await axios.get(`/projects/${id}/files`);
-      setFiles(filesRes.data);
       setUploadFile(null);
       toast.success('Project document uploaded.');
       e.currentTarget.reset();
+      await refreshProjectFiles();
       await fetchWorkspaceData();
     } catch (err) {
       toast.error(err.response?.data?.error || 'Unable to upload this file.');
@@ -1881,15 +1944,33 @@ export const ProjectWorkspace = () => {
                   <span className="badge badge-info">{files.length} file{files.length === 1 ? '' : 's'}</span>
                   <h3>Document library</h3>
                 </div>
-                <button type="button" className="btn btn-secondary" onClick={handleAnalyzeFiles} disabled={analyzingFiles || files.length === 0}>
-                  {analyzingFiles ? <><Loader2 className="spinner-icon" size={15} /> Analyzing...</> : <><Sparkles size={15} /> Analyze documents</>}
-                </button>
+                <div className="documents-list-actions">
+                  <button type="button" className="btn btn-secondary" onClick={refreshProjectFiles} disabled={refreshingFiles}>
+                    {refreshingFiles ? <><Loader2 className="spinner-icon" size={15} /> Refreshing...</> : <><ArrowDownToLine size={15} /> Resync</>}
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={handleAnalyzeFiles} disabled={analyzingFiles || files.length === 0}>
+                    {analyzingFiles ? <><Loader2 className="spinner-icon" size={15} /> Analyzing...</> : <><Sparkles size={15} /> Analyze documents</>}
+                  </button>
+                </div>
               </div>
 
               {fileAnalysis && (
                 <div className="documents-analysis">
                   <strong>AI document analysis</strong>
-                  <p>{fileAnalysis}</p>
+                  <div className="documents-analysis-body">
+                    {analysisSections.length ? analysisSections.map((section) => (
+                      <section key={section.title} className="documents-analysis-section">
+                        <h4>{section.title}</h4>
+                        <ul>
+                          {section.items.map((item, index) => (
+                            <li key={`${section.title}-${index}`}>{item}</li>
+                          ))}
+                        </ul>
+                      </section>
+                    )) : (
+                      <p>{fileAnalysis}</p>
+                    )}
+                  </div>
                 </div>
               )}
 

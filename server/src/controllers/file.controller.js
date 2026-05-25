@@ -176,12 +176,18 @@ ${fileSummary}
 Requirements:
 ${requirementSummary}
 
-Return a concise review with:
-1. Document completeness
-2. Testing/evidence gaps
-3. Risks for viva defense
-4. Recommended next uploads or fixes`,
-        'You are a strict capstone supervisor reviewing document completeness and evidence quality.'
+Return the review in clean markdown only, using:
+- One heading per section with ##
+- Short bullet points under each heading
+- No long paragraphs
+- No numbered essay format
+
+Use these sections in this order:
+## Document completeness
+## Testing and evidence gaps
+## Viva defense risks
+## Recommended next uploads or fixes`,
+  'You are a strict capstone supervisor reviewing document completeness and evidence quality. Respond in clean markdown with headings and bullet points only.'
       );
 
       res.json({ analysis, fileCount: project.files.length });

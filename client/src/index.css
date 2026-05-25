@@ -1639,8 +1639,8 @@ select {
 
 .team-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 324px);
+  gap: 16px;
   align-items: start;
 }
 
@@ -1651,6 +1651,7 @@ select {
 }
 
 .team-main {
+  min-width: 0;
   border: 1px solid var(--line-subtle);
   border-radius: 22px;
   background: var(--bg-elevated);
@@ -1667,6 +1668,17 @@ select {
   background: linear-gradient(180deg, color-mix(in oklab, var(--brand-3) 18%, white), transparent);
 }
 
+.team-head > div:first-child {
+  min-width: 0;
+}
+
+.team-head .btn {
+  flex: 0 0 auto;
+  max-width: 154px;
+  white-space: normal;
+  line-height: 1.25;
+}
+
 .team-head p,
 .team-invite-card p,
 .team-muted {
@@ -1676,16 +1688,17 @@ select {
 
 .team-table {
   display: grid;
-  padding: 0 clamp(14px, 2vw, 20px) 20px;
+  min-width: 0;
+  padding: 0 clamp(12px, 1.4vw, 18px) 18px;
 }
 
 .team-table-row {
   display: grid;
-  grid-template-columns: minmax(240px, 1.2fr) minmax(170px, 0.8fr) 110px minmax(150px, auto);
-  gap: 14px;
+  grid-template-columns: minmax(178px, 1.25fr) minmax(138px, 0.82fr) minmax(86px, 0.48fr) minmax(98px, 0.55fr);
+  gap: 10px;
   align-items: center;
   min-height: 72px;
-  padding: 12px 8px;
+  padding: 12px 6px;
   border-top: 1px solid var(--line-subtle);
 }
 
@@ -1707,6 +1720,7 @@ select {
   align-items: center;
   gap: 11px;
   min-width: 0;
+  max-width: 100%;
   text-align: left;
   cursor: pointer;
 }
@@ -1714,6 +1728,10 @@ select {
 .team-person strong,
 .team-person small {
   display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .team-person small,
@@ -1733,24 +1751,27 @@ select {
 
 .team-role-select {
   width: 100%;
+  min-width: 0;
   border: 1px solid var(--line-subtle);
   border-radius: 11px;
-  padding: 9px 10px;
+  padding: 9px 8px;
   color: var(--ink-strong);
   background: white;
 }
 
 .team-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .icon-button {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
   border: 1px solid var(--line-subtle);
   border-radius: 10px;
   background: color-mix(in oklab, white 84%, var(--bg-soft));
@@ -1825,6 +1846,34 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+@media (max-width: 1320px) {
+  .team-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .team-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .team-head .btn {
+    max-width: none;
+  }
+
+  .team-table-row {
+    grid-template-columns: minmax(220px, 1.25fr) minmax(160px, 0.9fr) minmax(96px, 0.45fr) minmax(120px, 0.55fr);
+  }
+}
+
+@media (max-width: 1180px) {
+  .team-table-row {
+    grid-template-columns: minmax(220px, 1fr) minmax(160px, 0.85fr);
+  }
+
+  .team-table-header {
+    display: none;
+  }
 }
 
 .profile-page {
@@ -1933,17 +1982,9 @@ select {
   .landing-grid,
   .grid-3,
   .comments-layout,
-  .team-layout,
+  .team-side,
   .profile-grid {
     grid-template-columns: 1fr;
-  }
-
-  .team-table-row {
-    grid-template-columns: minmax(220px, 1fr) minmax(170px, auto);
-  }
-
-  .team-table-header {
-    display: none;
   }
 
   .team-actions {

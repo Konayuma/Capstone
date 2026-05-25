@@ -1379,6 +1379,192 @@ select {
   color: var(--brand-1);
 }
 
+.requirements-page {
+  display: grid;
+  gap: 18px;
+}
+
+.requirements-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+}
+
+.requirements-hero-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.requirements-hero-copy p {
+  max-width: 62ch;
+  color: var(--ink-soft);
+}
+
+.requirements-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.requirements-hero-stat {
+  border: 1px solid var(--line-subtle);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: color-mix(in oklab, var(--bg-soft) 32%, white);
+  display: grid;
+  gap: 4px;
+}
+
+.requirements-hero-stat span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.requirements-hero-stat strong {
+  font-size: 1.35rem;
+  color: var(--ink-strong);
+}
+
+.requirements-hero-actions {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  align-content: start;
+  min-width: min(100%, 360px);
+}
+
+.requirements-intake-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  gap: 18px;
+}
+
+.requirements-drafting-card,
+.requirements-clarity-card {
+  display: grid;
+  gap: 14px;
+}
+
+.requirements-copy {
+  color: var(--ink-soft);
+  max-width: 54ch;
+}
+
+.requirements-prompt {
+  min-height: 160px;
+  resize: vertical;
+}
+
+.requirements-draft-button {
+  align-self: start;
+}
+
+.requirements-empty-state--compact {
+  min-height: 180px;
+  padding: 18px;
+}
+
+.clarity-list {
+  display: grid;
+  gap: 12px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.clarity-item {
+  border-left: 3px solid var(--warning);
+  padding: 10px 12px 10px 14px;
+  border-radius: 0 14px 14px 0;
+  background: color-mix(in oklab, var(--bg-soft) 22%, white);
+  display: grid;
+  gap: 6px;
+}
+
+.clarity-item-title {
+  font-weight: 700;
+  color: color-mix(in oklab, var(--warning) 80%, var(--ink-strong));
+  font-size: 0.9rem;
+}
+
+.clarity-item-copy {
+  color: var(--ink-body);
+  font-size: 0.84rem;
+}
+
+.clarity-item-suggestion {
+  color: color-mix(in oklab, var(--success) 78%, var(--ink-strong));
+  font-size: 0.84rem;
+}
+
+.requirements-workbench {
+  display: grid;
+  gap: 14px;
+}
+
+.requirements-workbench-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.requirements-selection-summary--compact {
+  min-width: min(100%, 100%);
+  justify-content: flex-end;
+}
+
+.requirement-detail-shell {
+  min-height: 100%;
+  position: sticky;
+  top: 18px;
+  align-self: start;
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+}
+
+.requirement-detail-view {
+  display: grid;
+  gap: 16px;
+}
+
+.requirement-detail-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0 2px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.requirement-detail-tab {
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--ink-soft);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.requirement-detail-tab.active {
+  background: color-mix(in oklab, var(--brand-3) 18%, white);
+  border-color: color-mix(in oklab, var(--brand-1) 20%, transparent);
+  color: var(--ink-strong);
+}
+
+.requirement-detail-empty--soft {
+  background: color-mix(in oklab, var(--bg-soft) 30%, white);
+}
+
+.requirement-detail-empty--hero {
+  min-height: 220px;
+  place-items: center;
+  text-align: center;
+}
+
 .comments-layout {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -2065,6 +2251,12 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .requirements-hero,
+  .requirements-intake-grid,
+  .requirements-workbench-grid {
+    grid-template-columns: 1fr;
+  }
+
   .comments-hero,
   .comments-modal-grid {
     grid-template-columns: 1fr;
@@ -2177,6 +2369,25 @@ select {
 
   .comments-form-actions {
     align-items: flex-start;
+  }
+
+  .requirements-hero-actions {
+    justify-items: stretch;
+    min-width: 0;
+  }
+
+  .requirements-hero-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .requirements-selection-summary--compact {
+    justify-content: flex-start;
+  }
+
+  .requirement-detail-shell {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 
   .team-table-row {

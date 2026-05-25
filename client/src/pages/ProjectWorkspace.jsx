@@ -178,6 +178,7 @@ export const ProjectWorkspace = () => {
   const [requirements, setRequirements] = useState([]);
   const [selectedRequirementId, setSelectedRequirementId] = useState(null);
   const [selectedRequirementIds, setSelectedRequirementIds] = useState([]);
+  const [requirementDetailTab, setRequirementDetailTab] = useState('overview');
   const [rawDesc, setRawDesc] = useState('');
   const [refining, setRefining] = useState(false);
   const [ambiguities, setAmbiguities] = useState([]);
@@ -219,6 +220,16 @@ export const ProjectWorkspace = () => {
   const [readiness, setReadiness] = useState(null);
 
   const selectedReq = requirements.find((requirement) => requirement.id === selectedRequirementId) || null;
+
+  useEffect(() => {
+    setRequirementDetailTab('overview');
+  }, [selectedRequirementId]);
+  const requirementDetailTabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'criteria', label: `Criteria (${selectedReq?.acceptanceCriteria?.length || 0})` },
+    { id: 'tests', label: `Tests (${selectedReq?.testCases?.length || 0})` },
+    { id: 'tasks', label: `Tasks (${selectedReq?.tasks?.length || 0})` },
+  ];
 
   const fetchWorkspaceData = async () => {
     try {
@@ -861,48 +872,99 @@ export const ProjectWorkspace = () => {
       <main style={{ marginTop: '16px' }}>
         {/* TAB 1: Requirements Engineering */}
         {activeTab === 'requirements' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-            <div className="grid-2">
-              {/* Requirements Generator Console */}
-              <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <h3>Requirements Drafting</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                  Paste a project idea, feature request, or rough scope note. We will turn it into measurable functional and non-functional requirements.
+          <div className="requirements-page">
+            <section className="card requirements-hero">
+              <div className="requirements-hero-copy">
+                <span className="badge badge-info">Requirements workspace</span>
+                <h3>Shape the spec before the board fills up</h3>
+                <p>
+                  Draft requirements, scan ambiguity warnings, and expand only the items that matter. The workspace now keeps the review flow compact instead of stacking every artifact in one long view.
                 </p>
-                <textarea 
-                  className="form-input"
+
+                <div className="requirements-hero-stats">
+                  <div className="requirements-hero-stat">
+                    <span>Drafted</span>
+                    <strong>{requirements.length}</strong>
+                  </div>
+                  <div className="requirements-hero-stat">
+                    <span>Queued</span>
+                    <strong>{selectedRequirementIds.length}</strong>
+                  </div>
+                  <div className="requirements-hero-stat">
+                    <span>Warnings</span>
+                    <strong>{ambiguities.length}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="requirements-hero-actions">
+                <button type="button" className="btn btn-secondary" onClick={focusRequirementsPrompt}>
+                  Refine prompt
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={selectAllRequirements} disabled={requirements.length === 0}>
+                  Select all
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={clearRequirementSelection} disabled={selectedRequirementIds.length === 0}>
+                  Clear selection
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => handleGenerateRequirementArtifacts()}
+                  disabled={selectedRequirementIds.length === 0 || expandingRequirements}
+                >
+                  {expandingRequirements ? <><Loader2 className="spinner-icon" size={15} /> Expanding selected...</> : 'Generate details for selected'}
+                </button>
+              </div>
+            </section>
+
+            <div className="requirements-intake-grid">
+              <div className="card requirements-drafting-card">
+                <div>
+                  <span className="badge badge-info">Drafting lane</span>
+                  <h3>Requirements drafting</h3>
+                  <p className="requirements-copy">
+                    Paste a project idea, feature request, or rough scope note. We will turn it into measurable functional and non-functional requirements.
+                  </p>
+                </div>
+                <textarea
+                  className="form-input requirements-prompt"
                   placeholder="Paste the rough project description or requested feature..."
                   value={rawDesc}
                   onChange={(e) => setRawDesc(e.target.value)}
                   ref={requirementsPromptRef}
-                  style={{ minHeight: '120px', resize: 'vertical' }}
                 />
-                <button 
-                  onClick={handleAIRefinement} 
-                  className="btn btn-primary"
+                <button
+                  onClick={handleAIRefinement}
+                  className="btn btn-primary requirements-draft-button"
                   disabled={refining}
-                  style={{ alignSelf: 'flex-start' }}
                 >
                   {refining ? <><Loader2 className="spinner-icon" size={15} /> Drafting requirements...</> : 'Draft Requirements'}
                 </button>
               </div>
 
-              {/* Ambiguity warnings display */}
-              <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <h3>Clarity Checks</h3>
+              <div className="card requirements-clarity-card">
+                <div>
+                  <span className="badge badge-info">Clarity lane</span>
+                  <h3>Clarity checks</h3>
+                  <p className="requirements-copy">
+                    Ambiguity warnings stay compact here so the drafting lane does not get pushed down the page.
+                  </p>
+                </div>
+
                 {ambiguities.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)' }}>No clarity checks yet. Draft requirements to highlight vague or hard-to-test wording.</p>
+                  <div className="requirements-empty-state requirements-empty-state--compact">
+                    <Sparkles size={20} />
+                    <h4>No clarity checks yet</h4>
+                    <p>Draft requirements to highlight vague or hard-to-test wording.</p>
+                  </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '250px', overflowY: 'auto' }}>
+                  <div className="clarity-list">
                     {ambiguities.map((warn, i) => (
-                      <div key={i} style={{ borderLeft: '3px solid var(--color-warning)', paddingLeft: '12px' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--color-warning)', fontSize: '0.9rem' }}>
-                          Needs clarification: "{warn.vagueTerm}"
-                        </div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{warn.explanation}</div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--color-success)', fontWeight: 500 }}>
-                          Suggestion: {warn.suggestion}
-                        </div>
+                      <div key={i} className="clarity-item">
+                        <div className="clarity-item-title">Needs clarification: “{warn.vagueTerm}”</div>
+                        <div className="clarity-item-copy">{warn.explanation}</div>
+                        <div className="clarity-item-suggestion">Suggestion: {warn.suggestion}</div>
                       </div>
                     ))}
                   </div>
@@ -920,37 +982,17 @@ export const ProjectWorkspace = () => {
                   </p>
                 </div>
 
-                <div className="requirements-workbench-actions">
-                  <button type="button" className="btn btn-secondary" onClick={focusRequirementsPrompt}>
-                    Refine prompt
-                  </button>
-                  <button type="button" className="btn btn-secondary" onClick={selectAllRequirements} disabled={requirements.length === 0}>
-                    Select all
-                  </button>
-                  <button type="button" className="btn btn-secondary" onClick={clearRequirementSelection} disabled={selectedRequirementIds.length === 0}>
-                    Clear selection
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => handleGenerateRequirementArtifacts()}
-                    disabled={selectedRequirementIds.length === 0 || expandingRequirements}
-                  >
-                    {expandingRequirements ? <><Loader2 className="spinner-icon" size={15} /> Expanding selected...</> : 'Generate details for selected'}
-                  </button>
+                <div className="requirements-selection-summary requirements-selection-summary--compact">
+                  <span>{selectedRequirementIds.length} selected</span>
+                  <span>{requirements.length} total requirements</span>
+                  <span>{selectedReq ? `Viewing: ${selectedReq.title}` : 'Pick a requirement to inspect'}</span>
                 </div>
               </div>
 
-              <div className="requirements-selection-summary">
-                <span>{selectedRequirementIds.length} selected</span>
-                <span>{requirements.length} total requirements</span>
-                <span>{selectedReq ? `Viewing: ${selectedReq.title}` : 'Pick a requirement to inspect'}</span>
-              </div>
-
-              <div className="grid-2">
+              <div className="requirements-workbench-grid">
                 <div className="requirements-list-column">
                   <div className="requirements-list-head">
-                    <h3>Project Specification Tree</h3>
+                    <h3>Project specification tree</h3>
                     <p>Choose requirements to expand, or use the right panel to review the active one in detail.</p>
                   </div>
 
@@ -1033,83 +1075,119 @@ export const ProjectWorkspace = () => {
                         <div><span>Type</span><strong>{selectedReq.type === 'functional' ? 'Functional' : 'Non-Functional'}</strong></div>
                       </div>
 
-                      <div className="requirement-detail-section">
-                        <div className="requirement-detail-section-head">
-                          <h4>Acceptance Criteria</h4>
-                          <span>{selectedReq.acceptanceCriteria?.length || 0} items</span>
-                        </div>
-                        {selectedReq.acceptanceCriteria?.length ? (
-                          <div className="requirement-detail-list">
-                            {selectedReq.acceptanceCriteria.map((ac, idx) => (
-                              <div key={ac.id} className="requirement-detail-item">
-                                <span>{idx + 1}</span>
-                                <p>{ac.criteriaText}</p>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="requirement-detail-empty">
-                            <p>No acceptance criteria generated yet.</p>
-                            <button
-                              type="button"
-                              className="btn btn-secondary"
-                              onClick={() => handleGenerateRequirementArtifacts([selectedReq.id])}
-                              disabled={expandingRequirements}
-                            >
-                              Generate criteria and test cases
-                            </button>
-                          </div>
-                        )}
+                      <div className="requirement-detail-tabs" role="tablist" aria-label="Requirement detail sections">
+                        {[
+                          { id: 'overview', label: 'Overview' },
+                          { id: 'criteria', label: 'Criteria' },
+                          { id: 'tests', label: 'Tests' },
+                          { id: 'tasks', label: 'Tasks' },
+                        ].map((tab) => (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={requirementDetailTab === tab.id}
+                            className={`requirement-detail-tab ${requirementDetailTab === tab.id ? 'active' : ''}`}
+                            onClick={() => setRequirementDetailTab(tab.id)}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
                       </div>
 
-                      <div className="requirement-detail-section">
-                        <div className="requirement-detail-section-head">
-                          <h4>Test Cases</h4>
-                          <span>{selectedReq.testCases?.length || 0} items</span>
+                      {requirementDetailTab === 'overview' && (
+                        <div className="requirement-detail-section requirement-detail-section--overview">
+                          <div className="requirement-detail-empty requirement-detail-empty--soft">
+                            <p>This requirement is selected for review. Switch tabs to inspect generated criteria, test cases, or linked tasks.</p>
+                          </div>
                         </div>
-                        {selectedReq.testCases?.length ? (
-                          <div className="requirement-detail-list">
-                            {selectedReq.testCases.map((testCase, idx) => (
-                              <div key={testCase.id} className="requirement-detail-item requirement-testcase-item">
-                                <span>{idx + 1}</span>
-                                <div>
-                                  <strong>{testCase.testTitle}</strong>
-                                  <p>{testCase.testSteps}</p>
-                                  <small>Expected: {testCase.expectedResult}</small>
+                      )}
+
+                      {requirementDetailTab === 'criteria' && (
+                        <div className="requirement-detail-section">
+                          <div className="requirement-detail-section-head">
+                            <h4>Acceptance Criteria</h4>
+                            <span>{selectedReq.acceptanceCriteria?.length || 0} items</span>
+                          </div>
+                          {selectedReq.acceptanceCriteria?.length ? (
+                            <div className="requirement-detail-list">
+                              {selectedReq.acceptanceCriteria.map((ac, idx) => (
+                                <div key={ac.id} className="requirement-detail-item">
+                                  <span>{idx + 1}</span>
+                                  <p>{ac.criteriaText}</p>
                                 </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="requirement-detail-empty">
-                            <p>No test cases generated yet.</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="requirement-detail-section">
-                        <div className="requirement-detail-section-head">
-                          <h4>Linked Tasks</h4>
-                          <span>{selectedReq.tasks?.length || 0} items</span>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="requirement-detail-empty">
+                              <p>No acceptance criteria generated yet.</p>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => handleGenerateRequirementArtifacts([selectedReq.id])}
+                                disabled={expandingRequirements}
+                              >
+                                Generate criteria and test cases
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        {selectedReq.tasks?.length ? (
-                          <div className="requirement-detail-tags">
-                            {selectedReq.tasks.map((task) => (
-                              <span key={task.id} className="requirement-task-pill">
-                                {task.title} · {task.status}
-                              </span>
-                            ))}
+                      )}
+
+                      {requirementDetailTab === 'tests' && (
+                        <div className="requirement-detail-section">
+                          <div className="requirement-detail-section-head">
+                            <h4>Test Cases</h4>
+                            <span>{selectedReq.testCases?.length || 0} items</span>
                           </div>
-                        ) : (
-                          <div className="requirement-detail-empty">
-                            <p>No tasks are linked to this requirement yet.</p>
+                          {selectedReq.testCases?.length ? (
+                            <div className="requirement-detail-list">
+                              {selectedReq.testCases.map((testCase, idx) => (
+                                <div key={testCase.id} className="requirement-detail-item requirement-testcase-item">
+                                  <span>{idx + 1}</span>
+                                  <div>
+                                    <strong>{testCase.testTitle}</strong>
+                                    <p>{testCase.testSteps}</p>
+                                    <small>Expected: {testCase.expectedResult}</small>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="requirement-detail-empty">
+                              <p>No test cases generated yet.</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {requirementDetailTab === 'tasks' && (
+                        <div className="requirement-detail-section">
+                          <div className="requirement-detail-section-head">
+                            <h4>Linked Tasks</h4>
+                            <span>{selectedReq.tasks?.length || 0} items</span>
                           </div>
-                        )}
-                      </div>
+                          {selectedReq.tasks?.length ? (
+                            <div className="requirement-detail-tags">
+                              {selectedReq.tasks.map((task) => (
+                                <span key={task.id} className="requirement-task-pill">
+                                  {task.title} · {task.status}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="requirement-detail-empty">
+                              <p>No tasks are linked to this requirement yet.</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px' }}>
-                      Select a requirement from the list to inspect its parameters, acceptance criteria, test cases, and linked tasks.
+                    <div className="requirement-detail-empty requirement-detail-empty--hero">
+                      <Sparkles size={22} />
+                      <h4>Select a requirement to inspect</h4>
+                      <p>The detail inspector stays compact now and reveals one section at a time.</p>
                     </div>
                   )}
                 </div>

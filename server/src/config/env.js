@@ -1,6 +1,11 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+const parseList = (value) => String(value || '')
+  .split(',')
+  .map((item) => item.trim())
+  .filter(Boolean);
+
 const env = {
   PORT: parseInt(process.env.PORT || '5000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
@@ -13,6 +18,7 @@ const env = {
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   SUPABASE_BUCKET_NAME: process.env.SUPABASE_BUCKET_NAME || 'capstone-files',
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+  CORS_ORIGINS: parseList(process.env.CORS_ORIGINS),
   UPLOAD_DIR: process.env.UPLOAD_DIR || './uploads',
   MAX_FILE_SIZE: parseInt(process.env.MAX_FILE_SIZE || '20971520', 10),
 };

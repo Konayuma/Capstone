@@ -68,6 +68,7 @@ SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_BUCKET_NAME=capstone-files
 CLIENT_URL=http://localhost:5173
+CORS_ORIGINS=https://capstone-3bk.pages.dev
 UPLOAD_DIR=./uploads
 MAX_FILE_SIZE=20971520
 ```

@@ -23,19 +23,43 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+const originPatternToRegex = (pattern) => {
+  const escaped = pattern
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\\\*/g, '.*');
+
+  return new RegExp(`^${escaped}$`);
+};
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+
+  const allowedOrigins = [
+    ...env.CORS_ORIGINS,
+    env.CLIENT_URL,
+    'https://*.pages.dev',
+  ].filter(Boolean);
+
+  return allowedOrigins.some((allowedOrigin) => {
+    if (allowedOrigin === origin) return true;
+    if (!allowedOrigin.includes('*')) return false;
+    return originPatternToRegex(allowedOrigin).test(origin);
+  });
+};
+
 // Security
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 // CORS
 app.use(cors({
-  origin: env.NODE_ENV === 'production'
-    ? env.CLIENT_URL
-    : (origin, callback) => {
-        const allowed = !origin
-          || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  origin: (origin, callback) => {
+    if (env.NODE_ENV === 'production') {
+      return callback(null, isAllowedOrigin(origin));
+    }
 
-        callback(null, allowed);
-      },
+    const allowed = !origin || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    return callback(null, allowed);
+  },
   credentials: true,
 }));
 

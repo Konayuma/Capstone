@@ -1386,6 +1386,153 @@ select {
   align-items: start;
 }
 
+.comments-page {
+  display: grid;
+  gap: 18px;
+}
+
+.comments-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 20px;
+}
+
+.comments-hero-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.comments-hero-copy p {
+  max-width: 44ch;
+  color: var(--ink-soft);
+}
+
+.comments-hero-actions {
+  display: grid;
+  gap: 14px;
+  justify-items: stretch;
+}
+
+.comments-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.comments-summary-item--dense {
+  padding: 12px 14px;
+  min-height: 76px;
+}
+
+.comments-summary-item--dense strong {
+  font-size: 1.35rem;
+}
+
+.comments-new-button {
+  justify-self: end;
+  min-width: 160px;
+}
+
+.comments-feed-shell {
+  padding: 20px;
+}
+
+.comments-empty--tight {
+  min-height: 220px;
+}
+
+.workspace-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: color-mix(in oklab, var(--ink-strong) 58%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.workspace-modal {
+  width: min(920px, 100%);
+  border: 1px solid color-mix(in oklab, var(--brand-1) 22%, var(--line-subtle));
+  border-radius: 26px;
+  background:
+    radial-gradient(900px 320px at 0% 0%, color-mix(in oklab, var(--brand-3) 18%, transparent), transparent 60%),
+    linear-gradient(180deg, color-mix(in oklab, white 90%, var(--brand-3)), var(--bg-elevated));
+  box-shadow: var(--shadow-float);
+  padding: 22px;
+}
+
+.comments-modal {
+  display: grid;
+  gap: 18px;
+}
+
+.comments-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.comments-modal-head p {
+  margin-top: 8px;
+  max-width: 56ch;
+  color: var(--ink-soft);
+}
+
+.comments-modal-form {
+  display: grid;
+}
+
+.comments-modal-grid {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+}
+
+.comments-modal-aside,
+.comments-modal-body {
+  display: grid;
+  gap: 14px;
+}
+
+.comments-modal-aside {
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid var(--line-subtle);
+  background: color-mix(in oklab, var(--bg-soft) 28%, white);
+}
+
+.comments-modal-aside p {
+  color: var(--ink-soft);
+  max-width: 30ch;
+}
+
+.comments-modal-targets {
+  display: grid;
+  gap: 10px;
+}
+
+.comments-textarea--modal {
+  min-height: 220px;
+}
+
+.comments-form-actions--modal {
+  align-items: end;
+  padding-top: 4px;
+}
+
+.comments-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .comments-compose,
 .comments-feed {
   display: grid;
@@ -1918,6 +2065,11 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .comments-hero,
+  .comments-modal-grid {
+    grid-template-columns: 1fr;
+  }
+
   .main-content {
     padding-top: 16px;
   }
@@ -1957,6 +2109,45 @@ select {
 
   .comments-panel-head {
     flex-direction: column;
+  }
+
+  .comments-hero {
+    padding: 18px;
+  }
+
+  .comments-hero-actions {
+    gap: 12px;
+  }
+
+  .comments-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .comments-new-button {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .workspace-modal-overlay {
+    padding: 12px;
+  }
+
+  .workspace-modal {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .comments-modal-head {
+    flex-direction: column;
+  }
+
+  .comments-modal-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .comments-modal-actions .btn {
+    width: 100%;
   }
 
   .requirements-workbench-header {

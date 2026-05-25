@@ -10,6 +10,7 @@ import {
   BarChart3, 
   Download, 
   MessageSquare,
+  X,
   Users,
   UserPlus,
   FileText,
@@ -212,6 +213,7 @@ export const ProjectWorkspace = () => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [commentTarget, setCommentTarget] = useState('project');
+  const [showCommentModal, setShowCommentModal] = useState(false);
 
   // Readiness Score
   const [readiness, setReadiness] = useState(null);
@@ -297,6 +299,19 @@ export const ProjectWorkspace = () => {
       setActiveTab(hashTab);
     }
   }, [location.hash]);
+
+  useEffect(() => {
+    if (!showCommentModal) return undefined;
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setShowCommentModal(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [showCommentModal]);
 
   const switchTab = (tab) => {
     setActiveTab(tab);
@@ -715,6 +730,7 @@ export const ProjectWorkspace = () => {
         commentText: newComment
       });
       setNewComment('');
+      setShowCommentModal(false);
       fetchWorkspaceData();
       toast.success('Comment added to the review stream.');
     } catch (err) {
@@ -1837,76 +1853,38 @@ export const ProjectWorkspace = () => {
 
         {/* TAB 6: Comments */}
         {activeTab === 'comments' && (
-          <div className="comments-layout">
-            <section className="card comments-compose">
-              <div className="comments-panel-head">
-                <div>
-                  <span className="badge badge-info">Review notes</span>
-                  <h3>Compose a comment</h3>
-                  <p className="comments-panel-copy">
-                    Pick the surface first, then leave feedback that is specific enough to act on.
-                  </p>
-                </div>
-                <div className="comments-summary">
+          <div className="comments-page">
+            <section className="card comments-hero">
+              <div className="comments-hero-copy">
+                <span className="badge badge-info">Review notes</span>
+                <h3>Comment stream</h3>
+                <p>
+                  Keep the conversation visible. Open the composer only when you need to add a new note.
+                </p>
+              </div>
+
+              <div className="comments-hero-actions">
+                <div className="comments-summary-grid" aria-label="Comment target counts">
                   {commentTargetOptions.map((option) => (
-                    <div key={option.id} className="comments-summary-item">
+                    <div key={option.id} className="comments-summary-item comments-summary-item--dense">
                       <span>{option.label}</span>
                       <strong>{commentCounts[option.id] || 0}</strong>
                     </div>
                   ))}
                 </div>
+
+                <button type="button" className="btn btn-primary comments-new-button" onClick={() => setShowCommentModal(true)}>
+                  <Plus size={16} />
+                  New comment
+                </button>
               </div>
-
-              <form onSubmit={handleAddComment} className="comments-form">
-                <div className="form-group">
-                  <label className="form-label">Comment target</label>
-                  <div className="comment-target-toggle" aria-label="Choose a comment target">
-                    {commentTargetOptions.map((option) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        className={`comment-target-option ${commentTarget === option.id ? 'active' : ''}`}
-                        onClick={() => setCommentTarget(option.id)}
-                        aria-pressed={commentTarget === option.id}
-                      >
-                        <span>{option.label}</span>
-                        <small>{option.note}</small>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Review comment</label>
-                  <textarea
-                    className="form-input comments-textarea"
-                    placeholder="Explain what should change, why it matters, and where the team should look next."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    required
-                  />
-                  <p className="comments-helper">
-                    Short, direct comments work best. Keep the note tied to the selected target.
-                  </p>
-                </div>
-
-                <div className="comments-form-actions">
-                  <div className="comments-active-target">
-                    <span className="comments-active-target-label">Posting to</span>
-                    <strong>{getCommentTargetLabel(commentTarget)}</strong>
-                  </div>
-                  <button type="submit" className="btn btn-primary" disabled={!newComment.trim()}>
-                    Post Comment
-                  </button>
-                </div>
-              </form>
             </section>
 
-            <section className="card comments-feed">
+            <section className="card comments-feed comments-feed-shell">
               <div className="comments-panel-head comments-feed-head">
                 <div>
                   <span className="badge badge-info">Latest updates</span>
-                  <h3>Comment stream</h3>
+                  <h3>Project review thread</h3>
                   <p className="comments-panel-copy">
                     Newest notes appear first so the feed reads like an active review thread.
                   </p>
@@ -1917,11 +1895,11 @@ export const ProjectWorkspace = () => {
               </div>
 
               {sortedComments.length === 0 ? (
-                <div className="comments-empty">
+                <div className="comments-empty comments-empty--tight">
                   <MessageSquare size={24} />
                   <h4>No comments yet</h4>
                   <p>
-                    Use the compose panel to leave the first review note. It will appear here as a structured feed.
+                    Use the new comment button to leave the first review note. It will appear here as a structured feed.
                   </p>
                 </div>
               ) : (
@@ -1934,8 +1912,8 @@ export const ProjectWorkspace = () => {
                             <UserRound size={14} />
                           </span>
                           <div>
-                            <strong>{comment.user.name}</strong>
-                            <span>{comment.user.role}</span>
+                            <strong>{comment.user?.name || 'Anonymous'}</strong>
+                            <span>{comment.user?.role || 'Member'}</span>
                           </div>
                         </div>
                         <span className="comment-date">{formatCommentDate(comment.createdAt)}</span>
@@ -1951,6 +1929,79 @@ export const ProjectWorkspace = () => {
                 </div>
               )}
             </section>
+
+            {showCommentModal && (
+              <div className="workspace-modal-overlay" role="presentation" onClick={() => setShowCommentModal(false)}>
+                <div className="workspace-modal comments-modal" role="dialog" aria-modal="true" aria-labelledby="comment-modal-title" onClick={(event) => event.stopPropagation()}>
+                  <div className="comments-modal-head">
+                    <div>
+                      <span className="badge badge-info">New note</span>
+                      <h3 id="comment-modal-title">Add a review comment</h3>
+                      <p>Choose the target surface, then capture the next action clearly and directly.</p>
+                    </div>
+                    <button type="button" className="icon-button" onClick={() => setShowCommentModal(false)} aria-label="Close comment composer">
+                      <X size={15} />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleAddComment} className="comments-modal-form">
+                    <div className="comments-modal-grid">
+                      <div className="comments-modal-aside">
+                        <h4>Comment targets</h4>
+                        <p>Pick the exact surface you want to discuss so the note lands in the right place.</p>
+                        <div className="comments-modal-targets" aria-label="Choose a comment target">
+                          {commentTargetOptions.map((option) => (
+                            <button
+                              key={option.id}
+                              type="button"
+                              className={`comment-target-option ${commentTarget === option.id ? 'active' : ''}`}
+                              onClick={() => setCommentTarget(option.id)}
+                              aria-pressed={commentTarget === option.id}
+                            >
+                              <span>{option.label}</span>
+                              <small>{option.note}</small>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="comments-modal-body">
+                        <div className="form-group">
+                          <label className="form-label">Review comment</label>
+                          <textarea
+                            className="form-input comments-textarea comments-textarea--modal"
+                            placeholder="Explain what should change, why it matters, and where the team should look next."
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            required
+                            autoFocus
+                          />
+                          <p className="comments-helper">
+                            Short, direct comments work best. Keep the note tied to the selected target.
+                          </p>
+                        </div>
+
+                        <div className="comments-form-actions comments-form-actions--modal">
+                          <div className="comments-active-target">
+                            <span className="comments-active-target-label">Posting to</span>
+                            <strong>{getCommentTargetLabel(commentTarget)}</strong>
+                          </div>
+
+                          <div className="comments-modal-actions">
+                            <button type="button" className="btn btn-secondary" onClick={() => setShowCommentModal(false)}>
+                              Cancel
+                            </button>
+                            <button type="submit" className="btn btn-primary" disabled={!newComment.trim()}>
+                              Post Comment
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

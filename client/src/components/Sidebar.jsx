@@ -109,6 +109,8 @@ export const Sidebar = () => {
       .filter((section) => section.items.length > 0);
   }, [navSections, query]);
 
+  const forceOpenGroups = query.trim().length > 0;
+
   const isChildActive = (to) => {
     const [pathname, hash] = to.split('#');
     if (hash) {
@@ -167,7 +169,7 @@ export const Sidebar = () => {
 
             {section.items.map((item) => {
               const Icon = item.icon;
-              const isOpen = openGroups[item.label] ?? true;
+              const isOpen = forceOpenGroups || (openGroups[item.label] ?? true);
 
               return (
                 <div className={`sidebar-tree-group ${isOpen ? '' : 'is-collapsed'}`} key={item.label}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 
-export const CoolLoader = ({ title = 'Preparing your workspace', subtitle = 'Collecting project signals and building your board view...', compact = false }) => {
+export const CoolLoader = ({ title = 'Loading your workspace', subtitle = 'Pulling together project details, files, and team activity...', compact = false }) => {
   return (
     <section className={`cool-loader-shell ${compact ? 'compact' : ''}`} aria-live="polite" aria-busy="true">
       <div className="cool-loader-orbit" aria-hidden="true">

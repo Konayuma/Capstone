@@ -194,12 +194,15 @@ export const Dashboard = () => {
             onClick={() => navigate('/profile')}
             aria-label="Open profile"
           >
-            <span className="user-avatar">{user.name.charAt(0).toUpperCase()}</span>
-            <span>
+            <span className="user-avatar dashboard-profile-avatar">{user.name.charAt(0).toUpperCase()}</span>
+            <span className="dashboard-profile-copy">
               <strong>{user.name}</strong>
-              <small>Open profile</small>
+              <small>{user.role}</small>
             </span>
-            <UserRound size={16} />
+            <span className="dashboard-profile-action">
+              Open profile
+              <ArrowRight size={15} />
+            </span>
           </button>
 
           <span className="badge badge-info">

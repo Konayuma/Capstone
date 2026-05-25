@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
+  ArrowRight,
   BookOpenCheck,
   ChevronDown,
   ClipboardList,
@@ -240,14 +241,15 @@ export const Sidebar = () => {
       </nav>
 
       <div className="sidebar-footer">
-        <button className="user-profile-widget profile-widget-button" type="button" onClick={() => navigate('/profile')}>
+        <button className="sidebar-profile-widget" type="button" onClick={() => navigate('/profile')}>
           <div className="user-avatar">{user.name.charAt(0).toUpperCase()}</div>
-          <div>
-            <div style={{ fontWeight: 700 }}>{user.name}</div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', textTransform: 'capitalize' }}>
+          <div className="sidebar-profile-copy">
+            <div className="sidebar-profile-name">{user.name}</div>
+            <div className="sidebar-profile-role">
               Signed in as {user.role}
             </div>
           </div>
+          <ArrowRight size={15} className="sidebar-profile-arrow" />
         </button>
 
         <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>

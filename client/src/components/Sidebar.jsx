@@ -74,7 +74,7 @@ export const Sidebar = () => {
           icon: Settings,
           to: '/dashboard',
           children: [
-            { label: 'Profile', icon: Users, to: '/dashboard' },
+            { label: 'Profile', icon: Users, to: '/profile' },
             ...(userRole === 'admin'
               ? [{ label: 'Admin Control', icon: ShieldAlert, to: '/admin' }]
               : []),
@@ -183,7 +183,7 @@ export const Sidebar = () => {
       </nav>
 
       <div className="sidebar-footer">
-        <div className="user-profile-widget">
+        <button className="user-profile-widget profile-widget-button" type="button" onClick={() => navigate('/profile')}>
           <div className="user-avatar">{user.name.charAt(0).toUpperCase()}</div>
           <div>
             <div style={{ fontWeight: 700 }}>{user.name}</div>
@@ -191,7 +191,7 @@ export const Sidebar = () => {
               Signed in as {user.role}
             </div>
           </div>
-        </div>
+        </button>
 
         <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
           <button className="btn btn-secondary" type="button" onClick={() => navigate('/dashboard')}>

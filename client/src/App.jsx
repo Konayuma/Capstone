@@ -110,6 +110,17 @@ export const App = () => {
           />
 
           <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <UserProfile />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/users/:userId"
             element={
               <ProtectedRoute>

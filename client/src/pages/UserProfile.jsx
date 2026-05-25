@@ -3,12 +3,14 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import CoolLoader from '../components/CoolLoader';
+import { useAuth } from '../context/AuthContext';
 import {
   ArrowLeft,
   FolderKanban,
   UserPlus,
   ShieldCheck,
   CheckCircle2,
+  Save,
 } from 'lucide-react';
 
 const getInitials = (name = '') => name
@@ -32,18 +34,26 @@ const roleLabel = (role) => ({
 const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const { user, updateProfile } = useAuth();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
+  const targetUserId = userId || user?.id;
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileName, setProfileName] = useState('');
+  const [profilePassword, setProfilePassword] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
+      if (!targetUserId) return;
+
       try {
-        const res = await axios.get(`/users/${userId}`);
+        const res = await axios.get(`/users/${targetUserId}`);
         setProfile(res.data);
+        setProfileName(res.data.name);
       } catch (err) {
         toast.error(err.response?.data?.error || 'Unable to load this profile.');
       } finally {
@@ -52,7 +62,9 @@ const UserProfile = () => {
     };
 
     fetchProfile();
-  }, [userId]);
+  }, [targetUserId]);
+
+  const isOwnProfile = profile && user && String(profile.id) === String(user.id);
 
   const handleAddToProject = async () => {
     if (!projectId) return;
@@ -68,6 +80,25 @@ const UserProfile = () => {
       toast.error(err.response?.data?.error || 'Unable to add this user to the project.');
     } finally {
       setAdding(false);
+    }
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!isOwnProfile) return;
+
+    setSavingProfile(true);
+    try {
+      const payload = { name: profileName.trim() };
+      if (profilePassword.trim()) payload.password = profilePassword;
+      const updated = await updateProfile(payload);
+      setProfile((current) => ({ ...current, ...updated }));
+      setProfilePassword('');
+      toast.success('Profile updated.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to update profile.');
+    } finally {
+      setSavingProfile(false);
     }
   };
 
@@ -116,6 +147,43 @@ const UserProfile = () => {
           )
         )}
       </section>
+
+      {isOwnProfile && (
+        <section className="card profile-panel">
+          <div>
+            <span className="badge badge-info">Account details</span>
+            <h3>Edit profile</h3>
+          </div>
+
+          <form className="profile-edit-form" onSubmit={handleSaveProfile}>
+            <div className="form-group">
+              <label className="form-label">Display name</label>
+              <input
+                className="form-input"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                minLength={2}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">New password</label>
+              <input
+                className="form-input"
+                type="password"
+                value={profilePassword}
+                onChange={(e) => setProfilePassword(e.target.value)}
+                minLength={6}
+                placeholder="Leave blank to keep current password"
+              />
+            </div>
+            <button className="btn btn-primary" type="submit" disabled={savingProfile}>
+              <Save size={16} />
+              {savingProfile ? 'Saving...' : 'Save profile'}
+            </button>
+          </form>
+        </section>
+      )}
 
       <section className="profile-grid">
         <article className="card profile-stat">

@@ -310,6 +310,23 @@ select {
   margin-bottom: 10px;
 }
 
+.profile-widget-button {
+  width: 100%;
+  border: 0;
+  border-radius: 14px;
+  padding: 6px;
+  background: transparent;
+  color: var(--ink-strong);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast), transform var(--t-fast);
+}
+
+.profile-widget-button:hover {
+  background: color-mix(in oklab, var(--brand-3) 14%, white);
+  transform: translateY(-1px);
+}
+
 .main-content {
   min-height: 100vh;
   padding: clamp(20px, 2.8vw, 40px);
@@ -332,6 +349,75 @@ select {
   color: color-mix(in oklab, var(--ink-strong) 75%, transparent);
   margin-top: 8px;
   max-width: 62ch;
+}
+
+.dashboard-action-stack {
+  display: grid;
+  gap: 10px;
+  min-width: min(260px, 100%);
+  align-self: start;
+}
+
+.dashboard-profile-button {
+  border: 1px solid color-mix(in oklab, white 62%, transparent);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ink-strong);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+}
+
+.dashboard-profile-button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 10px 24px color-mix(in oklab, var(--ink-strong) 10%, transparent);
+}
+
+.dashboard-profile-button strong,
+.dashboard-profile-button small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-profile-button small {
+  color: color-mix(in oklab, var(--ink-strong) 58%, transparent);
+  font-size: 0.78rem;
+}
+
+.dashboard-invite-card {
+  margin-top: 14px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--bg-elevated) 88%, white);
+  padding: clamp(14px, 2vw, 18px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  gap: 16px;
+  align-items: center;
+  box-shadow: var(--shadow-soft);
+}
+
+.dashboard-invite-card h3 {
+  margin-top: 7px;
+}
+
+.dashboard-invite-card p {
+  margin-top: 4px;
+  color: var(--ink-soft);
+}
+
+.dashboard-invite-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
 }
 
 .status-row {
@@ -1942,6 +2028,13 @@ select {
   display: block;
 }
 
+.profile-edit-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
 .join-page {
   min-height: 70vh;
   display: grid;
@@ -1978,6 +2071,7 @@ select {
 
   .board-lanes,
   .auth-shell,
+  .dashboard-invite-card,
   .landing-hero,
   .landing-grid,
   .grid-3,
@@ -2063,9 +2157,12 @@ select {
   }
 
   .landing-actions,
+  .dashboard-invite-form,
+  .profile-edit-form,
   .landing-cta-row {
     width: 100%;
     display: grid;
+    grid-template-columns: 1fr;
   }
 
   .landing-actions .btn,

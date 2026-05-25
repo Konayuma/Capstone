@@ -1,16 +1,20 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import CoolLoader from '../components/CoolLoader';
 import {
+  ArrowRight,
   FolderPlus,
   Clock3,
   Activity,
   CheckCircle2,
   CalendarDays,
+  KeyRound,
   Layers,
   Loader2,
+  UserRound,
 } from 'lucide-react';
 
 const STATUS_META = {
@@ -54,6 +58,8 @@ export const Dashboard = () => {
   const [department, setDepartment] = useState('');
   const [academicYear, setAcademicYear] = useState('2025/2026');
   const [error, setError] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+  const [joiningTeam, setJoiningTeam] = useState(false);
 
   const fetchProjects = async () => {
     try {
@@ -91,6 +97,33 @@ export const Dashboard = () => {
       navigate(`/projects/${res.data.id}`);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create project workspace');
+    }
+  };
+
+  const handleJoinWithInvite = async (e) => {
+    e.preventDefault();
+    const normalizedCode = inviteCode
+      .trim()
+      .split('/')
+      .filter(Boolean)
+      .pop()
+      ?.toUpperCase();
+    if (!normalizedCode) {
+      toast.error('Enter an invite code first.');
+      return;
+    }
+
+    setJoiningTeam(true);
+    try {
+      const res = await axios.post(`/projects/join/${normalizedCode}`);
+      setInviteCode('');
+      await fetchProjects();
+      toast.success(`Joined ${res.data.project.title}.`);
+      navigate(`/projects/${res.data.project.id}#team`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to join with this invite code.');
+    } finally {
+      setJoiningTeam(false);
     }
   };
 
@@ -132,7 +165,21 @@ export const Dashboard = () => {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gap: '10px', minWidth: '220px', alignSelf: 'start' }}>
+        <div className="dashboard-action-stack">
+          <button
+            type="button"
+            className="dashboard-profile-button"
+            onClick={() => navigate('/profile')}
+            aria-label="Open profile"
+          >
+            <span className="user-avatar">{user.name.charAt(0).toUpperCase()}</span>
+            <span>
+              <strong>{user.name}</strong>
+              <small>Open profile</small>
+            </span>
+            <UserRound size={16} />
+          </button>
+
           <span className="badge badge-info">
             <CalendarDays size={14} />
             {toDisplayDate()}
@@ -144,6 +191,31 @@ export const Dashboard = () => {
             </button>
           )}
         </div>
+      </section>
+
+      <section className="dashboard-invite-card">
+        <div>
+          <span className="badge badge-info">
+            <KeyRound size={14} />
+            Team invite
+          </span>
+          <h3>Join a project team</h3>
+          <p>Paste an invite code from your project manager to join the workspace directly.</p>
+        </div>
+
+        <form onSubmit={handleJoinWithInvite} className="dashboard-invite-form">
+          <input
+            className="form-input"
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value)}
+            placeholder="CAP-1234-ABCD"
+            aria-label="Invite code"
+          />
+          <button type="submit" className="btn btn-secondary" disabled={joiningTeam}>
+            {joiningTeam ? <Loader2 className="spinner-icon" size={15} /> : <ArrowRight size={15} />}
+            Join team
+          </button>
+        </form>
       </section>
 
       <section className="status-row" style={{ marginTop: '14px' }}>

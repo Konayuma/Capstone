@@ -12,6 +12,10 @@ import {
   MessageSquare,
   Users,
   UserPlus,
+  FileText,
+  Upload,
+  Settings,
+  Pencil,
   Plus, 
   Copy,
   Search,
@@ -72,9 +76,24 @@ const commentTargetOptions = [
     note: 'Use this for spec gaps, unclear wording, or testability issues.',
   },
   {
+    id: 'task',
+    label: 'Task Delivery',
+    note: 'Use this for task scope, deadlines, evidence, or review status.',
+  },
+  {
+    id: 'document',
+    label: 'Project Documents',
+    note: 'Use this for proposal, report, slides, source archive, or evidence files.',
+  },
+  {
     id: 'contribution',
     label: 'Contribution Score Audit',
     note: 'Use this for contribution reviews and peer assessment notes.',
+  },
+  {
+    id: 'viva',
+    label: 'Viva Readiness',
+    note: 'Use this for defense preparation and examiner-style feedback.',
   },
 ];
 
@@ -124,6 +143,14 @@ export const ProjectWorkspace = () => {
   const { user } = useAuth();
 
   const [project, setProject] = useState(null);
+  const [projectForm, setProjectForm] = useState({
+    title: '',
+    description: '',
+    category: '',
+    department: '',
+    academicYear: '',
+    status: 'active',
+  });
   const [activeTab, setActiveTab] = useState('requirements');
   const [loading, setLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState([]);
@@ -133,6 +160,16 @@ export const ProjectWorkspace = () => {
   const [memberSearch, setMemberSearch] = useState('');
   const [memberSearchResults, setMemberSearchResults] = useState([]);
   const [searchingMembers, setSearchingMembers] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadFileType, setUploadFileType] = useState('proposal');
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [analyzingFiles, setAnalyzingFiles] = useState(false);
+  const [fileAnalysis, setFileAnalysis] = useState('');
+  const [savingProject, setSavingProject] = useState(false);
+  const [deletingProject, setDeletingProject] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [evidenceDrafts, setEvidenceDrafts] = useState({});
 
   // Requirements state
   const [requirements, setRequirements] = useState([]);
@@ -183,6 +220,14 @@ export const ProjectWorkspace = () => {
     try {
       const projRes = await axios.get(`/projects/${id}`);
       setProject(projRes.data);
+      setProjectForm({
+        title: projRes.data.title || '',
+        description: projRes.data.description || '',
+        category: projRes.data.category || '',
+        department: projRes.data.department || '',
+        academicYear: projRes.data.academicYear || '',
+        status: projRes.data.status || 'active',
+      });
 
       const memberRes = await axios.get(`/projects/${id}/members`);
       setTeamMembers(memberRes.data.members || []);
@@ -202,6 +247,9 @@ export const ProjectWorkspace = () => {
 
       const readinessRes = await axios.get(`/projects/${id}/readiness-score`);
       setReadiness(readinessRes.data);
+
+      const filesRes = await axios.get(`/projects/${id}/files`);
+      setFiles(filesRes.data);
 
       if (memberRes.data.canManageTeam) {
         const invitesRes = await axios.get(`/projects/${id}/invites`);
@@ -237,7 +285,7 @@ export const ProjectWorkspace = () => {
 
   useEffect(() => {
     const hashTab = location.hash.replace('#', '');
-    if (['requirements', 'tasks', 'team', 'contribution', 'readiness', 'comments'].includes(hashTab)) {
+    if (['requirements', 'tasks', 'team', 'documents', 'contribution', 'readiness', 'comments', 'settings'].includes(hashTab)) {
       setActiveTab(hashTab);
     }
   }, [location.hash]);
@@ -313,13 +361,32 @@ export const ProjectWorkspace = () => {
   const commentCounts = comments.reduce((counts, comment) => {
     counts[comment.targetType] = (counts[comment.targetType] || 0) + 1;
     return counts;
-  }, { project: 0, requirement: 0, contribution: 0 });
+  }, { project: 0, requirement: 0, task: 0, document: 0, contribution: 0, viva: 0 });
   const taskFilters = [
     { id: 'all', label: 'All', count: tasks.length },
     { id: 'open', label: 'Open', count: openTasks.length },
     { id: 'closed', label: 'Closed', count: closedTasks.length },
     { id: 'overdue', label: 'Overdue', count: overdueTasks.length },
   ];
+  const fileTypeOptions = [
+    { value: 'proposal', label: 'Project proposal' },
+    { value: 'report', label: 'Project report' },
+    { value: 'slides', label: 'Presentation slides' },
+    { value: 'code', label: 'Source code ZIP' },
+    { value: 'screenshot', label: 'Screenshot' },
+    { value: 'evidence', label: 'Testing evidence' },
+    { value: 'diagram', label: 'Diagram' },
+  ];
+  const getFileUrl = (file) => (
+    file.filePath?.startsWith('http')
+      ? file.filePath
+      : `${API_BASE}${file.filePath}`
+  );
+  const formatFileSize = (size) => {
+    if (!size) return 'Unknown size';
+    if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const refreshTeam = async () => {
     const memberRes = await axios.get(`/projects/${id}/members`);
@@ -344,7 +411,7 @@ export const ProjectWorkspace = () => {
   };
 
   const handleCopyInvite = async () => {
-    if (!inviteCode) return;
+    if (!activeInviteCode) return;
 
     try {
       await navigator.clipboard.writeText(inviteLink);
@@ -403,6 +470,136 @@ export const ProjectWorkspace = () => {
       toast.success(`${member.user.name} was removed from the team.`);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Unable to remove this member.');
+    }
+  };
+
+  const handleUploadProjectFile = async (e) => {
+    e.preventDefault();
+    if (!uploadFile) {
+      toast.error('Choose a file to upload.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+    formData.append('fileType', uploadFileType);
+
+    setUploadingFile(true);
+    try {
+      await axios.post(`/projects/${id}/files/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const filesRes = await axios.get(`/projects/${id}/files`);
+      setFiles(filesRes.data);
+      setUploadFile(null);
+      toast.success('Project document uploaded.');
+      e.currentTarget.reset();
+      await fetchWorkspaceData();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to upload this file.');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDeleteFile = async (file) => {
+    try {
+      await axios.delete(`/projects/files/${file.id}`);
+      setFiles((current) => current.filter((item) => item.id !== file.id));
+      toast.success('File deleted.');
+      await fetchWorkspaceData();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to delete this file.');
+    }
+  };
+
+  const handleAnalyzeFiles = async () => {
+    if (files.length === 0) {
+      toast.error('Upload documents before running analysis.');
+      return;
+    }
+
+    setAnalyzingFiles(true);
+    try {
+      const res = await axios.post(`/projects/${id}/files/analyze`);
+      setFileAnalysis(res.data.analysis);
+      toast.success('Document analysis is ready.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to analyze the uploaded documents.');
+    } finally {
+      setAnalyzingFiles(false);
+    }
+  };
+
+  const setEvidenceDraft = (taskId, patch) => {
+    setEvidenceDrafts((current) => ({
+      ...current,
+      [taskId]: {
+        note: '',
+        file: null,
+        ...(current[taskId] || {}),
+        ...patch,
+      },
+    }));
+  };
+
+  const handleSubmitTaskEvidence = async (e, taskId) => {
+    e.preventDefault();
+    const draft = evidenceDrafts[taskId] || {};
+    if (!draft.file && !draft.note?.trim()) {
+      toast.error('Add a short note or choose an evidence file.');
+      return;
+    }
+
+    try {
+      let fileId = null;
+      if (draft.file) {
+        const formData = new FormData();
+        formData.append('file', draft.file);
+        formData.append('fileType', 'evidence');
+        const uploadRes = await axios.post(`/projects/${id}/files/upload`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        fileId = uploadRes.data.id;
+      }
+
+      await axios.post(`/projects/tasks/${taskId}/evidence`, {
+        fileId,
+        note: draft.note || '',
+      });
+      setEvidenceDrafts((current) => ({ ...current, [taskId]: { note: '', file: null } }));
+      e.currentTarget.reset();
+      await fetchWorkspaceData();
+      toast.success('Task evidence submitted.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to submit task evidence.');
+    }
+  };
+
+  const handleUpdateProject = async (e) => {
+    e.preventDefault();
+    setSavingProject(true);
+    try {
+      const res = await axios.put(`/projects/${id}`, projectForm);
+      setProject(res.data);
+      toast.success('Project details updated.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to update project details.');
+    } finally {
+      setSavingProject(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    setDeletingProject(true);
+    try {
+      await axios.delete(`/projects/${id}`);
+      toast.success('Project workspace deleted.');
+      navigate('/dashboard');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to delete this project.');
+    } finally {
+      setDeletingProject(false);
     }
   };
 
@@ -597,6 +794,15 @@ export const ProjectWorkspace = () => {
               Readiness & Reports
         </button>
 
+        <button
+          className={`btn ${activeTab === 'documents' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => switchTab('documents')}
+          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+        >
+          <FileText size={16} />
+              Documents
+        </button>
+
         <button 
           className={`btn ${activeTab === 'comments' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('comments')}
@@ -604,6 +810,15 @@ export const ProjectWorkspace = () => {
         >
           <MessageSquare size={16} />
               Comments
+        </button>
+
+        <button
+          className={`btn ${activeTab === 'settings' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => switchTab('settings')}
+          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+        >
+          <Settings size={16} />
+              Settings
         </button>
       </div>
 
@@ -979,6 +1194,46 @@ export const ProjectWorkspace = () => {
                             <option value="rejected">Needs Changes</option>
                           </select>
                           <span className="task-status-text">{taskStatusLabel[task.status] || task.status}</span>
+                        </div>
+
+                        <div className="task-evidence-panel">
+                          <div className="task-evidence-head">
+                            <strong>Evidence</strong>
+                            <span>{task.evidence?.length || 0} item{task.evidence?.length === 1 ? '' : 's'}</span>
+                          </div>
+
+                          {task.evidence?.length > 0 && (
+                            <div className="task-evidence-list">
+                              {task.evidence.map((item) => (
+                                <div key={item.id} className="task-evidence-item">
+                                  <span>{item.note || item.file?.fileName || 'Evidence note'}</span>
+                                  {item.file?.filePath && (
+                                    <button type="button" className="btn btn-secondary" onClick={() => window.open(getFileUrl(item.file), '_blank')}>
+                                      <Download size={14} />
+                                      Open
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <form className="task-evidence-form" onSubmit={(event) => handleSubmitTaskEvidence(event, task.id)}>
+                            <input
+                              className="form-input"
+                              placeholder="Short evidence note or link"
+                              onChange={(event) => setEvidenceDraft(task.id, { note: event.target.value })}
+                            />
+                            <input
+                              className="form-input"
+                              type="file"
+                              onChange={(event) => setEvidenceDraft(task.id, { file: event.target.files?.[0] || null })}
+                            />
+                            <button type="submit" className="btn btn-secondary">
+                              <Upload size={14} />
+                              Add evidence
+                            </button>
+                          </form>
                         </div>
                       </article>
                     );
@@ -1466,7 +1721,95 @@ export const ProjectWorkspace = () => {
           </div>
         )}
 
-        {/* TAB 5: Comments */}
+        {/* TAB 5: Documents & Evidence */}
+        {activeTab === 'documents' && (
+          <div className="documents-layout">
+            <section className="card documents-upload-card">
+              <div>
+                <span className="badge badge-info">
+                  <Upload size={14} />
+                  Project files
+                </span>
+                <h3>Upload project documents</h3>
+                <p>Attach proposals, reports, slides, source archives, screenshots, test evidence, and diagrams.</p>
+              </div>
+
+              <form className="documents-upload-form" onSubmit={handleUploadProjectFile}>
+                <div className="form-group">
+                  <label className="form-label">File type</label>
+                  <select className="form-input" value={uploadFileType} onChange={(event) => setUploadFileType(event.target.value)}>
+                    {fileTypeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Document</label>
+                  <input className="form-input" type="file" onChange={(event) => setUploadFile(event.target.files?.[0] || null)} />
+                </div>
+
+                <button type="submit" className="btn btn-primary" disabled={uploadingFile}>
+                  {uploadingFile ? <><Loader2 className="spinner-icon" size={15} /> Uploading...</> : <><Upload size={16} /> Upload document</>}
+                </button>
+              </form>
+            </section>
+
+            <section className="card documents-list-card">
+              <div className="documents-list-head">
+                <div>
+                  <span className="badge badge-info">{files.length} file{files.length === 1 ? '' : 's'}</span>
+                  <h3>Document library</h3>
+                </div>
+                <button type="button" className="btn btn-secondary" onClick={handleAnalyzeFiles} disabled={analyzingFiles || files.length === 0}>
+                  {analyzingFiles ? <><Loader2 className="spinner-icon" size={15} /> Analyzing...</> : <><Sparkles size={15} /> Analyze documents</>}
+                </button>
+              </div>
+
+              {fileAnalysis && (
+                <div className="documents-analysis">
+                  <strong>AI document analysis</strong>
+                  <p>{fileAnalysis}</p>
+                </div>
+              )}
+
+              {files.length === 0 ? (
+                <div className="documents-empty">
+                  <FileText size={28} />
+                  <h4>No documents uploaded yet</h4>
+                  <p>Upload proposal, report, slide, source, or evidence files to build the project record.</p>
+                </div>
+              ) : (
+                <div className="documents-list">
+                  {files.map((file) => (
+                    <article key={file.id} className="documents-item">
+                      <div className="documents-file-icon">
+                        <FileText size={18} />
+                      </div>
+                      <div>
+                        <strong>{file.fileName}</strong>
+                        <span>
+                          {file.fileType} · {formatFileSize(file.size)} · Uploaded by {file.uploader?.name || 'Unknown'} · {formatCommentDate(file.uploadedAt)}
+                        </span>
+                      </div>
+                      <div className="documents-actions">
+                        <button type="button" className="btn btn-secondary" onClick={() => window.open(getFileUrl(file), '_blank')}>
+                          <Download size={14} />
+                          Download
+                        </button>
+                        <button type="button" className="icon-button danger" onClick={() => handleDeleteFile(file)} title="Delete file">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+
+        {/* TAB 6: Comments */}
         {activeTab === 'comments' && (
           <div className="comments-layout">
             <section className="card comments-compose">
@@ -1581,6 +1924,89 @@ export const ProjectWorkspace = () => {
                   ))}
                 </div>
               )}
+            </section>
+          </div>
+        )}
+
+        {/* TAB 7: Project Settings */}
+        {activeTab === 'settings' && (
+          <div className="settings-layout">
+            <section className="card settings-card">
+              <div>
+                <span className="badge badge-info">
+                  <Pencil size={14} />
+                  Workspace settings
+                </span>
+                <h3>Edit project details</h3>
+                <p>Keep the title, scope, department, category, academic year, and status current.</p>
+              </div>
+
+              <form className="settings-form" onSubmit={handleUpdateProject}>
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label className="form-label">Project title</label>
+                    <input className="form-input" value={projectForm.title} onChange={(event) => setProjectForm({ ...projectForm, title: event.target.value })} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Status</label>
+                    <select className="form-input" value={projectForm.status} onChange={(event) => setProjectForm({ ...projectForm, status: event.target.value })}>
+                      <option value="active">Active</option>
+                      <option value="completed">Completed</option>
+                      <option value="archived">Archived</option>
+                      <option value="draft">Draft</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Description</label>
+                  <textarea
+                    className="form-input"
+                    value={projectForm.description}
+                    onChange={(event) => setProjectForm({ ...projectForm, description: event.target.value })}
+                    minLength={10}
+                    required
+                  />
+                </div>
+
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label className="form-label">Department or course</label>
+                    <input className="form-input" value={projectForm.department} onChange={(event) => setProjectForm({ ...projectForm, department: event.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Project category</label>
+                    <input className="form-input" value={projectForm.category} onChange={(event) => setProjectForm({ ...projectForm, category: event.target.value })} />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Academic year</label>
+                  <input className="form-input" value={projectForm.academicYear} onChange={(event) => setProjectForm({ ...projectForm, academicYear: event.target.value })} />
+                </div>
+
+                <button type="submit" className="btn btn-primary" disabled={savingProject}>
+                  {savingProject ? <><Loader2 className="spinner-icon" size={15} /> Saving...</> : 'Save project details'}
+                </button>
+              </form>
+            </section>
+
+            <section className="card danger-zone-card">
+              <div>
+                <span className="badge badge-danger">
+                  <Trash2 size={14} />
+                  Danger zone
+                </span>
+                <h3>Delete project workspace</h3>
+                <p>This removes the project and its connected records. Use only when the workspace is no longer needed.</p>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Type DELETE to enable deletion</label>
+                <input className="form-input" value={deleteConfirmText} onChange={(event) => setDeleteConfirmText(event.target.value)} />
+              </div>
+              <button type="button" className="btn btn-danger" onClick={handleDeleteProject} disabled={deletingProject || deleteConfirmText !== 'DELETE'}>
+                {deletingProject ? 'Deleting...' : 'Delete project'}
+              </button>
             </section>
           </div>
         )}

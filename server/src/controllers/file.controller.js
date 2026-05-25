@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import prisma from '../config/db.js';
 import env from '../config/env.js';
 import supabase from '../config/supabase.js';
+import { generateTextContent } from '../ai/nvidia.js';
 
 const usingSupabaseStorage = Boolean(supabase);
 
@@ -98,6 +99,65 @@ export const fileController = {
         orderBy: { uploadedAt: 'desc' },
       });
       res.json(files);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async analyzeProjectFiles(req, res, next) {
+    try {
+      const projectId = parseInt(req.params.id || req.params.projectId, 10);
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        include: {
+          files: {
+            include: {
+              uploader: { select: { name: true, role: true } },
+            },
+            orderBy: { uploadedAt: 'desc' },
+          },
+          requirements: {
+            select: { title: true, type: true, status: true },
+          },
+        },
+      });
+
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found.' });
+      }
+
+      if (project.files.length === 0) {
+        return res.status(400).json({ error: 'Upload project documents before running analysis.' });
+      }
+
+      const fileSummary = project.files
+        .map((file) => `- ${file.fileType}: ${file.fileName}, ${file.size || 0} bytes, uploaded by ${file.uploader?.name || 'unknown'}`)
+        .join('\n');
+      const requirementSummary = project.requirements
+        .map((requirement) => `- [${requirement.type}] ${requirement.title} (${requirement.status})`)
+        .join('\n') || 'No requirements recorded.';
+
+      const analysis = await generateTextContent(
+        `Analyze this capstone project's uploaded document set and identify quality gaps, missing artifacts, and viva preparation risks.
+
+Project: ${project.title}
+Description: ${project.description}
+
+Uploaded files:
+${fileSummary}
+
+Requirements:
+${requirementSummary}
+
+Return a concise review with:
+1. Document completeness
+2. Testing/evidence gaps
+3. Risks for viva defense
+4. Recommended next uploads or fixes`,
+        'You are a strict capstone supervisor reviewing document completeness and evidence quality.'
+      );
+
+      res.json({ analysis, fileCount: project.files.length });
     } catch (error) {
       next(error);
     }

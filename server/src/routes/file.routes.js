@@ -19,6 +19,9 @@ router.post(
 // List project documents
 router.get('/:id/files', requireProjectAccess, fileController.getProjectFiles);
 
+// Analyze uploaded document set
+router.post('/:id/files/analyze', requireProjectAccess, fileController.analyzeProjectFiles);
+
 // Delete file
 router.delete('/files/:fileId', fileController.deleteFile);
 

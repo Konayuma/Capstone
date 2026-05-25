@@ -789,6 +789,46 @@ select {
   background: color-mix(in oklab, white 55%, transparent);
 }
 
+.task-evidence-panel {
+  border-top: 1px solid var(--line-subtle);
+  padding-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.task-evidence-head,
+.task-evidence-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.task-evidence-head span,
+.task-evidence-item span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.task-evidence-list {
+  display: grid;
+  gap: 8px;
+}
+
+.task-evidence-item {
+  border: 1px solid var(--line-subtle);
+  border-radius: 12px;
+  background: color-mix(in oklab, white 70%, var(--bg-soft));
+  padding: 8px 10px;
+}
+
+.task-evidence-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.7fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
 .card {
   background: var(--bg-elevated);
   border-radius: var(--radius-md);
@@ -1176,6 +1216,121 @@ select {
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   gap: 18px;
   align-items: start;
+}
+
+.documents-layout,
+.settings-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.documents-upload-card,
+.documents-list-card,
+.settings-card,
+.danger-zone-card {
+  display: grid;
+  gap: 18px;
+}
+
+.documents-upload-card p,
+.settings-card p,
+.danger-zone-card p {
+  margin-top: 6px;
+  color: var(--ink-soft);
+  max-width: 66ch;
+}
+
+.documents-upload-form,
+.settings-form {
+  display: grid;
+  gap: 14px;
+}
+
+.documents-list-head,
+.documents-item,
+.documents-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.documents-list-head,
+.documents-item {
+  justify-content: space-between;
+}
+
+.documents-list {
+  display: grid;
+  gap: 10px;
+}
+
+.documents-item {
+  border: 1px solid var(--line-subtle);
+  border-radius: 16px;
+  background: color-mix(in oklab, white 78%, var(--bg-soft));
+  padding: 12px;
+}
+
+.documents-file-icon {
+  inline-size: 42px;
+  block-size: 42px;
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--brand-3) 22%, white);
+  color: color-mix(in oklab, var(--brand-1) 68%, var(--ink-strong));
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.documents-item > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.documents-item strong,
+.documents-item span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.documents-item span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.documents-empty {
+  min-height: 260px;
+  border: 1px dashed var(--line-medium);
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 9px;
+  padding: 24px;
+  text-align: center;
+  color: var(--ink-soft);
+  background: color-mix(in oklab, var(--bg-soft) 34%, white);
+}
+
+.documents-analysis {
+  border: 1px solid color-mix(in oklab, var(--brand-1) 22%, var(--line-subtle));
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--brand-3) 14%, white);
+  padding: 14px 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.documents-analysis p {
+  color: var(--ink-body);
+  white-space: pre-wrap;
+}
+
+.danger-zone-card {
+  border-color: color-mix(in oklab, var(--danger) 28%, transparent);
+  background: color-mix(in oklab, var(--danger) 5%, var(--bg-elevated));
 }
 
 .comments-compose,
@@ -2124,6 +2279,15 @@ select {
 
   .comments-panel-head {
     flex-direction: column;
+  }
+
+  .task-evidence-form,
+  .documents-upload-form,
+  .documents-item,
+  .documents-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .comments-feed-head {

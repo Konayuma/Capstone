@@ -13,8 +13,32 @@ import {
   HelpCircle,
   Award,
   CheckSquare,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
+
+const rubricLabels = ['Clarity', 'Correctness', 'Depth', 'Confidence'];
+
+const parseFeedback = (rawFeedback = '') => {
+  const text = rawFeedback.trim();
+  const rubric = rubricLabels.map((label) => {
+    const match = text.match(new RegExp(`${label}:\\s*([^\\.\\n]+)`, 'i'));
+    return {
+      label,
+      value: match?.[1]?.trim() || 'Not assessed',
+    };
+  });
+  const feedbackBody = text.replace(/^.*?Feedback:\s*/is, '').trim() || text;
+  const sentences = feedbackBody
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+
+  const mainFinding = sentences[0] || 'Review the suggested answer and add more project-specific evidence.';
+  const nextSteps = sentences.slice(1, 5);
+
+  return { rubric, mainFinding, nextSteps };
+};
 
 export const VivaPractice = () => {
   const { id } = useParams();
@@ -29,6 +53,7 @@ export const VivaPractice = () => {
   const [submitting, setSubmitting] = useState(false);
   const [evaluation, setEvaluation] = useState(null);
   const [showAnswerOutline, setShowAnswerOutline] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [delight, setDelight] = useState(null);
   const delightTimeoutRef = useRef(null);
 
@@ -61,7 +86,8 @@ export const VivaPractice = () => {
     setAnswerText(active.answers?.[0]?.answerText || '');
     setEvaluation(null);
     setShowAnswerOutline(false);
-  }, [currentIdx, questions]);
+    setShowFeedbackModal(false);
+  }, [questions[currentIdx]?.id]);
 
   const triggerDelight = () => {
     const options = [
@@ -107,8 +133,9 @@ export const VivaPractice = () => {
       });
       setEvaluation(res.data);
       await fetchQuestions(); // reload to register answer in list
+      setShowFeedbackModal(true);
       triggerDelight();
-      toast.success('Answer reviewed. Feedback is ready below.');
+      toast.success('Answer reviewed. Open the feedback panel to revise.');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Unable to review this answer right now.');
     } finally {
@@ -122,6 +149,8 @@ export const VivaPractice = () => {
   const difficultyLabel = activeQuestion?.difficulty === 'brutal'
     ? 'challenge'
     : activeQuestion?.difficulty;
+  const feedbackData = evaluation || activeQuestion?.answers?.[0];
+  const parsedFeedback = parseFeedback(feedbackData?.aiFeedback);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
@@ -182,6 +211,7 @@ export const VivaPractice = () => {
                       setEvaluation(null);
                       setAnswerText(hasAnswered ? q.answers[0].answerText : '');
                       setShowAnswerOutline(false);
+                      setShowFeedbackModal(false);
                     }}
                     className={`viva-question-button ${currentIdx === idx ? 'is-active' : ''}`}
                     aria-current={currentIdx === idx ? 'true' : undefined}
@@ -250,6 +280,17 @@ export const VivaPractice = () => {
                   >
                     {showAnswerOutline ? 'Hide Answer Guide' : 'View Answer Guide'}
                   </button>
+
+                  {feedbackData && (
+                    <button
+                      type="button"
+                      onClick={() => setShowFeedbackModal(true)}
+                      className="btn btn-secondary viva-feedback-open"
+                    >
+                      <Award size={16} />
+                      View Feedback
+                    </button>
+                  )}
                 </div>
               </form>
             </div>
@@ -267,35 +308,72 @@ export const VivaPractice = () => {
               </div>
             )}
 
-            {/* Evaluation block */}
-            {(evaluation || (activeQuestion.answers && activeQuestion.answers.length > 0)) && (
-              <div className="card" style={{ borderLeft: '4px solid var(--success)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--success)' }}>
-                  <Award size={20} />
-                  Feedback
-                </h3>
-                
-                {(() => {
-                  const evalData = evaluation || activeQuestion.answers[0];
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div style={{ display: 'flex', gap: '32px' }}>
-                        <div>
-                          <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--success)' }}>
-                            {evalData.aiScore}/100
-                          </div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Answer score</div>
-                        </div>
-                      </div>
-                      <div style={{ borderTop: '1px solid var(--line-subtle)', paddingTop: '16px' }}>
-                        <h4 style={{ marginBottom: '8px' }}>What to strengthen</h4>
-                        <p style={{ color: 'var(--ink-body)', fontSize: '0.95rem', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
-                          {evalData.aiFeedback}
-                        </p>
-                      </div>
+            {feedbackData && showFeedbackModal && (
+              <div className="workspace-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="viva-feedback-title">
+                <div className="workspace-modal viva-feedback-modal">
+                  <div className="viva-feedback-head">
+                    <div>
+                      <span className="landing-eyebrow"><Award size={14} /> Reviewed answer</span>
+                      <h2 id="viva-feedback-title">Feedback</h2>
                     </div>
-                  );
-                })()}
+                    <button
+                      type="button"
+                      className="viva-feedback-close"
+                      onClick={() => setShowFeedbackModal(false)}
+                      aria-label="Close feedback"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div className="viva-feedback-score-card">
+                    <div>
+                      <span>Answer score</span>
+                      <strong>{feedbackData.aiScore}/100</strong>
+                    </div>
+                    <p>{parsedFeedback.mainFinding}</p>
+                  </div>
+
+                  <div className="viva-feedback-rubric" aria-label="Feedback rubric">
+                    {parsedFeedback.rubric.map((item) => (
+                      <div key={item.label}>
+                        <span>{item.label}</span>
+                        <strong>{item.value}</strong>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="viva-feedback-section">
+                    <h3>What to strengthen first</h3>
+                    {parsedFeedback.nextSteps.length > 0 ? (
+                      <ol className="viva-feedback-list">
+                        {parsedFeedback.nextSteps.map((step) => (
+                          <li key={step}>{step}</li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <p>Add direct project evidence, name the technical mechanism, and explain the trade-off behind the choice.</p>
+                    )}
+                  </div>
+
+                  <div className="viva-feedback-section viva-feedback-next">
+                    <h3>How to revise your answer</h3>
+                    <ul>
+                      <li>Name the exact component, library, data field, or architecture decision.</li>
+                      <li>Connect the explanation to evidence already in your project workspace.</li>
+                      <li>Use a short sequence: input, processing step, output, limitation.</li>
+                    </ul>
+                  </div>
+
+                  <div className="comments-modal-actions">
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowFeedbackModal(false)}>
+                      Close
+                    </button>
+                    <button type="button" className="btn btn-primary" onClick={() => setShowFeedbackModal(false)}>
+                      Revise answer
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>

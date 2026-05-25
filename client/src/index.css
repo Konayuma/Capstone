@@ -1398,6 +1398,141 @@ select {
   flex: none;
 }
 
+.viva-feedback-open {
+  color: color-mix(in oklab, var(--success) 70%, var(--ink-strong));
+}
+
+.viva-feedback-modal {
+  max-height: min(86vh, 780px);
+  overflow: auto;
+  display: grid;
+  gap: 18px;
+}
+
+.viva-feedback-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.viva-feedback-head h2 {
+  margin-top: 8px;
+}
+
+.viva-feedback-close {
+  inline-size: 40px;
+  block-size: 40px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 12px;
+  background: color-mix(in oklab, white 84%, var(--bg-app));
+  color: var(--ink-soft);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), transform var(--t-fast);
+}
+
+.viva-feedback-close:hover {
+  color: var(--ink-strong);
+  background: white;
+  transform: translateY(-1px);
+}
+
+.viva-feedback-score-card {
+  border: 1px solid color-mix(in oklab, var(--success) 30%, var(--line-subtle));
+  border-radius: 20px;
+  padding: clamp(18px, 3vw, 26px);
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+  background:
+    radial-gradient(360px 180px at 0% 0%, color-mix(in oklab, var(--success) 16%, transparent), transparent 70%),
+    color-mix(in oklab, white 84%, var(--bg-elevated));
+}
+
+.viva-feedback-score-card span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.viva-feedback-score-card strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--success);
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  line-height: 0.95;
+}
+
+.viva-feedback-score-card p {
+  font-size: 1rem;
+  color: var(--ink-body);
+}
+
+.viva-feedback-rubric {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.viva-feedback-rubric div {
+  border: 1px solid var(--line-subtle);
+  border-radius: 15px;
+  padding: 13px 14px;
+  background: color-mix(in oklab, var(--bg-soft) 28%, white);
+  display: grid;
+  gap: 4px;
+}
+
+.viva-feedback-rubric span {
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.viva-feedback-rubric strong {
+  color: var(--ink-strong);
+  text-transform: capitalize;
+}
+
+.viva-feedback-section {
+  border-top: 1px solid var(--line-subtle);
+  padding-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.viva-feedback-section h3 {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.viva-feedback-list,
+.viva-feedback-next ul {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 9px;
+  color: var(--ink-body);
+}
+
+.viva-feedback-list li::marker {
+  color: var(--success);
+  font-weight: 800;
+}
+
+.viva-feedback-next {
+  border: 1px solid var(--line-subtle);
+  border-radius: 18px;
+  padding: 16px;
+  background: color-mix(in oklab, var(--brand-3) 12%, white);
+}
+
 .task-board-head h2 {
   font-family: var(--font-sans);
   font-size: clamp(1.5rem, 2.5vw, 2rem);
@@ -3653,6 +3788,8 @@ select {
 
   .landing-preview-grid,
   .landing-preview-score,
+  .viva-feedback-score-card,
+  .viva-feedback-rubric,
   .landing-steps li {
     grid-template-columns: 1fr;
   }

@@ -413,6 +413,7 @@ export const ProjectWorkspace = () => {
     { label: 'Overdue', value: overdueTasks.length, hint: 'Needs attention before it slips further.' },
     { label: 'Unassigned', value: unassignedTasks.length, hint: 'Waiting for an owner.' },
   ];
+  const analysisSections = fileAnalysis ? parseAnalysisSections(fileAnalysis) : [];
   const documentOverviewItems = [
     { title: 'What is incomplete', section: analysisSections.find((section) => /completeness|gaps/i.test(section.title)) },
     { title: 'What to upload next', section: analysisSections.find((section) => /recommended next uploads|fixes/i.test(section.title)) },
@@ -490,8 +491,6 @@ export const ProjectWorkspace = () => {
     flushSection();
     return sections.filter((section) => section.items.length > 0);
   };
-
-  const analysisSections = fileAnalysis ? parseAnalysisSections(fileAnalysis) : [];
 
   const delightCopy = {
     upload: [

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import CoolLoader from '../components/CoolLoader';
+import ActionDelight from '../components/ActionDelight';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { 
@@ -27,12 +29,15 @@ export const VivaPractice = () => {
   const [submitting, setSubmitting] = useState(false);
   const [evaluation, setEvaluation] = useState(null);
   const [showAnswerOutline, setShowAnswerOutline] = useState(false);
+  const [delight, setDelight] = useState(null);
+  const delightTimeoutRef = useRef(null);
 
   const fetchQuestions = async () => {
     try {
       // Fetch existing questions
       const res = await axios.get(`/projects/${id}/viva/questions`);
       setQuestions(res.data);
+      setCurrentIdx((current) => Math.min(current, Math.max(res.data.length - 1, 0)));
     } catch (err) {
       console.error('Failed to fetch viva questions:', err);
     } finally {
@@ -43,6 +48,35 @@ export const VivaPractice = () => {
   useEffect(() => {
     fetchQuestions();
   }, [id]);
+
+  useEffect(() => () => {
+    if (delightTimeoutRef.current) {
+      clearTimeout(delightTimeoutRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    const active = questions[currentIdx];
+    if (!active) return;
+    setAnswerText(active.answers?.[0]?.answerText || '');
+    setEvaluation(null);
+    setShowAnswerOutline(false);
+  }, [currentIdx, questions]);
+
+  const triggerDelight = () => {
+    const options = [
+      { title: 'Answer logged', message: 'Nice. The feedback is in and the practice set is richer now.' },
+      { title: 'Response recorded', message: 'That answer now gives you something concrete to improve on.' },
+    ];
+    const picked = options[Math.floor(Math.random() * options.length)];
+
+    if (delightTimeoutRef.current) {
+      clearTimeout(delightTimeoutRef.current);
+    }
+
+    setDelight(picked);
+    delightTimeoutRef.current = setTimeout(() => setDelight(null), 2400);
+  };
 
   const handleGenerateQuestions = async () => {
     setLoading(true);
@@ -72,7 +106,8 @@ export const VivaPractice = () => {
         answerText
       });
       setEvaluation(res.data);
-      fetchQuestions(); // reload to register answer in list
+      await fetchQuestions(); // reload to register answer in list
+      triggerDelight();
       toast.success('Answer reviewed. Feedback is ready below.');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Unable to review this answer right now.');
@@ -90,6 +125,12 @@ export const VivaPractice = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
+      <ActionDelight
+        visible={Boolean(delight)}
+        title={delight?.title}
+        message={delight?.message}
+      />
+
       {/* Back button */}
       <div>
         <button 
@@ -105,7 +146,7 @@ export const VivaPractice = () => {
       {/* Title */}
       <div>
         <h1>Viva Practice</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
+        <p style={{ color: 'var(--ink-soft)' }}>
           Rehearse the questions your team is likely to face on design choices, architecture, code ownership, testing evidence, and originality.
         </p>
       </div>
@@ -113,9 +154,9 @@ export const VivaPractice = () => {
       {/* Initial state: no questions generated yet */}
       {questions.length === 0 ? (
         <div className="card" style={{ padding: '60px', textAlign: 'center', maxWidth: '600px', marginInline: 'auto' }}>
-          <HelpCircle size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
+          <HelpCircle size={48} style={{ color: 'var(--ink-soft)', marginBottom: '16px' }} />
           <h3>No practice questions yet</h3>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
+          <p style={{ color: 'var(--ink-soft)', marginBottom: '24px' }}>
             Create a set of viva questions from your current requirements, uploaded files, and contribution records.
           </p>
           <button onClick={handleGenerateQuestions} className="btn btn-primary">
@@ -123,14 +164,14 @@ export const VivaPractice = () => {
           </button>
         </div>
       ) : (
-        <div className="grid-3" style={{ gridTemplateColumns: '280px 1fr', gap: '32px', alignItems: 'flex-start' }}>
+        <div className="viva-layout">
           {/* Left panel: Questions Index */}
-          <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <h4 style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="card viva-question-panel">
+            <h4 className="viva-question-panel-title">
               <HelpCircle size={18} />
               Practice Questions
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="viva-question-list">
               {questions.map((q, idx) => {
                 const hasAnswered = q.answers && q.answers.length > 0;
                 return (
@@ -142,20 +183,8 @@ export const VivaPractice = () => {
                       setAnswerText(hasAnswered ? q.answers[0].answerText : '');
                       setShowAnswerOutline(false);
                     }}
-                    style={{
-                      width: '100%',
-                      background: currentIdx === idx ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                      color: currentIdx === idx ? 'white' : 'var(--text-primary)',
-                      border: '1px solid var(--border-medium)',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      fontSize: '0.85rem'
-                    }}
+                    className={`viva-question-button ${currentIdx === idx ? 'is-active' : ''}`}
+                    aria-current={currentIdx === idx ? 'true' : undefined}
                   >
                     <span>Question {idx + 1}</span>
                     {hasAnswered && (
@@ -184,7 +213,7 @@ export const VivaPractice = () => {
                 <span className="badge badge-info" style={{ textTransform: 'uppercase' }}>
                   {activeQuestion.category}
                 </span>
-                <span className="badge badge-danger" style={{ textTransform: 'uppercase', background: activeQuestion.difficulty === 'brutal' ? 'var(--color-danger-bg)' : 'var(--color-warning-bg)', color: activeQuestion.difficulty === 'brutal' ? 'var(--color-danger)' : 'var(--color-warning)' }}>
+                <span className={`badge ${activeQuestion.difficulty === 'brutal' ? 'badge-danger' : 'badge-warning'}`} style={{ textTransform: 'uppercase' }}>
                   {difficultyLabel} level
                 </span>
               </div>
@@ -227,12 +256,12 @@ export const VivaPractice = () => {
 
             {/* Suggested Outline Answer Guide */}
             {showAnswerOutline && (
-              <div className="card" style={{ borderLeft: '4px solid var(--accent-secondary)' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-secondary)' }}>
+              <div className="card" style={{ borderLeft: '4px solid var(--brand-1)' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--brand-1)' }}>
                   <CheckSquare size={18} />
                   Answer Guide
                 </h4>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginTop: '8px', whiteSpace: 'pre-line' }}>
+                <p style={{ color: 'var(--ink-body)', fontSize: '0.95rem', marginTop: '8px', whiteSpace: 'pre-line' }}>
                   {activeQuestion.suggestedAnswer}
                 </p>
               </div>
@@ -240,8 +269,8 @@ export const VivaPractice = () => {
 
             {/* Evaluation block */}
             {(evaluation || (activeQuestion.answers && activeQuestion.answers.length > 0)) && (
-              <div className="card" style={{ borderLeft: '4px solid var(--color-success)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-success)' }}>
+              <div className="card" style={{ borderLeft: '4px solid var(--success)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--success)' }}>
                   <Award size={20} />
                   Feedback
                 </h3>
@@ -252,15 +281,15 @@ export const VivaPractice = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                       <div style={{ display: 'flex', gap: '32px' }}>
                         <div>
-                          <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--color-success)' }}>
+                          <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--success)' }}>
                             {evalData.aiScore}/100
                           </div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Answer score</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>Answer score</div>
                         </div>
                       </div>
-                      <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '16px' }}>
+                      <div style={{ borderTop: '1px solid var(--line-subtle)', paddingTop: '16px' }}>
                         <h4 style={{ marginBottom: '8px' }}>What to strengthen</h4>
-                        <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
+                        <p style={{ color: 'var(--ink-body)', fontSize: '0.95rem', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
                           {evalData.aiFeedback}
                         </p>
                       </div>

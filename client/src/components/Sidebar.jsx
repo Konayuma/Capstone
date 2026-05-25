@@ -13,6 +13,8 @@ import {
   LayoutDashboard,
   LogOut,
   MessageSquare,
+  PanelLeftClose,
+  PanelLeftOpen,
   Search,
   Settings,
   ShieldAlert,
@@ -43,7 +45,7 @@ const readStoredSidebarGroups = () => {
   }
 };
 
-export const Sidebar = () => {
+export const Sidebar = ({ collapsed = false, onCollapsedChange }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -161,39 +163,56 @@ export const Sidebar = () => {
     }
   }, [openGroups]);
 
+  useEffect(() => {
+    if (collapsed) {
+      setQuery('');
+    }
+  }, [collapsed]);
+
   if (!user) return null;
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${collapsed ? 'is-rail' : ''}`}>
       <div className="sidebar-head">
         <div className="sidebar-logo">
           <div className="user-avatar">CS</div>
-          <div>
+          <div className="sidebar-logo-copy">
             <div className="sidebar-logo-text">Capstone Studio</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>Project workspace</div>
           </div>
+          <button
+            type="button"
+            className="sidebar-rail-toggle"
+            onClick={() => onCollapsedChange?.(!collapsed)}
+            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+            aria-pressed={collapsed}
+          >
+            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+          </button>
         </div>
 
-        <label className="sidebar-search">
-          <Search size={16} />
-          <input
-            type="search"
-            placeholder="Search..."
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <kbd>Ctrl F</kbd>
-        </label>
+        {!collapsed && (
+          <label className="sidebar-search">
+            <Search size={16} />
+            <input
+              type="search"
+              placeholder="Search..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <kbd>Ctrl F</kbd>
+          </label>
+        )}
       </div>
 
       <nav className="sidebar-menu">
         {filteredSections.map((section) => (
           <section className="sidebar-section" key={section.eyebrow}>
-            <div className="sidebar-eyebrow">{section.eyebrow}</div>
+            {!collapsed && <div className="sidebar-eyebrow">{section.eyebrow}</div>}
 
             {section.items.map((item) => {
               const Icon = item.icon;
-              const isOpen = forceOpenGroups || (openGroups[item.label] ?? true);
+              const isOpen = !collapsed && (forceOpenGroups || (openGroups[item.label] ?? true));
 
               return (
                 <div className={`sidebar-tree-group ${isOpen ? '' : 'is-collapsed'}`} key={item.label}>
@@ -201,23 +220,27 @@ export const Sidebar = () => {
                     <NavLink
                       to={item.to}
                       className={({ isActive }) => `sidebar-link sidebar-parent ${isActive ? 'active' : ''}`}
+                      title={collapsed ? item.label : undefined}
                     >
                       <Icon size={17} />
                       <span>{item.label}</span>
                     </NavLink>
 
-                    <button
-                      type="button"
-                      className="sidebar-collapse-toggle"
-                      onClick={() => setOpenGroups((current) => ({ ...current, [item.label]: !isOpen }))}
-                      aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.label}`}
-                      aria-expanded={isOpen}
-                    >
-                      <ChevronDown size={15} className="sidebar-chevron" />
-                    </button>
+                    {!collapsed && (
+                      <button
+                        type="button"
+                        className="sidebar-collapse-toggle"
+                        onClick={() => setOpenGroups((current) => ({ ...current, [item.label]: !isOpen }))}
+                        aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.label}`}
+                        aria-expanded={isOpen}
+                      >
+                        <ChevronDown size={15} className="sidebar-chevron" />
+                      </button>
+                    )}
                   </div>
 
-                  <div className="sidebar-branch" aria-hidden={!isOpen}>
+                  {!collapsed && (
+                    <div className="sidebar-branch" aria-hidden={!isOpen}>
                     {item.children.map((child) => {
                       const ChildIcon = child.icon;
 
@@ -232,7 +255,8 @@ export const Sidebar = () => {
                         </NavLink>
                       );
                     })}
-                  </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -252,14 +276,14 @@ export const Sidebar = () => {
           <ArrowRight size={15} className="sidebar-profile-arrow" />
         </button>
 
-        <div style={{ display: 'grid', gap: '8px', marginTop: '12px' }}>
+        <div className="sidebar-footer-actions">
           <button className="btn btn-secondary" type="button" onClick={() => navigate('/dashboard')}>
             <Sparkles size={15} />
-            Open board
+            <span>Open board</span>
           </button>
           <button className="btn btn-danger" type="button" onClick={handleLogout}>
             <LogOut size={15} />
-            Logout
+            <span>Logout</span>
           </button>
         </div>
       </div>

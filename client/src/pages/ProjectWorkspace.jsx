@@ -4,6 +4,8 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import CoolLoader from '../components/CoolLoader';
+import ActionDelight from '../components/ActionDelight';
+import { API_ORIGIN } from '../lib/apiBase';
 import { 
   Sparkles, 
   ListTodo, 
@@ -169,12 +171,14 @@ export const ProjectWorkspace = () => {
   const [analyzingFiles, setAnalyzingFiles] = useState(false);
   const [refreshingFiles, setRefreshingFiles] = useState(false);
   const [fileAnalysis, setFileAnalysis] = useState('');
+  const [delight, setDelight] = useState(null);
   const [savingProject, setSavingProject] = useState(false);
   const [deletingProject, setDeletingProject] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [evidenceDrafts, setEvidenceDrafts] = useState({});
   const [inviteCopied, setInviteCopied] = useState(false);
   const inviteCopyTimeoutRef = useRef(null);
+  const delightTimeoutRef = useRef(null);
 
   // Requirements state
   const [requirements, setRequirements] = useState([]);
@@ -186,6 +190,12 @@ export const ProjectWorkspace = () => {
   const [ambiguities, setAmbiguities] = useState([]);
   const [expandingRequirements, setExpandingRequirements] = useState(false);
   const requirementsPromptRef = useRef(null);
+
+  useEffect(() => () => {
+    if (delightTimeoutRef.current) {
+      clearTimeout(delightTimeoutRef.current);
+    }
+  }, []);
 
   // Tasks state
   const [tasks, setTasks] = useState([]);
@@ -377,7 +387,6 @@ export const ProjectWorkspace = () => {
     }
   };
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const activeInviteCode = inviteCode || recentInvites[0]?.code || '';
   const inviteLink = activeInviteCode ? `${window.location.origin}/join/${activeInviteCode}` : '';
   const visibleTeamStack = teamMembers.slice(0, 5);
@@ -385,6 +394,7 @@ export const ProjectWorkspace = () => {
   const openTasks = tasks.filter((task) => !['completed', 'rejected'].includes(task.status));
   const closedTasks = tasks.filter((task) => task.status === 'completed');
   const overdueTasks = tasks.filter(isOverdueTask);
+  const unassignedTasks = tasks.filter((task) => !task.assignee);
   const visibleTasks = tasks.filter((task) => {
     if (taskFilter === 'open') return !['completed', 'rejected'].includes(task.status);
     if (taskFilter === 'closed') return task.status === 'completed';
@@ -398,6 +408,16 @@ export const ProjectWorkspace = () => {
     counts[comment.targetType] = (counts[comment.targetType] || 0) + 1;
     return counts;
   }, { project: 0, requirement: 0, task: 0, document: 0, contribution: 0, viva: 0 });
+  const taskOverviewCards = [
+    { label: 'Open tasks', value: openTasks.length, hint: 'Ready for assignment or completion.' },
+    { label: 'Overdue', value: overdueTasks.length, hint: 'Needs attention before it slips further.' },
+    { label: 'Unassigned', value: unassignedTasks.length, hint: 'Waiting for an owner.' },
+  ];
+  const documentOverviewItems = [
+    { title: 'What is incomplete', section: analysisSections.find((section) => /completeness|gaps/i.test(section.title)) },
+    { title: 'What to upload next', section: analysisSections.find((section) => /recommended next uploads|fixes/i.test(section.title)) },
+    { title: 'What may hurt viva', section: analysisSections.find((section) => /viva defense risks/i.test(section.title)) },
+  ].filter((item) => item.section);
   const taskFilters = [
     { id: 'all', label: 'All', count: tasks.length },
     { id: 'open', label: 'Open', count: openTasks.length },
@@ -416,7 +436,7 @@ export const ProjectWorkspace = () => {
   const getFileUrl = (file) => (
     file.filePath?.startsWith('http')
       ? file.filePath
-      : `${API_BASE}${file.filePath}`
+      : `${API_ORIGIN}${file.filePath}`
   );
   const formatFileSize = (size) => {
     if (!size) return 'Unknown size';
@@ -472,6 +492,29 @@ export const ProjectWorkspace = () => {
   };
 
   const analysisSections = fileAnalysis ? parseAnalysisSections(fileAnalysis) : [];
+
+  const delightCopy = {
+    upload: [
+      { title: 'Document received', message: 'The archive is in. The workspace has fresh evidence to work with.' },
+      { title: 'Upload complete', message: 'That piece is safely in the library and ready for review.' },
+    ],
+    task: [
+      { title: 'Task closed', message: 'One more moving part is off the board.' },
+      { title: 'Nice finish', message: 'That task is wrapped and ready for the next handoff.' },
+    ],
+  };
+
+  const triggerDelight = (kind) => {
+    const choices = delightCopy[kind] || delightCopy.upload;
+    const picked = choices[Math.floor(Math.random() * choices.length)];
+
+    if (delightTimeoutRef.current) {
+      clearTimeout(delightTimeoutRef.current);
+    }
+
+    setDelight(picked);
+    delightTimeoutRef.current = setTimeout(() => setDelight(null), 2400);
+  };
 
   const refreshProjectFiles = async () => {
     setRefreshingFiles(true);
@@ -600,6 +643,7 @@ export const ProjectWorkspace = () => {
       });
       setUploadFile(null);
       toast.success('Project document uploaded.');
+      triggerDelight('upload');
       e.currentTarget.reset();
       await refreshProjectFiles();
       await fetchWorkspaceData();
@@ -731,6 +775,24 @@ export const ProjectWorkspace = () => {
     }
   };
 
+  const handleToggleTaskStatus = async (task) => {
+    const nextStatus = task.status === 'completed' ? 'todo' : 'completed';
+
+    try {
+      await axios.put(`/projects/tasks/${task.id}`, {
+        status: nextStatus,
+      });
+
+      if (nextStatus === 'completed') {
+        triggerDelight('task');
+      }
+
+      fetchWorkspaceData();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to update this task right now.');
+    }
+  };
+
   // Tab 2: Task CRUD
   const handleCreateTask = async (e) => {
     e.preventDefault();
@@ -814,7 +876,7 @@ export const ProjectWorkspace = () => {
 
   // Reports
   const handleDownloadReport = (reportType) => {
-    window.open(`${API_BASE}/api/projects/${id}/reports/${reportType}?token=${localStorage.getItem('token')}`);
+    window.open(`${API_ORIGIN}/api/projects/${id}/reports/${reportType}?token=${localStorage.getItem('token')}`);
   };
 
   if (loading) return <CoolLoader title="Scaffolding workspace" subtitle="Loading project data and team signals..." />;
@@ -822,9 +884,15 @@ export const ProjectWorkspace = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', textAlign: 'left' }}>
+      <ActionDelight
+        visible={Boolean(delight)}
+        title={delight?.title}
+        message={delight?.message}
+      />
+
       {/* Workspace Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
+      <div className="workspace-header">
+        <div className="workspace-header-copy">
           <span className="badge badge-info" style={{ marginBottom: '8px' }}>Project Workspace</span>
           <h1 style={{ fontSize: '2.2rem', marginBottom: '8px' }}>{project.title}</h1>
           <p style={{ color: 'var(--text-secondary)', maxWidth: '800px' }}>{project.description}</p>
@@ -1263,10 +1331,14 @@ export const ProjectWorkspace = () => {
         {activeTab === 'tasks' && (
           <div className="task-board-shell">
             <div className="task-board-panel">
-              <div className="task-top-tabs" aria-label="Task workspace sections">
-                <button type="button" className="task-top-tab muted">Messages</button>
-                <button type="button" className="task-top-tab active">Project Tasks</button>
-                <button type="button" className="task-top-tab muted">Last Activity</button>
+              <div className="task-overview-grid" aria-label="Task overview">
+                {taskOverviewCards.map((card) => (
+                  <article key={card.label} className="task-overview-card">
+                    <span>{card.label}</span>
+                    <strong>{card.value}</strong>
+                    <p>{card.hint}</p>
+                  </article>
+                ))}
               </div>
 
               <div className="task-board-head">
@@ -1318,12 +1390,7 @@ export const ProjectWorkspace = () => {
                             type="button"
                             className={`task-check ${isClosed ? 'checked' : ''}`}
                             aria-label={isClosed ? 'Mark task open' : 'Mark task completed'}
-                            onClick={async () => {
-                              await axios.put(`/projects/tasks/${task.id}`, {
-                                status: isClosed ? 'todo' : 'completed',
-                              });
-                              fetchWorkspaceData();
-                            }}
+                            onClick={() => handleToggleTaskStatus(task)}
                           >
                             <CheckCircle2 size={18} />
                           </button>
@@ -1907,36 +1974,66 @@ export const ProjectWorkspace = () => {
         {/* TAB 5: Documents & Evidence */}
         {activeTab === 'documents' && (
           <div className="documents-layout">
-            <section className="card documents-upload-card">
-              <div>
-                <span className="badge badge-info">
-                  <Upload size={14} />
-                  Project files
-                </span>
-                <h3>Upload project documents</h3>
-                <p>Attach proposals, reports, slides, source archives, screenshots, test evidence, and diagrams.</p>
-              </div>
+            <div className="documents-side-stack">
+              <section className="card documents-upload-card">
+                <div>
+                  <span className="badge badge-info">
+                    <Upload size={14} />
+                    Project files
+                  </span>
+                  <h3>Upload project documents</h3>
+                  <p>Attach proposals, reports, slides, source archives, screenshots, test evidence, and diagrams.</p>
+                </div>
 
-              <form className="documents-upload-form" onSubmit={handleUploadProjectFile}>
-                <div className="form-group">
-                  <label className="form-label">File type</label>
-                  <select className="form-input" value={uploadFileType} onChange={(event) => setUploadFileType(event.target.value)}>
-                    {fileTypeOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                <form className="documents-upload-form" onSubmit={handleUploadProjectFile}>
+                  <div className="form-group">
+                    <label className="form-label">File type</label>
+                    <select className="form-input" value={uploadFileType} onChange={(event) => setUploadFileType(event.target.value)}>
+                      {fileTypeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Document</label>
+                    <input className="form-input" type="file" onChange={(event) => setUploadFile(event.target.files?.[0] || null)} />
+                  </div>
+
+                  <button type="submit" className="btn btn-primary" disabled={uploadingFile}>
+                    {uploadingFile ? <><Loader2 className="spinner-icon" size={15} /> Uploading...</> : <><Upload size={16} /> Upload document</>}
+                  </button>
+                </form>
+              </section>
+
+              <section className="card documents-overview-card">
+                <div>
+                  <span className="badge badge-info">At a glance</span>
+                  <h3>What is missing or needs action</h3>
+                  <p>Run analysis after uploading. This overview keeps the next moves visible without reading the full report.</p>
+                </div>
+
+                {fileAnalysis && documentOverviewItems.length > 0 ? (
+                  <div className="documents-overview-list">
+                    {documentOverviewItems.map((item) => (
+                      <article key={item.title} className="documents-overview-item">
+                        <strong>{item.title}</strong>
+                        <ul>
+                          {item.section.items.slice(0, 3).map((entry, index) => (
+                            <li key={`${item.title}-${index}`}>{entry}</li>
+                          ))}
+                        </ul>
+                      </article>
                     ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Document</label>
-                  <input className="form-input" type="file" onChange={(event) => setUploadFile(event.target.files?.[0] || null)} />
-                </div>
-
-                <button type="submit" className="btn btn-primary" disabled={uploadingFile}>
-                  {uploadingFile ? <><Loader2 className="spinner-icon" size={15} /> Uploading...</> : <><Upload size={16} /> Upload document</>}
-                </button>
-              </form>
-            </section>
+                  </div>
+                ) : (
+                  <div className="documents-overview-empty">
+                    <Sparkles size={18} />
+                    <p>Upload files, then run analysis to surface gaps, missing evidence, and the next upload to tackle.</p>
+                  </div>
+                )}
+              </section>
+            </div>
 
             <section className="card documents-list-card">
               <div className="documents-list-head">

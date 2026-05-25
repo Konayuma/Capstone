@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
@@ -44,9 +44,18 @@ const PublicRoute = ({ children }) => {
 
 // Main App Layout Wrapper
 const AppLayout = ({ children }) => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('capstone.sidebarCollapsed') === 'true';
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem('capstone.sidebarCollapsed', String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
+
   return (
-    <div className="app-container">
-      <Sidebar />
+    <div className={`app-container ${sidebarCollapsed ? 'sidebar-is-collapsed' : ''}`}>
+      <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
       <main className="main-content">
         {children}
       </main>

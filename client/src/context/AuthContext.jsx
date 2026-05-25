@@ -1,11 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../lib/apiBase';
 
 const AuthContext = createContext(null);
 
-// Configure default Axios parameters using Vite environment variable
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-axios.defaults.baseURL = `${API_BASE}/api`;
+axios.defaults.baseURL = API_BASE_URL;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

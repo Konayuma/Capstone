@@ -1,6 +1,68 @@
 import prisma from '../config/db.js';
 
 export const supervisorController = {
+  async listAssignedProjects(req, res, next) {
+    try {
+      if (!['supervisor', 'admin'].includes(req.user.role)) {
+        return res.status(403).json({ error: 'Supervisor access required.' });
+      }
+
+      const where = req.user.role === 'admin' ? {} : { supervisorId: req.user.id };
+      const projects = await prisma.project.findMany({
+        where,
+        include: {
+          creator: { select: { id: true, name: true, email: true } },
+          members: { include: { user: { select: { id: true, name: true, email: true } } } },
+          _count: {
+            select: { requirements: true, tasks: true, files: true, vivaQuestions: true, comments: true },
+          },
+          readinessScores: {
+            orderBy: { generatedAt: 'desc' },
+            take: 1,
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      res.json(projects);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getOverview(req, res, next) {
+    try {
+      if (!['supervisor', 'admin'].includes(req.user.role)) {
+        return res.status(403).json({ error: 'Supervisor access required.' });
+      }
+
+      const where = req.user.role === 'admin' ? {} : { supervisorId: req.user.id };
+      const [projects, activeProjects, completedProjects] = await Promise.all([
+        prisma.project.count({ where }),
+        prisma.project.count({ where: { ...where, status: 'active' } }),
+        prisma.project.count({ where: { ...where, status: 'completed' } }),
+      ]);
+
+      const requirementWhere = req.user.role === 'admin'
+        ? {}
+        : { project: { supervisorId: req.user.id } };
+      const requirementStatus = await prisma.requirement.groupBy({
+        by: ['status'],
+        where: requirementWhere,
+        _count: { id: true },
+      });
+
+      res.json({
+        projects,
+        activeProjects,
+        completedProjects,
+        requirementStatus,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // Add a comment to a requirement, task, document, contribution report, or readiness dashboard
   async addComment(req, res, next) {
     try {

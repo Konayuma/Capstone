@@ -33,6 +33,33 @@ const getStoragePathFromPublicUrl = (publicUrl) => {
   return decodeURIComponent(publicUrl.slice(prefixIndex + bucketPrefix.length));
 };
 
+const getLocalUploadPath = (filePath) => path.join(process.cwd(), filePath.replace(/^\/+/, ''));
+
+const assertFileAccess = async (req, fileId) => {
+  const fileRecord = await prisma.file.findUnique({
+    where: { id: fileId },
+    include: {
+      project: {
+        include: { members: true },
+      },
+    },
+  });
+
+  if (!fileRecord) {
+    throw Object.assign(new Error('File not found.'), { status: 404 });
+  }
+
+  const hasAccess = req.user.role === 'admin'
+    || fileRecord.project.supervisorId === req.user.id
+    || fileRecord.project.members.some((member) => member.userId === req.user.id);
+
+  if (!hasAccess) {
+    throw Object.assign(new Error('You do not have access to this file.'), { status: 403 });
+  }
+
+  return fileRecord;
+};
+
 export const fileController = {
   async uploadFile(req, res, next) {
     try {
@@ -166,14 +193,7 @@ Return a concise review with:
   async deleteFile(req, res, next) {
     try {
       const fileId = parseInt(req.params.fileId, 10);
-      
-      const fileRecord = await prisma.file.findUnique({
-        where: { id: fileId },
-      });
-
-      if (!fileRecord) {
-        return res.status(404).json({ error: 'File not found.' });
-      }
+      const fileRecord = await assertFileAccess(req, fileId);
 
       // Check access permission (creator, supervisor or admin)
       if (req.user.id !== fileRecord.uploadedBy && req.user.role !== 'admin' && req.user.role !== 'supervisor') {
@@ -193,7 +213,7 @@ Return a concise review with:
         }
       } else {
         // Delete physical file from disk
-        const physicalPath = path.join(process.cwd(), fileRecord.filePath);
+        const physicalPath = getLocalUploadPath(fileRecord.filePath);
         if (fs.existsSync(physicalPath)) {
           fs.unlinkSync(physicalPath);
         }
@@ -205,6 +225,26 @@ Return a concise review with:
       });
 
       res.json({ message: 'File deleted successfully.' });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async downloadFile(req, res, next) {
+    try {
+      const fileId = parseInt(req.params.fileId, 10);
+      const fileRecord = await assertFileAccess(req, fileId);
+
+      if (fileRecord.filePath?.startsWith('http')) {
+        return res.redirect(fileRecord.filePath);
+      }
+
+      const physicalPath = getLocalUploadPath(fileRecord.filePath);
+      if (!fs.existsSync(physicalPath)) {
+        return res.status(404).json({ error: 'Stored file not found.' });
+      }
+
+      res.download(physicalPath, fileRecord.fileName);
     } catch (error) {
       next(error);
     }

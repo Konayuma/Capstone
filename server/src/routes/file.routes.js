@@ -22,6 +22,9 @@ router.get('/:id/files', requireProjectAccess, fileController.getProjectFiles);
 // Analyze uploaded document set
 router.post('/:id/files/analyze', requireProjectAccess, fileController.analyzeProjectFiles);
 
+// Download file
+router.get('/files/:fileId/download', fileController.downloadFile);
+
 // Delete file
 router.delete('/files/:fileId', fileController.deleteFile);
 

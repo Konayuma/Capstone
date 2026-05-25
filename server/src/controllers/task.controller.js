@@ -11,6 +11,31 @@ const taskSchema = z.object({
   requirementId: z.number().optional().nullable(),
 });
 
+const assertTaskAccess = async (req, taskId) => {
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    include: {
+      project: {
+        include: { members: true },
+      },
+    },
+  });
+
+  if (!task) {
+    throw Object.assign(new Error('Task not found.'), { status: 404 });
+  }
+
+  const hasAccess = req.user.role === 'admin'
+    || task.project.supervisorId === req.user.id
+    || task.project.members.some((member) => member.userId === req.user.id);
+
+  if (!hasAccess) {
+    throw Object.assign(new Error('You do not have access to this task.'), { status: 403 });
+  }
+
+  return task;
+};
+
 export const taskController = {
   async getProjectTasks(req, res, next) {
     try {
@@ -64,6 +89,7 @@ export const taskController = {
   async getTaskDetails(req, res, next) {
     try {
       const taskId = parseInt(req.params.taskId, 10);
+      await assertTaskAccess(req, taskId);
       const task = await prisma.task.findUnique({
         where: { id: taskId },
         include: {
@@ -89,6 +115,7 @@ export const taskController = {
   async updateTask(req, res, next) {
     try {
       const taskId = parseInt(req.params.taskId, 10);
+      await assertTaskAccess(req, taskId);
       const data = req.body;
 
       // Handle status changes (update completedAt if completed)
@@ -120,6 +147,7 @@ export const taskController = {
   async deleteTask(req, res, next) {
     try {
       const taskId = parseInt(req.params.taskId, 10);
+      await assertTaskAccess(req, taskId);
       await prisma.task.delete({ where: { id: taskId } });
       res.json({ message: 'Task deleted successfully.' });
     } catch (error) {
@@ -131,6 +159,7 @@ export const taskController = {
   async submitEvidence(req, res, next) {
     try {
       const taskId = parseInt(req.params.taskId, 10);
+      await assertTaskAccess(req, taskId);
       const { fileId, note } = req.body;
 
       const evidence = await prisma.taskEvidence.create({

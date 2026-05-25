@@ -7,6 +7,9 @@ const router = Router();
 
 router.use(authenticate);
 
+router.get('/assigned/projects', supervisorController.listAssignedProjects);
+router.get('/assigned/overview', supervisorController.getOverview);
+
 // Project comment endpoints
 router.post('/:id/comments', requireProjectAccess, supervisorController.addComment);
 router.get('/:id/comments', requireProjectAccess, supervisorController.getComments);

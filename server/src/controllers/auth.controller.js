@@ -45,7 +45,12 @@ export const authController = {
 
   async updateProfile(req, res, next) {
     try {
-      const user = await authService.updateProfile(req.user.id, req.body);
+      const data = z.object({
+        name: z.string().min(2).optional(),
+        password: z.string().min(6).optional(),
+        profileImage: z.string().trim().min(1).nullable().optional(),
+      }).parse(req.body);
+      const user = await authService.updateProfile(req.user.id, data);
       res.json(user);
     } catch (error) {
       next(error);

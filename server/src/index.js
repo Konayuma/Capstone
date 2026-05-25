@@ -63,6 +63,7 @@ app.use('/api/projects', fileRoutes);
 app.use('/api/projects', vivaRoutes);
 app.use('/api/projects', reportRoutes);
 app.use('/api/projects', supervisorRoutes);
+app.use('/api/supervisor', supervisorRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Health check
@@ -77,7 +78,7 @@ app.use((err, req, res, next) => {
   if (err.name === 'ZodError') {
     return res.status(400).json({
       error: 'Validation error',
-      details: err.errors,
+      details: err.issues,
     });
   }
 

@@ -16,6 +16,7 @@ router.get('/:id/requirements/traceability', requireProjectAccess, requirementCo
 // Individual requirement endpoints
 router.get('/requirements/:requirementId', requirementController.getRequirementDetails);
 router.put('/requirements/:requirementId', requirementController.updateRequirement);
+router.put('/requirements/:requirementId/review', requirementController.reviewRequirement);
 router.delete('/requirements/:requirementId', requirementController.deleteRequirement);
 
 // AI triggers for individual requirements

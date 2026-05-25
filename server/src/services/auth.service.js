@@ -80,9 +80,10 @@ export const authService = {
     return user;
   },
 
-  async updateProfile(userId, { name, password }) {
+  async updateProfile(userId, { name, password, profileImage }) {
     const data = {};
     if (name) data.name = name;
+    if (profileImage !== undefined) data.profileImage = profileImage || null;
     if (password) {
       const salt = await bcrypt.genSalt(12);
       data.passwordHash = await bcrypt.hash(password, salt);

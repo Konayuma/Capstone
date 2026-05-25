@@ -8,7 +8,22 @@ const createProjectSchema = z.object({
   department: z.string().optional(),
   academicYear: z.string().optional(),
   supervisorId: z.number().optional(),
+  status: z.enum(['active', 'completed', 'archived', 'draft']).optional(),
 });
+
+const canManageProject = (req) => {
+  if (req.user.role === 'admin') return true;
+  if (req.project?.createdBy === req.user.id) return true;
+  if (req.project?.supervisorId === req.user.id) return true;
+  if (req.projectMember?.isLeader) return true;
+  return req.projectMember?.projectRole === 'project_manager';
+};
+
+const assertCanManageProject = (req) => {
+  if (!canManageProject(req)) {
+    throw Object.assign(new Error('Only the project owner, manager, supervisor, or administrator can change this workspace.'), { status: 403 });
+  }
+};
 
 export const projectController = {
   async create(req, res, next) {
@@ -93,10 +108,9 @@ export const projectController = {
 
   async update(req, res, next) {
     try {
+      assertCanManageProject(req);
       const id = parseInt(req.params.id, 10);
-      const data = req.body;
-      delete data.createdBy;
-      delete data.id;
+      const data = createProjectSchema.partial().parse(req.body);
 
       const project = await prisma.project.update({
         where: { id },
@@ -111,6 +125,7 @@ export const projectController = {
 
   async remove(req, res, next) {
     try {
+      assertCanManageProject(req);
       const id = parseInt(req.params.id, 10);
       await prisma.project.delete({ where: { id } });
       res.json({ message: 'Project deleted successfully.' });

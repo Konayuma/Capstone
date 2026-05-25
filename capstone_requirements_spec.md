@@ -12,10 +12,9 @@ The system will be built using:
 | -------------------- | -------------------------------------- |
 | Frontend             | React                                  |
 | Backend              | Express.js                             |
-| Development Database | SQLite                                 |
-| Production Database  | PostgreSQL                             |
-| AI Integration       | Gemini API                             |
-| File Handling        | Multer or equivalent upload middleware |
+| Database             | PostgreSQL via Prisma ORM              |
+| AI Integration       | NVIDIA OpenAI-compatible AI endpoint   |
+| File Handling        | Multer with local or Supabase storage  |
 | Authentication       | JWT-based authentication               |
 | Deployment           | Render, Railway, VPS, or similar       |
 
@@ -45,7 +44,7 @@ To develop an AI-powered capstone project supervision platform that improves req
 4. To allow group members to create, assign, update, and complete project tasks.
 5. To track individual contribution using tasks, uploads, progress logs, and peer reviews.
 6. To allow students to upload project proposals, reports, slides, and source code files.
-7. To use Gemini API to generate examiner-style viva questions.
+7. To use an NVIDIA OpenAI-compatible AI endpoint to generate examiner-style viva questions.
 8. To generate a defense readiness score based on requirements, documentation, testing evidence, and contribution records.
 9. To provide supervisors with a dashboard for monitoring project progress and group contribution.
 10. To generate downloadable project analysis and viva preparation reports.
@@ -213,7 +212,7 @@ The system shall provide a dashboard showing:
 
 ### FR-010: Add Group Members
 
-The system shall allow a group leader to invite or add members to a project workspace.
+The system shall allow a group leader or project manager to invite or add members to a project workspace by searching for existing users, adding a user directly, or generating an invite code that another authenticated user can enter from the dashboard.
 
 ### FR-011: Remove Group Members
 
@@ -249,7 +248,7 @@ Example:
 
 ### FR-015: Generate Functional Requirements Using AI
 
-The system shall use Gemini API to convert raw project descriptions into functional requirements.
+The system shall use the configured NVIDIA OpenAI-compatible AI API to convert raw project descriptions into functional requirements.
 
 ### FR-016: Generate Non-Functional Requirements Using AI
 
@@ -430,7 +429,7 @@ The system shall allow authorized users to delete uploaded files.
 
 ### FR-036: Analyze Uploaded Files Using AI
 
-The system shall extract text from supported documents and use Gemini API to analyze project quality.
+The system shall use uploaded document metadata, project context, requirements, and supported extracted content where available to analyze project quality through the configured AI API.
 
 ---
 
@@ -438,7 +437,7 @@ The system shall extract text from supported documents and use Gemini API to ana
 
 ### FR-037: Generate Viva Questions
 
-The system shall use Gemini API to generate viva questions based on:
+The system shall use the configured AI API to generate viva questions based on:
 
 * project title
 * problem statement
@@ -482,7 +481,7 @@ The system shall allow students to save answers for future review.
 
 ### FR-042: Score Viva Answers
 
-The system shall use Gemini API to evaluate answers based on clarity, correctness, technical depth, and confidence.
+The system shall use the configured AI API to evaluate answers based on clarity, correctness, technical depth, and confidence.
 
 ### FR-043: Generate Suggested Answers
 
@@ -613,7 +612,7 @@ The system shall prevent SQL injection through parameterized queries or ORM quer
 
 ### NFR-010
 
-The system shall store Gemini API keys only in environment variables.
+The system shall store AI provider API keys only in environment variables.
 
 ---
 
@@ -690,11 +689,11 @@ React Frontend
      |
 Express.js Backend
      |
-     |---------------- Gemini API
+     |---------------- NVIDIA OpenAI-compatible AI API
      |
      |---------------- File Storage
      |
-     |---------------- SQLite / PostgreSQL Database
+     |---------------- PostgreSQL Database
 ```
 
 ## 8.2 Frontend Layer
@@ -731,7 +730,7 @@ The Express.js backend shall handle:
 * task management
 * file uploads
 * database operations
-* Gemini API requests
+* AI API requests
 * report generation
 * contribution score calculation
 
@@ -750,19 +749,9 @@ Suggested backend libraries:
 
 ## 8.4 Database Layer
 
-Development shall use SQLite for simplicity.
+Development and production shall use PostgreSQL for relational integrity, consistent migrations, and deployment parity.
 
-Production shall use PostgreSQL for scalability, reliability, and stronger relational data support.
-
-A query abstraction or ORM should be used to support both databases.
-
-Recommended options:
-
-* Prisma ORM
-* Drizzle ORM
-* Sequelize
-
-Best recommendation: **Prisma**, because it works cleanly with both SQLite and PostgreSQL.
+Prisma ORM shall be used for schema definition, migrations, and type-safe database access.
 
 ---
 
@@ -777,6 +766,7 @@ Best recommendation: **Prisma**, because it works cleanly with both SQLite and P
 | email         | String         | Unique email               |
 | password_hash | String         | Hashed password            |
 | role          | String         | student, supervisor, admin |
+| profile_image | String         | Optional profile image URL |
 | created_at    | DateTime       | Account creation date      |
 
 ---
@@ -789,6 +779,7 @@ Best recommendation: **Prisma**, because it works cleanly with both SQLite and P
 | title         | String         | Project title               |
 | description   | Text           | Project description         |
 | category      | String         | Project category            |
+| department    | String         | Department or course        |
 | academic_year | String         | Academic year               |
 | status        | String         | active, completed, archived |
 | supervisor_id | Foreign Key    | Assigned supervisor         |
@@ -805,6 +796,7 @@ Best recommendation: **Prisma**, because it works cleanly with both SQLite and P
 | project_id   | Foreign Key    | Related project       |
 | user_id      | Foreign Key    | Related user          |
 | project_role | String         | Internal project role |
+| is_leader    | Boolean        | Project manager flag  |
 | joined_at    | DateTime       | Join date             |
 
 ---
@@ -861,6 +853,7 @@ Best recommendation: **Prisma**, because it works cleanly with both SQLite and P
 | status       | String         | todo, in_progress, review, completed |
 | deadline     | DateTime       | Due date                             |
 | completed_at | DateTime       | Completion date                      |
+| requirement_id | Foreign Key  | Related requirement, optional        |
 
 ---
 
@@ -878,15 +871,20 @@ Best recommendation: **Prisma**, because it works cleanly with both SQLite and P
 
 ## 9.9 Peer Reviews Table
 
-| Field            | Type           | Description      |
-| ---------------- | -------------- | ---------------- |
-| id               | UUID / Integer | Unique review ID |
-| project_id       | Foreign Key    | Related project  |
-| reviewer_id      | Foreign Key    | Reviewer         |
-| reviewed_user_id | Foreign Key    | Reviewed member  |
-| rating           | Integer        | Rating out of 5  |
-| comment          | Text           | Review comment   |
-| created_at       | DateTime       | Review date      |
+| Field                      | Type           | Description                  |
+| -------------------------- | -------------- | ---------------------------- |
+| id                         | UUID / Integer | Unique review ID             |
+| project_id                 | Foreign Key    | Related project              |
+| reviewer_id                | Foreign Key    | Reviewer                     |
+| reviewed_user_id           | Foreign Key    | Reviewed member              |
+| reliability                | Integer        | Reliability rating out of 5  |
+| technical_contribution     | Integer        | Technical rating out of 5    |
+| communication              | Integer        | Communication rating out of 5 |
+| meeting_attendance         | Integer        | Attendance rating out of 5   |
+| documentation_contribution | Integer        | Documentation rating out of 5 |
+| overall_rating             | Integer        | Calculated overall rating    |
+| comment                    | Text           | Review comment               |
+| created_at                 | DateTime       | Review date                  |
 
 ---
 
@@ -899,7 +897,7 @@ Best recommendation: **Prisma**, because it works cleanly with both SQLite and P
 | uploaded_by | Foreign Key    | User who uploaded file                   |
 | file_name   | String         | Original file name                       |
 | file_path   | String         | Storage path                             |
-| file_type   | String         | proposal, report, slides, code, evidence |
+| file_type   | String         | proposal, report, slides, code, evidence, screenshot, diagram |
 | mime_type   | String         | File MIME type                           |
 | size        | Integer        | File size                                |
 | uploaded_at | DateTime       | Upload date                              |
@@ -936,6 +934,47 @@ Best recommendation: **Prisma**, because it works cleanly with both SQLite and P
 
 ---
 
+## 9.13 Team Invites Table
+
+| Field      | Type           | Description                 |
+| ---------- | -------------- | --------------------------- |
+| id         | UUID / Integer | Unique invite ID            |
+| project_id | Foreign Key    | Related project             |
+| code       | String         | Unique invite code          |
+| created_by | Foreign Key    | User who generated the code |
+| expires_at | DateTime       | Expiry date                 |
+| used_at    | DateTime       | Last usage date, optional   |
+| used_by    | Integer        | Last user who used code     |
+| created_at | DateTime       | Creation date               |
+
+---
+
+## 9.14 Task Evidence Table
+
+| Field      | Type           | Description              |
+| ---------- | -------------- | ------------------------ |
+| id         | UUID / Integer | Unique evidence ID       |
+| task_id    | Foreign Key    | Related task             |
+| file_id    | Foreign Key    | Optional uploaded file   |
+| note       | Text           | Evidence note            |
+| created_at | DateTime       | Submission date          |
+
+---
+
+## 9.15 Supervisor Comments Table
+
+| Field        | Type           | Description                                      |
+| ------------ | -------------- | ------------------------------------------------ |
+| id           | UUID / Integer | Unique comment ID                                |
+| project_id   | Foreign Key    | Related project                                  |
+| user_id      | Foreign Key    | Supervisor or admin who commented                |
+| target_type  | String         | requirement, task, document, contribution, viva  |
+| target_id    | Integer        | Optional target record ID                        |
+| comment_text | Text           | Comment body                                     |
+| created_at   | DateTime       | Creation date                                    |
+
+---
+
 # 10. API Requirements
 
 ## 10.1 Authentication APIs
@@ -944,10 +983,18 @@ Best recommendation: **Prisma**, because it works cleanly with both SQLite and P
 POST /api/auth/register
 POST /api/auth/login
 GET  /api/auth/me
+PUT  /api/auth/profile
 POST /api/auth/logout
 ```
 
-## 10.2 Project APIs
+## 10.2 User APIs
+
+```text
+GET /api/users/search?q={query}
+GET /api/users/:userId
+```
+
+## 10.3 Project APIs
 
 ```text
 POST   /api/projects
@@ -957,34 +1004,45 @@ PUT    /api/projects/:id
 DELETE /api/projects/:id
 ```
 
-## 10.3 Member APIs
+## 10.4 Member and Invite APIs
 
 ```text
+POST   /api/projects/join/:code
 POST   /api/projects/:id/members
 GET    /api/projects/:id/members
+PUT    /api/projects/:id/members/:userId
 DELETE /api/projects/:id/members/:userId
+POST   /api/projects/:id/invites
+GET    /api/projects/:id/invites
 ```
 
-## 10.4 Requirements APIs
+## 10.5 Requirements APIs
 
 ```text
-POST /api/projects/:id/requirements
-GET  /api/projects/:id/requirements
-PUT  /api/requirements/:requirementId
-POST /api/projects/:id/requirements/generate
-POST /api/projects/:id/requirements/test-cases/generate
+GET    /api/projects/:id/requirements
+POST   /api/projects/:id/requirements
+POST   /api/projects/:id/requirements/generate
+GET    /api/projects/:id/requirements/traceability
+GET    /api/projects/requirements/:requirementId
+PUT    /api/projects/requirements/:requirementId
+PUT    /api/projects/requirements/:requirementId/review
+DELETE /api/projects/requirements/:requirementId
+POST   /api/projects/requirements/:requirementId/acceptance-criteria/generate
+POST   /api/projects/requirements/:requirementId/test-cases/generate
 ```
 
-## 10.5 Task APIs
+## 10.6 Task APIs
 
 ```text
-POST /api/projects/:id/tasks
-GET  /api/projects/:id/tasks
-PUT  /api/tasks/:taskId
-DELETE /api/tasks/:taskId
+GET    /api/projects/:id/tasks
+POST   /api/projects/:id/tasks
+GET    /api/projects/tasks/:taskId
+PUT    /api/projects/tasks/:taskId
+DELETE /api/projects/tasks/:taskId
+POST   /api/projects/tasks/:taskId/evidence
 ```
 
-## 10.6 Contribution APIs
+## 10.7 Contribution APIs
 
 ```text
 POST /api/projects/:id/progress-logs
@@ -993,26 +1051,38 @@ POST /api/projects/:id/peer-reviews
 GET  /api/projects/:id/contribution-report
 ```
 
-## 10.7 File APIs
+## 10.8 File APIs
 
 ```text
 POST   /api/projects/:id/files/upload
 GET    /api/projects/:id/files
-GET    /api/files/:fileId/download
-DELETE /api/files/:fileId
+POST   /api/projects/:id/files/analyze
+GET    /api/projects/files/:fileId/download
+DELETE /api/projects/files/:fileId
 ```
 
-## 10.8 Viva APIs
+## 10.9 Viva APIs
 
 ```text
 POST /api/projects/:id/viva/generate
 GET  /api/projects/:id/viva/questions
-POST /api/viva/questions/:questionId/answer
+POST /api/projects/:id/viva/questions/:questionId/answer
+POST /api/projects/viva/questions/:questionId/answer
 POST /api/projects/:id/readiness-score/generate
 GET  /api/projects/:id/readiness-score
 ```
 
-## 10.9 Report APIs
+## 10.10 Supervisor APIs
+
+```text
+GET    /api/supervisor/assigned/projects
+GET    /api/supervisor/assigned/overview
+POST   /api/projects/:id/comments
+GET    /api/projects/:id/comments
+DELETE /api/projects/comments/:commentId
+```
+
+## 10.11 Report APIs
 
 ```text
 GET /api/projects/:id/reports/requirements
@@ -1021,13 +1091,22 @@ GET /api/projects/:id/reports/viva
 GET /api/projects/:id/reports/full
 ```
 
+## 10.12 Admin APIs
+
+```text
+GET    /api/admin/stats
+GET    /api/admin/users
+PUT    /api/admin/users/:userId/role
+DELETE /api/admin/users/:userId
+```
+
 ---
 
 # 11. AI Requirements
 
-## 11.1 Gemini API Usage
+## 11.1 NVIDIA OpenAI-Compatible API Usage
 
-The system shall use Gemini API for:
+The system shall use the NVIDIA OpenAI-compatible chat completions API for:
 
 1. Requirements generation
 2. Ambiguity detection
@@ -1079,7 +1158,7 @@ Uploaded document summary:
 
 ## 11.3 AI Output Format
 
-The system should request structured JSON output from Gemini where possible.
+The system should request structured JSON output from the AI provider where possible.
 
 Example:
 
@@ -1095,7 +1174,7 @@ Example:
 
 ## 11.4 AI Failure Handling
 
-If Gemini API fails, the system shall:
+If the AI API fails, the system shall:
 
 * show a friendly error message
 * allow the user to retry
@@ -1216,7 +1295,7 @@ Test interactions between:
 
 * React frontend and Express API
 * Express API and database
-* Express API and Gemini API
+* Express API and the NVIDIA OpenAI-compatible AI API
 * file upload system and database
 
 ## 15.3 Acceptance Testing
@@ -1236,10 +1315,10 @@ Example acceptance test:
 
 The system shall operate under the following constraints:
 
-1. The system requires internet access for Gemini API features.
+1. The system requires internet access for AI API features.
 2. AI-generated content must be reviewed by students or supervisors before use.
-3. SQLite shall be used only during development.
-4. PostgreSQL shall be used for production deployment.
+3. PostgreSQL shall be used for development and production deployment.
+4. Prisma migrations shall be used to keep database structure consistent across environments.
 5. File upload size may be limited depending on server configuration.
 6. The system shall not be treated as a final examiner or automatic grading authority.
 7. AI-generated scoring shall be advisory, not final.
@@ -1252,7 +1331,7 @@ The system shall operate under the following constraints:
 2. Students can upload their project documents in supported formats.
 3. Supervisors will review AI-generated outputs before making decisions.
 4. Group contribution data will be based on tasks, logs, uploads, and peer reviews.
-5. Gemini API will be available for AI processing.
+5. The configured NVIDIA AI API will be available for AI processing.
 6. Production deployment will provide PostgreSQL database access.
 
 ---
@@ -1263,7 +1342,7 @@ The system shall operate under the following constraints:
 | ------------------------------------- | ------------------------- | --------------------------------------- |
 | AI generates inaccurate requirements  | Poor project quality      | Require supervisor approval             |
 | Students manipulate contribution data | Unfair scores             | Use multiple evidence sources           |
-| Gemini API downtime                   | AI features unavailable   | Add retry and fallback messages         |
+| AI API downtime                       | AI features unavailable   | Add retry and fallback messages         |
 | File upload abuse                     | Security risk             | Validate file type and size             |
 | Weak peer review honesty              | Biased contribution score | Combine peer reviews with task evidence |
 | Database migration issues             | Deployment failure        | Use Prisma migrations                   |
@@ -1295,6 +1374,6 @@ Future versions may include:
 
 CapstoneGuard AI is a comprehensive AI-powered platform for improving the quality of student software projects. It combines requirements engineering, group contribution tracking, viva preparation, project supervision, and AI-assisted analysis into a single system.
 
-The chosen stack of **React, Express.js, SQLite for development, PostgreSQL for production, and Gemini API for AI features** is suitable because it supports fast development, modular architecture, scalable deployment, and intelligent document-based analysis.
+The chosen stack of **React, Express.js, PostgreSQL with Prisma, and NVIDIA OpenAI-compatible AI integration** is suitable because it supports fast development, modular architecture, scalable deployment, and intelligent document-based analysis.
 
 The system’s strongest value is that it does not simply manage projects. It helps students make their projects **testable, traceable, fairly contributed, and defensible**.

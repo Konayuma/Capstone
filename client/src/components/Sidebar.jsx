@@ -23,16 +23,31 @@ const buildProjectHref = (projectId, tab) => (
   projectId ? `/projects/${projectId}#${tab}` : '/projects'
 );
 
+const sidebarGroupDefaults = {
+  'Studio Board': true,
+  'Project Tools': true,
+  'Settings': true,
+};
+
+const sidebarGroupStorageKey = 'capstone.sidebarGroups';
+
+const readStoredSidebarGroups = () => {
+  if (typeof window === 'undefined') return sidebarGroupDefaults;
+
+  try {
+    const raw = window.localStorage.getItem(sidebarGroupStorageKey);
+    return raw ? { ...sidebarGroupDefaults, ...JSON.parse(raw) } : sidebarGroupDefaults;
+  } catch {
+    return sidebarGroupDefaults;
+  }
+};
+
 export const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [query, setQuery] = useState('');
-  const [openGroups, setOpenGroups] = useState({
-    'Studio Board': true,
-    'Project Tools': true,
-    'Settings': true,
-  });
+  const [openGroups, setOpenGroups] = useState(readStoredSidebarGroups);
   const userRole = user?.role;
 
   const projectMatch = location.pathname.match(/^\/projects\/(\d+)/);
@@ -136,6 +151,14 @@ export const Sidebar = () => {
       ...nextOpenGroups,
     }));
   }, [location.pathname]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(sidebarGroupStorageKey, JSON.stringify(openGroups));
+    } catch {
+      // Ignore storage failures and fall back to in-memory state.
+    }
+  }, [openGroups]);
 
   if (!user) return null;
 

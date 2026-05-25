@@ -628,6 +628,83 @@ select {
   max-width: 62ch;
 }
 
+.dashboard-action-stack {
+  display: grid;
+  justify-items: end;
+  align-content: start;
+  gap: 10px;
+}
+
+.dashboard-profile-button {
+  width: min(100%, 280px);
+  border: 1px solid var(--line-subtle);
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--bg-elevated) 92%, white);
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.dashboard-profile-button:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--brand-1) 18%, var(--line-subtle));
+  box-shadow: var(--shadow-soft);
+}
+
+.dashboard-profile-button strong,
+.dashboard-profile-button small {
+  display: block;
+}
+
+.dashboard-profile-button strong {
+  color: var(--ink-strong);
+}
+
+.dashboard-profile-button small {
+  color: var(--ink-soft);
+}
+
+.dashboard-invite-card {
+  display: grid;
+  gap: 16px;
+  padding: clamp(18px, 2vw, 26px);
+}
+
+.dashboard-invite-card > div:first-child {
+  display: grid;
+  gap: 8px;
+  max-width: 62ch;
+}
+
+.dashboard-invite-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.dashboard-modal-card {
+  display: grid;
+  gap: 14px;
+}
+
+.dashboard-modal-form {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .status-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -2403,6 +2480,16 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-action-stack,
+  .dashboard-invite-form {
+    justify-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-profile-button {
+    width: 100%;
+  }
+
   .main-content {
     padding-top: 16px;
   }
@@ -2502,6 +2589,14 @@ select {
   .requirement-detail-item > span {
     width: 26px;
     height: 26px;
+  }
+
+  .dashboard-modal-actions {
+    justify-content: stretch;
+  }
+
+  .dashboard-modal-actions .btn {
+    width: 100%;
   }
 
   .comments-feed-head {

@@ -60,6 +60,26 @@ export const Dashboard = () => {
   const [error, setError] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [joiningTeam, setJoiningTeam] = useState(false);
+  const [creatingProject, setCreatingProject] = useState(false);
+
+  const openCreateProjectModal = () => {
+    setError('');
+    setShowModal(true);
+  };
+
+  const closeCreateProjectModal = () => {
+    if (creatingProject) return;
+    setShowModal(false);
+    setError('');
+  };
+
+  const resetProjectForm = () => {
+    setTitle('');
+    setDescription('');
+    setCategory('');
+    setDepartment('');
+    setAcademicYear('2025/2026');
+  };
 
   const fetchProjects = async () => {
     try {
@@ -79,6 +99,9 @@ export const Dashboard = () => {
   const handleCreateProject = async (e) => {
     e.preventDefault();
     setError('');
+    if (creatingProject) return;
+
+    setCreatingProject(true);
     try {
       const res = await axios.post('/projects', {
         title,
@@ -88,15 +111,14 @@ export const Dashboard = () => {
         academicYear,
       });
 
+      resetProjectForm();
       setShowModal(false);
-      setTitle('');
-      setDescription('');
-      setCategory('');
-      setDepartment('');
       fetchProjects();
       navigate(`/projects/${res.data.id}`);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create project workspace');
+    } finally {
+      setCreatingProject(false);
     }
   };
 
@@ -185,7 +207,7 @@ export const Dashboard = () => {
             {toDisplayDate()}
           </span>
           {user.role === 'student' && (
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            <button className="btn btn-primary" onClick={openCreateProjectModal}>
               <FolderPlus size={16} />
               New Project
             </button>
@@ -302,11 +324,11 @@ export const Dashboard = () => {
             padding: '18px',
           }}
         >
-          <div className="card" style={{ width: 'min(620px, 100%)' }}>
+          <div className="card dashboard-modal-card" style={{ width: 'min(620px, 100%)' }}>
             <h2 style={{ marginBottom: '14px' }}>Create a New Project</h2>
             {error && <div className="badge badge-danger" style={{ marginBottom: '12px' }}>{error}</div>}
 
-            <form onSubmit={handleCreateProject} style={{ display: 'grid', gap: '12px' }}>
+            <form onSubmit={handleCreateProject} className="dashboard-modal-form">
               <div className="form-group">
                 <label className="form-label">Project title</label>
                 <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -341,11 +363,11 @@ export const Dashboard = () => {
                 <input className="form-input" value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">
-                  <Activity size={15} />
-                  Create project
+              <div className="dashboard-modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={closeCreateProjectModal} disabled={creatingProject}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={creatingProject} aria-busy={creatingProject}>
+                  {creatingProject ? <Loader2 className="spinner-icon" size={15} /> : <Activity size={15} />}
+                  {creatingProject ? 'Creating...' : 'Create project'}
                 </button>
               </div>
             </form>

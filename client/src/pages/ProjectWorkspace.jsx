@@ -566,6 +566,7 @@ export const ProjectWorkspace = () => {
     { label: 'Unassigned', value: unassignedTasks.length, hint: 'Waiting for an owner.' },
   ];
   const analysisSections = fileAnalysis ? parseAnalysisSections(fileAnalysis) : [];
+  const githubImportedFiles = files.filter((file) => String(file.fileType || '').startsWith('github:'));
   const documentOverviewItems = [
     { title: 'What is incomplete', section: analysisSections.find((section) => /completeness|gaps/i.test(section.title)) },
     { title: 'What to upload next', section: analysisSections.find((section) => /recommended next uploads|fixes/i.test(section.title)) },
@@ -2311,6 +2312,11 @@ export const ProjectWorkspace = () => {
               <div className="documents-list-head">
                 <div>
                   <span className="badge badge-info">{files.length} file{files.length === 1 ? '' : 's'}</span>
+                    {githubImportedFiles.length > 0 && (
+                      <span className="badge badge-info" style={{ marginLeft: '8px' }}>
+                        {githubImportedFiles.length} from GitHub
+                      </span>
+                    )}
                   <h3>Document library</h3>
                 </div>
                 <div className="documents-list-actions">

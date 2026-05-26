@@ -3,6 +3,8 @@ import prisma from '../config/db.js';
 import env from '../config/env.js';
 
 const DEFAULT_IMPORT_ROOTS = ['README.md', 'docs', 'requirements', 'notes', 'architecture', 'reports'];
+const DOCUMENT_HINT_SEGMENTS = new Set(['docs', 'doc', 'documentation', 'requirements', 'requirement', 'notes', 'note', 'architecture', 'design', 'reports', 'report', '.github']);
+const DOCUMENT_HINT_FILENAMES = new Set(['readme', 'readme.md', 'readme.markdown', 'changelog', 'changelog.md', 'contributing', 'contributing.md', 'license', 'license.md']);
 const TEXT_EXTENSIONS = new Set(['.md', '.markdown', '.mdx', '.txt', '.rst', '.adoc', '.csv', '.json', '.yaml', '.yml', '.toml']);
 
 const normalizePath = (value) => String(value || '')
@@ -178,10 +180,12 @@ const isSupportedDocumentPath = (relativePath) => {
   }
 
   const lowerPath = normalizedPath.toLowerCase();
-  if (lowerPath === 'readme.md') return true;
+  if (DOCUMENT_HINT_FILENAMES.has(lowerPath) || lowerPath.startsWith('readme.')) return true;
 
   const extension = lowerPath.slice(lowerPath.lastIndexOf('.'));
-  return TEXT_EXTENSIONS.has(extension);
+  if (!TEXT_EXTENSIONS.has(extension)) return false;
+
+  return normalizedPath.split('/').some((segment) => DOCUMENT_HINT_SEGMENTS.has(segment.toLowerCase()));
 };
 
 const buildGithubHeaders = (token) => {
@@ -261,7 +265,6 @@ const collectGithubFiles = (tree, project, branch) => {
       size: typeof entry.size === 'number' ? entry.size : null,
     }))
     .filter((entry) => isSupportedDocumentPath(entry.path))
-    .filter((entry) => managedRoots.some((root) => pathMatchesManagedRoot(entry.path, root)))
     .map((entry) => ({
       fileName: entry.path,
       filePath: buildBlobUrl(project.githubRepositoryOwner, project.githubRepositoryName, branch, entry.path),

@@ -165,7 +165,7 @@ export const fileController = {
         .join('\n') || 'No requirements recorded.';
 
       const analysis = await generateTextContent(
-        `Analyze this capstone project's uploaded document set and identify quality gaps, missing artifacts, and viva preparation risks.
+        `Analyze this capstone project's document set, including any GitHub-synced repository files, and identify quality gaps, missing artifacts, and viva preparation risks.
 
 Project: ${project.title}
 Description: ${project.description}

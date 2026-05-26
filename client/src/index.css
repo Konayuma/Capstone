@@ -1777,6 +1777,84 @@ select {
 .settings-card textarea {
   min-height: 150px;
 }
+
+.github-card {
+  gap: 18px;
+}
+
+.github-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.github-status-pill {
+  display: grid;
+  gap: 5px;
+  padding: 12px 13px;
+  border-radius: 16px;
+  border: 1px solid var(--line-subtle);
+  background: color-mix(in oklab, var(--bg-soft) 28%, white);
+}
+
+.github-status-pill span {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.github-status-pill strong {
+  font-size: 0.92rem;
+  color: var(--ink-strong);
+  word-break: break-word;
+}
+
+.github-status-summary,
+.github-status-error,
+.github-helper-text {
+  border-radius: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-subtle);
+  background: color-mix(in oklab, var(--bg-soft) 30%, white);
+}
+
+.github-status-summary,
+.github-helper-text {
+  color: var(--ink-soft);
+}
+
+.github-status-error {
+  color: color-mix(in oklab, var(--danger) 78%, var(--ink-strong));
+  background: color-mix(in oklab, var(--danger) 8%, white);
+}
+
+.github-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.github-actions .btn {
+  justify-self: start;
+}
+
+.github-disconnect-button {
+  border-style: dashed;
+}
+
+.github-form {
+  gap: 16px;
+}
+
+.github-form .form-group {
+  gap: 8px;
+}
+
+.github-form .form-label {
+  color: var(--ink-strong);
+}
 .profile-page {
   display: grid;
   gap: 18px;
@@ -1916,6 +1994,7 @@ select {
   border: 1px solid color-mix(in oklab, var(--line-subtle) 72%, transparent);
   border-radius: 16px;
   background: color-mix(in oklab, white 86%, var(--bg-elevated));
+  --task-card-inline-pad: clamp(16px, 3vw, 24px);
   padding: 18px clamp(16px, 3vw, 24px);
   display: grid;
   gap: 16px;
@@ -2043,21 +2122,30 @@ select {
 }
 
 .task-evidence-panel {
+  margin-inline: calc(var(--task-card-inline-pad) * -1);
+  padding: 16px var(--task-card-inline-pad) 4px;
   border-top: 1px solid var(--line-subtle);
-  padding-top: 16px;
+  background: color-mix(in oklab, var(--bg-elevated) 82%, white);
   display: grid;
-  gap: 13px;
+  gap: 12px;
 }
 
 .task-evidence-head {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
   gap: 12px;
 }
 
 .task-evidence-head strong {
   color: var(--ink-strong);
+}
+
+.task-evidence-head p {
+  margin-top: 4px;
+  max-width: 48ch;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
 }
 
 .task-evidence-head span {
@@ -2106,9 +2194,24 @@ select {
 
 .task-evidence-form {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(220px, 0.9fr) auto;
-  gap: 10px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.95fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.task-evidence-form-field {
+  display: grid;
+  gap: 6px;
+}
+
+.task-evidence-form-field--file {
+  align-self: start;
+}
+
+.task-evidence-label {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .task-evidence-form .form-input {
@@ -2117,7 +2220,7 @@ select {
 }
 
 .task-evidence-form input[type="file"] {
-  padding: 8px 10px;
+  padding: 9px 10px;
   color: var(--ink-soft);
 }
 
@@ -2135,6 +2238,51 @@ select {
 .task-evidence-form .btn {
   min-height: 42px;
   white-space: nowrap;
+}
+
+.task-evidence-form-actions {
+  display: grid;
+  gap: 8px;
+  align-content: end;
+}
+
+.task-evidence-hint {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  max-width: 28ch;
+}
+
+.task-evidence-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line-subtle);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: color-mix(in oklab, var(--bg-soft) 22%, white);
+  min-width: 0;
+}
+
+.task-evidence-file-chip span {
+  min-width: 0;
+  color: var(--ink-body);
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-evidence-clear {
+  border: 0;
+  background: transparent;
+  color: var(--brand-1);
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
+}
+
+.task-evidence-clear:hover {
+  text-decoration: underline;
 }
 
 .task-empty-state {
@@ -3874,6 +4022,30 @@ select {
   .task-item-controls,
   .task-evidence-item {
     grid-template-columns: 1fr;
+  }
+
+  .github-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .github-actions .btn {
+    width: 100%;
+  }
+
+  .task-evidence-panel {
+    margin-inline: calc(var(--task-card-inline-pad) * -1);
+    padding-inline: var(--task-card-inline-pad);
+  }
+
+  .task-evidence-head,
+  .task-evidence-form,
+  .task-evidence-form-actions {
+    gap: 10px;
+  }
+
+  .task-evidence-form {
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .task-evidence-item .btn,

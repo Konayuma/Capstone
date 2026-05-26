@@ -44,6 +44,20 @@ model Project {
   supervisorId Int?
   createdBy    Int
   createdAt    DateTime @default(now())
+  githubRepositoryUrl    String?
+  githubRepositoryOwner  String?
+  githubRepositoryName   String?
+  githubInstallationId   Int?
+  githubDefaultBranch    String?
+  githubDocsPath        String?
+  githubRequirementsPath String?
+  githubNotesPath       String?
+  githubSyncEnabled     Boolean  @default(false)
+  githubConnectedAt     DateTime?
+  githubLastSyncedAt    DateTime?
+  githubLastSyncStatus  String?
+  githubLastSyncSummary String?
+  githubLastSyncError   String?
 
   // Relations
   supervisor   User?            @relation("ProjectSupervisor", fields: [supervisorId], references: [id])

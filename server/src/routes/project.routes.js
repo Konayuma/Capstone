@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import projectController from '../controllers/project.controller.js';
+import githubController from '../controllers/github.controller.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireProjectAccess } from '../middleware/projectAccess.js';
 
@@ -11,6 +12,10 @@ router.post('/', projectController.create);
 router.get('/', projectController.list);
 router.get('/:id', requireProjectAccess, projectController.getById);
 router.put('/:id', requireProjectAccess, projectController.update);
+router.get('/:id/github', requireProjectAccess, githubController.getProjectIntegration);
+router.put('/:id/github', requireProjectAccess, githubController.updateProjectIntegration);
+router.post('/:id/github/sync', requireProjectAccess, githubController.syncProjectRepository);
+router.delete('/:id/github', requireProjectAccess, githubController.disconnectProjectRepository);
 router.delete('/:id', requireProjectAccess, projectController.remove);
 
 export default router;

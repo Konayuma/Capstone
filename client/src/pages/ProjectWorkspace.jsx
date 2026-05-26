@@ -26,6 +26,10 @@ import {
   ShieldCheck,
   Trash2,
   ExternalLink,
+  GitBranch,
+  RefreshCw,
+  Link2,
+  Unlink,
   KeyRound,
   CalendarDays,
   CheckCircle2,
@@ -140,6 +144,18 @@ const getInitials = (name = '') => name
 
 const getProjectRoleLabel = (role) => roleLabelMap[role] || 'Team Member';
 
+const formatProjectFileTypeLabel = (fileType = '') => {
+  const normalized = String(fileType || '').trim();
+  if (!normalized) return 'Document';
+  if (normalized.startsWith('github:')) {
+    return `GitHub ${normalized.split(':')[1] || 'document'}`;
+  }
+
+  return normalized
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+};
+
 export const ProjectWorkspace = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -154,6 +170,14 @@ export const ProjectWorkspace = () => {
     department: '',
     academicYear: '',
     status: 'active',
+  });
+  const [githubForm, setGithubForm] = useState({
+    repositoryUrl: '',
+    installationId: '',
+    defaultBranch: 'main',
+    docsPath: 'docs',
+    requirementsPath: 'requirements',
+    notesPath: 'notes',
   });
   const [activeTab, setActiveTab] = useState('requirements');
   const [loading, setLoading] = useState(true);
@@ -173,6 +197,9 @@ export const ProjectWorkspace = () => {
   const [fileAnalysis, setFileAnalysis] = useState('');
   const [delight, setDelight] = useState(null);
   const [savingProject, setSavingProject] = useState(false);
+  const [savingGithubConnection, setSavingGithubConnection] = useState(false);
+  const [syncingGithubRepository, setSyncingGithubRepository] = useState(false);
+  const [disconnectingGithubRepository, setDisconnectingGithubRepository] = useState(false);
   const [deletingProject, setDeletingProject] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [evidenceDrafts, setEvidenceDrafts] = useState({});
@@ -257,6 +284,14 @@ export const ProjectWorkspace = () => {
         department: projRes.data.department || '',
         academicYear: projRes.data.academicYear || '',
         status: projRes.data.status || 'active',
+      });
+      setGithubForm({
+        repositoryUrl: projRes.data.githubRepositoryUrl || '',
+        installationId: projRes.data.githubInstallationId || '',
+        defaultBranch: projRes.data.githubDefaultBranch || 'main',
+        docsPath: projRes.data.githubDocsPath || 'docs',
+        requirementsPath: projRes.data.githubRequirementsPath || 'requirements',
+        notesPath: projRes.data.githubNotesPath || 'notes',
       });
 
       const memberRes = await axios.get(`/projects/${id}/members`);
@@ -810,6 +845,77 @@ export const ProjectWorkspace = () => {
       toast.error(err.response?.data?.error || 'Unable to update project details.');
     } finally {
       setSavingProject(false);
+    }
+  };
+
+  const handleUpdateGithubConnection = async (e) => {
+    e.preventDefault();
+
+    if (!githubForm.repositoryUrl.trim()) {
+      toast.error('Enter a GitHub repository URL first.');
+      return;
+    }
+
+    if (!String(githubForm.installationId || '').trim()) {
+      toast.error('Enter the GitHub App installation ID.');
+      return;
+    }
+
+    setSavingGithubConnection(true);
+    try {
+      const res = await axios.put(`/projects/${id}/github`, githubForm);
+      setProject(res.data.project);
+      setGithubForm(res.data.connection);
+      toast.success('GitHub connection saved.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to save the GitHub connection.');
+    } finally {
+      setSavingGithubConnection(false);
+    }
+  };
+
+  const handleSyncGithubRepository = async () => {
+    if (!githubForm.repositoryUrl.trim()) {
+      toast.error('Connect a GitHub repository before syncing.');
+      return;
+    }
+
+    setSyncingGithubRepository(true);
+    try {
+      const res = await axios.post(`/projects/${id}/github/sync`);
+      setProject(res.data.project);
+      await refreshProjectFiles();
+      toast.success(`Imported ${res.data.importedCount} GitHub file${res.data.importedCount === 1 ? '' : 's'}.`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to sync the GitHub repository.');
+    } finally {
+      setSyncingGithubRepository(false);
+    }
+  };
+
+  const handleDisconnectGithubRepository = async () => {
+    if (!window.confirm('Disconnect the GitHub repository and remove imported GitHub files?')) {
+      return;
+    }
+
+    setDisconnectingGithubRepository(true);
+    try {
+      const res = await axios.delete(`/projects/${id}/github`);
+      setProject(res.data.project);
+      setGithubForm(res.data.connection || {
+        repositoryUrl: '',
+        installationId: '',
+        defaultBranch: 'main',
+        docsPath: 'docs',
+        requirementsPath: 'requirements',
+        notesPath: 'notes',
+      });
+      await refreshProjectFiles();
+      toast.success('GitHub connection removed.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to disconnect the GitHub repository.');
+    } finally {
+      setDisconnectingGithubRepository(false);
     }
   };
 
@@ -1542,7 +1648,10 @@ export const ProjectWorkspace = () => {
 
                         <div className="task-evidence-panel">
                           <div className="task-evidence-head">
-                            <strong>Evidence</strong>
+                            <div>
+                              <strong>Evidence</strong>
+                              <p>Capture what changed, attach proof, and keep each task ready for review.</p>
+                            </div>
                             <span>{task.evidence?.length || 0} item{task.evidence?.length === 1 ? '' : 's'}</span>
                           </div>
 
@@ -1566,21 +1675,52 @@ export const ProjectWorkspace = () => {
                           )}
 
                           <form className="task-evidence-form" onSubmit={(event) => handleSubmitTaskEvidence(event, task.id)}>
-                            <input
-                              className="form-input"
-                              value={evidenceDrafts[task.id]?.note || ''}
-                              placeholder="Short evidence note or link"
-                              onChange={(event) => setEvidenceDraft(task.id, { note: event.target.value })}
-                            />
-                            <input
-                              className="form-input"
-                              type="file"
-                              onChange={(event) => setEvidenceDraft(task.id, { file: event.target.files?.[0] || null })}
-                            />
-                            <button type="submit" className="btn btn-secondary">
-                              <Upload size={14} />
-                              Add evidence
-                            </button>
+                            <div className="task-evidence-form-field task-evidence-form-field--note">
+                              <label className="task-evidence-label" htmlFor={`task-evidence-note-${task.id}`}>
+                                Note or link
+                              </label>
+                              <input
+                                id={`task-evidence-note-${task.id}`}
+                                className="form-input"
+                                value={evidenceDrafts[task.id]?.note || ''}
+                                placeholder="What did you verify or finish?"
+                                onChange={(event) => setEvidenceDraft(task.id, { note: event.target.value })}
+                              />
+                            </div>
+
+                            <div className="task-evidence-form-field task-evidence-form-field--file">
+                              <label className="task-evidence-label" htmlFor={`task-evidence-file-${task.id}`}>
+                                Attach file
+                              </label>
+                              <input
+                                id={`task-evidence-file-${task.id}`}
+                                className="form-input"
+                                type="file"
+                                onChange={(event) => setEvidenceDraft(task.id, { file: event.target.files?.[0] || null })}
+                              />
+                              {evidenceDrafts[task.id]?.file?.name && (
+                                <div className="task-evidence-file-chip">
+                                  <span>{evidenceDrafts[task.id].file.name}</span>
+                                  <button
+                                    type="button"
+                                    className="task-evidence-clear"
+                                    onClick={() => setEvidenceDraft(task.id, { file: null })}
+                                  >
+                                    Clear
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="task-evidence-form-actions">
+                              <p className="task-evidence-hint">
+                                Add a note, a file, or both. Keep the proof tied to this task so review stays fast.
+                              </p>
+                              <button type="submit" className="btn btn-secondary">
+                                <Upload size={14} />
+                                Add evidence
+                              </button>
+                            </div>
                           </form>
                         </div>
                       </article>
@@ -2192,7 +2332,7 @@ export const ProjectWorkspace = () => {
                       <div>
                         <strong>{file.fileName}</strong>
                         <span>
-                          {file.fileType} · {formatFileSize(file.size)} · Uploaded by {file.uploader?.name || 'Unknown'} · {formatCommentDate(file.uploadedAt)}
+                          {formatProjectFileTypeLabel(file.fileType)} · {formatFileSize(file.size)} · Uploaded by {file.uploader?.name || 'Unknown'} · {formatCommentDate(file.uploadedAt)}
                         </span>
                       </div>
                       <div className="documents-actions">
@@ -2369,65 +2509,176 @@ export const ProjectWorkspace = () => {
         {/* TAB 7: Project Settings */}
         {activeTab === 'settings' && (
           <div className="settings-layout">
-            <section className="card settings-card">
-              <div>
-                <span className="badge badge-info">
-                  <Pencil size={14} />
-                  Workspace settings
-                </span>
-                <h3>Edit project details</h3>
-                <p>Keep the title, scope, department, category, academic year, and status current.</p>
-              </div>
+            <div className="grid-2 settings-grid">
+              <section className="card settings-card">
+                <div>
+                  <span className="badge badge-info">
+                    <Pencil size={14} />
+                    Workspace settings
+                  </span>
+                  <h3>Edit project details</h3>
+                  <p>Keep the title, scope, department, category, academic year, and status current.</p>
+                </div>
 
-              <form className="settings-form" onSubmit={handleUpdateProject}>
-                <div className="grid-2">
-                  <div className="form-group">
-                    <label className="form-label">Project title</label>
-                    <input className="form-input" value={projectForm.title} onChange={(event) => setProjectForm({ ...projectForm, title: event.target.value })} required />
+                <form className="settings-form" onSubmit={handleUpdateProject}>
+                  <div className="grid-2">
+                    <div className="form-group">
+                      <label className="form-label">Project title</label>
+                      <input className="form-input" value={projectForm.title} onChange={(event) => setProjectForm({ ...projectForm, title: event.target.value })} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Status</label>
+                      <select className="form-input" value={projectForm.status} onChange={(event) => setProjectForm({ ...projectForm, status: event.target.value })}>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="archived">Archived</option>
+                        <option value="draft">Draft</option>
+                      </select>
+                    </div>
                   </div>
+
                   <div className="form-group">
-                    <label className="form-label">Status</label>
-                    <select className="form-input" value={projectForm.status} onChange={(event) => setProjectForm({ ...projectForm, status: event.target.value })}>
-                      <option value="active">Active</option>
-                      <option value="completed">Completed</option>
-                      <option value="archived">Archived</option>
-                      <option value="draft">Draft</option>
-                    </select>
+                    <label className="form-label">Description</label>
+                    <textarea
+                      className="form-input"
+                      value={projectForm.description}
+                      onChange={(event) => setProjectForm({ ...projectForm, description: event.target.value })}
+                      minLength={10}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid-2">
+                    <div className="form-group">
+                      <label className="form-label">Department or course</label>
+                      <input className="form-input" value={projectForm.department} onChange={(event) => setProjectForm({ ...projectForm, department: event.target.value })} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Project category</label>
+                      <input className="form-input" value={projectForm.category} onChange={(event) => setProjectForm({ ...projectForm, category: event.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Academic year</label>
+                    <input className="form-input" value={projectForm.academicYear} onChange={(event) => setProjectForm({ ...projectForm, academicYear: event.target.value })} />
+                  </div>
+
+                  <button type="submit" className="btn btn-primary" disabled={savingProject}>
+                    {savingProject ? <><Loader2 className="spinner-icon" size={15} /> Saving...</> : 'Save project details'}
+                  </button>
+                </form>
+              </section>
+
+              <section className="card github-card settings-card">
+                <div>
+                  <span className="badge badge-info">
+                    <GitBranch size={14} />
+                    GitHub App sync
+                  </span>
+                  <h3>Import repository docs through the app</h3>
+                  <p>Read GitHub markdown and text files into the Documents tab through an installation token, not a user token.</p>
+                </div>
+
+                <div className="github-status-grid">
+                  <div className="github-status-pill">
+                    <span>Auth model</span>
+                    <strong>GitHub App</strong>
+                  </div>
+                  <div className="github-status-pill">
+                    <span>Installation ID</span>
+                    <strong>{project?.githubInstallationId || 'Not set'}</strong>
+                  </div>
+                  <div className="github-status-pill">
+                    <span>Repository</span>
+                    <strong>{project?.githubRepositoryOwner && project?.githubRepositoryName ? `${project.githubRepositoryOwner}/${project.githubRepositoryName}` : 'Not set'}</strong>
+                  </div>
+                  <div className="github-status-pill">
+                    <span>Connection</span>
+                    <strong>{project?.githubSyncEnabled ? 'Connected' : 'Not connected'}</strong>
+                  </div>
+                  <div className="github-status-pill">
+                    <span>Last sync</span>
+                    <strong>{project?.githubLastSyncedAt ? formatCommentDate(project.githubLastSyncedAt) : 'Never'}</strong>
+                  </div>
+                  <div className="github-status-pill">
+                    <span>Sync result</span>
+                    <strong>{project?.githubLastSyncStatus ? formatProjectFileTypeLabel(project.githubLastSyncStatus) : 'Idle'}</strong>
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Description</label>
-                  <textarea
-                    className="form-input"
-                    value={projectForm.description}
-                    onChange={(event) => setProjectForm({ ...projectForm, description: event.target.value })}
-                    minLength={10}
-                    required
-                  />
-                </div>
+                {project?.githubLastSyncSummary && (
+                  <p className="github-status-summary">{project.githubLastSyncSummary}</p>
+                )}
 
-                <div className="grid-2">
+                {project?.githubLastSyncError && (
+                  <p className="github-status-error">{project.githubLastSyncError}</p>
+                )}
+
+                <form className="settings-form github-form" onSubmit={handleUpdateGithubConnection}>
                   <div className="form-group">
-                    <label className="form-label">Department or course</label>
-                    <input className="form-input" value={projectForm.department} onChange={(event) => setProjectForm({ ...projectForm, department: event.target.value })} />
+                    <label className="form-label">Repository URL</label>
+                    <input
+                      className="form-input"
+                      placeholder="https://github.com/owner/repository"
+                      value={githubForm.repositoryUrl}
+                      onChange={(event) => setGithubForm({ ...githubForm, repositoryUrl: event.target.value })}
+                      required
+                    />
                   </div>
+
                   <div className="form-group">
-                    <label className="form-label">Project category</label>
-                    <input className="form-input" value={projectForm.category} onChange={(event) => setProjectForm({ ...projectForm, category: event.target.value })} />
+                    <label className="form-label">GitHub App installation ID</label>
+                    <input
+                      className="form-input"
+                      inputMode="numeric"
+                      placeholder="12345678"
+                      value={githubForm.installationId}
+                      onChange={(event) => setGithubForm({ ...githubForm, installationId: event.target.value })}
+                      required
+                    />
                   </div>
-                </div>
 
-                <div className="form-group">
-                  <label className="form-label">Academic year</label>
-                  <input className="form-input" value={projectForm.academicYear} onChange={(event) => setProjectForm({ ...projectForm, academicYear: event.target.value })} />
-                </div>
+                  <div className="grid-2">
+                    <div className="form-group">
+                      <label className="form-label">Default branch</label>
+                      <input className="form-input" value={githubForm.defaultBranch} onChange={(event) => setGithubForm({ ...githubForm, defaultBranch: event.target.value })} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Docs folder</label>
+                      <input className="form-input" value={githubForm.docsPath} onChange={(event) => setGithubForm({ ...githubForm, docsPath: event.target.value })} />
+                    </div>
+                  </div>
 
-                <button type="submit" className="btn btn-primary" disabled={savingProject}>
-                  {savingProject ? <><Loader2 className="spinner-icon" size={15} /> Saving...</> : 'Save project details'}
-                </button>
-              </form>
-            </section>
+                  <div className="grid-2">
+                    <div className="form-group">
+                      <label className="form-label">Requirements folder</label>
+                      <input className="form-input" value={githubForm.requirementsPath} onChange={(event) => setGithubForm({ ...githubForm, requirementsPath: event.target.value })} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Notes folder</label>
+                      <input className="form-input" value={githubForm.notesPath} onChange={(event) => setGithubForm({ ...githubForm, notesPath: event.target.value })} />
+                    </div>
+                  </div>
+
+                  <p className="github-helper-text">
+                    Install the GitHub App on the repository, then paste the installation ID. Capstone imports supported markdown and text files from the selected folders.
+                  </p>
+
+                  <div className="github-actions">
+                    <button type="submit" className="btn btn-primary" disabled={savingGithubConnection}>
+                      {savingGithubConnection ? <><Loader2 className="spinner-icon" size={15} /> Saving...</> : <><Link2 size={15} /> Save connection</>}
+                    </button>
+                    <button type="button" className="btn btn-secondary" onClick={handleSyncGithubRepository} disabled={syncingGithubRepository || refreshingFiles || !githubForm.repositoryUrl.trim()}>
+                      {syncingGithubRepository ? <><Loader2 className="spinner-icon" size={15} /> Syncing...</> : <><RefreshCw size={15} /> Sync now</>}
+                    </button>
+                    <button type="button" className="btn btn-secondary github-disconnect-button" onClick={handleDisconnectGithubRepository} disabled={disconnectingGithubRepository || !project?.githubSyncEnabled}>
+                      {disconnectingGithubRepository ? <><Loader2 className="spinner-icon" size={15} /> Disconnecting...</> : <><Unlink size={15} /> Disconnect</>}
+                    </button>
+                  </div>
+                </form>
+              </section>
+            </div>
 
             <section className="card danger-zone-card">
               <div>

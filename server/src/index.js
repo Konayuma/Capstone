@@ -16,6 +16,7 @@ import fileRoutes from './routes/file.routes.js';
 import vivaRoutes from './routes/viva.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import supervisorRoutes from './routes/supervisor.routes.js';
+import githubRoutes from './routes/github.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,7 +70,12 @@ if (env.NODE_ENV === 'development') {
 }
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf?.toString('utf8') || '';
+  },
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Static files for uploads
@@ -87,6 +93,7 @@ app.use('/api/projects', fileRoutes);
 app.use('/api/projects', vivaRoutes);
 app.use('/api/projects', reportRoutes);
 app.use('/api/projects', supervisorRoutes);
+app.use('/api/github', githubRoutes);
 app.use('/api/supervisor', supervisorRoutes);
 app.use('/api/admin', adminRoutes);
 

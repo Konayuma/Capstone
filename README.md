@@ -67,11 +67,17 @@ NVIDIA_MODEL=minimaxai/minimax-m2.7
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_BUCKET_NAME=capstone-files
+GITHUB_APP_ID=
+GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+GITHUB_WEBHOOK_SECRET=
+GITHUB_API_BASE_URL=https://api.github.com
 CLIENT_URL=http://localhost:5173
 CORS_ORIGINS=https://capstone-3bk.pages.dev
 UPLOAD_DIR=./uploads
 MAX_FILE_SIZE=20971520
 ```
+
+When you connect a repository in the workspace, paste the GitHub App installation ID for that repo. The server uses the app credentials above to mint installation tokens, so GitHub usage is not tied to an individual user.
 
 ## Running Locally
 

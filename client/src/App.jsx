@@ -12,6 +12,7 @@ import ProjectWorkspace from './pages/ProjectWorkspace';
 import VivaPractice from './pages/VivaPractice';
 import UserProfile from './pages/UserProfile';
 import JoinProject from './pages/JoinProject';
+import { Menu, X } from 'lucide-react';
 
 import { OnboardingProvider } from './context/OnboardingContext';
 import OnboardingTour from './components/OnboardingTour';
@@ -81,12 +82,11 @@ const AppLayout = ({ children }) => {
           <button
             type="button"
             className="mobile-sidebar-toggle"
-            onClick={() => setMobileSidebarOpen(true)}
-            aria-label="Open navigation drawer"
+            onClick={() => setMobileSidebarOpen((current) => !current)}
+            aria-label={mobileSidebarOpen ? 'Close navigation drawer' : 'Open navigation drawer'}
+            aria-pressed={mobileSidebarOpen}
           >
-            <span />
-            <span />
-            <span />
+            {mobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
         {children}

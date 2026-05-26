@@ -22,6 +22,7 @@ import {
   ShieldAlert,
   Sparkles,
   Users,
+  X,
 } from 'lucide-react';
 
 import { useOnboarding } from '../context/OnboardingContext';
@@ -190,7 +191,7 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange, mobileOpen = fal
             onClick={onMobileClose}
             aria-label="Close navigation drawer"
           >
-            <PanelLeftClose size={17} />
+            <X size={17} />
           </button>
           <button
             type="button"

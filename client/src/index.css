@@ -715,16 +715,28 @@ select {
   flex: none;
 }
 
+.documents-item > div:nth-child(2) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
 .documents-item strong {
   color: var(--ink-strong);
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .documents-item span {
   display: block;
-  margin-top: 3px;
   color: var(--ink-soft);
   font-size: 0.84rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .documents-actions {

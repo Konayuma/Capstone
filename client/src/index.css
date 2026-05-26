@@ -284,7 +284,7 @@ select {
 
 .team-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(310px, 0.95fr);
+  grid-template-columns: 1fr minmax(310px, 420px);
   gap: 22px;
   align-items: start;
 }
@@ -992,6 +992,13 @@ select {
   padding: clamp(20px, 2.8vw, 40px);
 }
 
+/* Center top-level page content and constrain width for consistent layouts */
+.main-content > :not(.main-mobile-shell) {
+  max-width: 1140px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
 .sidebar-mobile-close {
   display: none;
 }
@@ -2854,7 +2861,7 @@ select {
 
 .requirements-intake-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  grid-template-columns: 1fr minmax(320px, 420px);
   gap: 18px;
 }
 
@@ -2923,7 +2930,7 @@ select {
 
 .requirements-workbench-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+  grid-template-columns: 1fr minmax(360px, 420px);
   gap: 18px;
   align-items: start;
 }

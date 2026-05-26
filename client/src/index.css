@@ -14,9 +14,10 @@
   --text-secondary: var(--ink-body);
   --text-muted: var(--ink-soft);
 
-  --brand-1: oklch(0.64 0.18 333);
-  --brand-2: oklch(0.75 0.12 300);
-  --brand-3: oklch(0.82 0.09 270);
+  /* Softer pink brand colors */
+  --brand-1: #f6c9d3; /* primary soft pink */
+  --brand-2: #f0b6c3; /* slightly deeper pink */
+  --brand-3: #fde9ec; /* pale pink highlight */
   --accent: oklch(0.64 0.13 35);
   --success: oklch(0.63 0.13 155);
   --warning: oklch(0.69 0.14 72);
@@ -64,10 +65,8 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   color: var(--ink-strong);
-  background:
-    radial-gradient(1000px 620px at 8% -10%, color-mix(in oklab, var(--brand-3) 30%, transparent), transparent 60%),
-    radial-gradient(760px 520px at 105% 4%, color-mix(in oklab, var(--brand-2) 22%, transparent), transparent 60%),
-    linear-gradient(180deg, oklch(0.985 0.01 70), var(--bg-canvas));
+  /* removed decorative gradients for a cleaner look */
+  background: var(--bg-canvas);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
@@ -141,9 +140,7 @@ select {
   height: 100vh;
   padding: 22px 18px;
   border-right: 1px solid var(--line-subtle);
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--bg-app) 94%, white), color-mix(in oklab, var(--bg-soft) 58%, white)),
-    var(--bg-app);
+  background: var(--bg-app);
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 18px;
@@ -242,7 +239,7 @@ select {
   border-radius: 14px;
   display: grid;
   place-items: center;
-  background: linear-gradient(165deg, var(--brand-1), color-mix(in oklab, var(--brand-2) 80%, var(--brand-1)));
+  background: var(--brand-1);
   color: white;
   font-weight: 700;
   box-shadow: inset 0 0 0 1px color-mix(in oklab, black 10%, transparent);
@@ -396,7 +393,7 @@ select {
   border-radius: 14px;
   display: grid;
   place-items: center;
-  background: linear-gradient(165deg, var(--brand-1), color-mix(in oklab, var(--brand-2) 78%, var(--brand-1)));
+  background: var(--brand-1);
   color: white;
   font-weight: 700;
   flex: none;

@@ -193,7 +193,7 @@ export const VivaPractice = () => {
           </button>
         </div>
       ) : (
-        <div className="viva-layout">
+        <div className="viva-layout" data-tour="viva">
           {/* Left panel: Questions Index */}
           <div className="card viva-question-panel">
             <h4 className="viva-question-panel-title">

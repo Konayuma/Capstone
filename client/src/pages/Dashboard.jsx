@@ -258,7 +258,7 @@ export const Dashboard = () => {
         </article>
       </section>
 
-      <section className="board-lanes">
+  <section className="board-lanes" data-tour="studio-board">
         {['todo', 'ongoing', 'done'].map((laneKey) => (
           <article key={laneKey} className="lane">
             <div className="lane-header">

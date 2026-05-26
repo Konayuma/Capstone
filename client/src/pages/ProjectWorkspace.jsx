@@ -1168,6 +1168,7 @@ export const ProjectWorkspace = () => {
         <button
           className={`btn workspace-tab ${activeTab === 'requirements' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('requirements')}
+                 data-tour="requirements"
         >
           <Sparkles size={16} />
           <span>Requirements</span>
@@ -1177,6 +1178,7 @@ export const ProjectWorkspace = () => {
         <button
           className={`btn workspace-tab ${activeTab === 'tasks' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('tasks')}
+                 data-tour="tasks"
         >
           <ListTodo size={16} />
           <span>Tasks</span>
@@ -1210,6 +1212,7 @@ export const ProjectWorkspace = () => {
         <button
           className={`btn workspace-tab ${activeTab === 'documents' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => switchTab('documents')}
+                 data-tour="documents"
         >
           <FileText size={16} />
           <span>Documents</span>

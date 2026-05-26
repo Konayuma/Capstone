@@ -1,0 +1,265 @@
+/* Onboarding Tour Styles */
+
+.tour-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+  animation: backdropFadeIn 300ms ease-out forwards;
+}
+
+.tour-spotlight {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tour-spotlight.center {
+  pointer-events: none;
+}
+
+.tour-spotlight.bottom {
+  pointer-events: none;
+}
+
+.tour-target-highlight {
+  position: absolute;
+  border: 3px solid var(--brand-1);
+  border-radius: 12px;
+  box-shadow: 0 0 0 4px var(--brand-3, rgba(100, 116, 255, 0.15));
+  animation: highlightPulse 2s ease-in-out infinite;
+  pointer-events: auto;
+}
+
+.tour-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line-subtle);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  animation: cardSlideIn 300ms ease-out forwards;
+  position: relative;
+  pointer-events: auto;
+}
+
+/* Position variants */
+.tour-card-center {
+  transform: scale(0.95);
+  animation: cardFadeAndScale 300ms ease-out forwards;
+}
+
+.tour-card-bottom {
+  animation: cardSlideInUp 300ms ease-out forwards;
+}
+
+.tour-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.tour-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--ink-strong);
+  margin: 0;
+}
+
+.tour-close {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 150ms ease-out;
+}
+
+.tour-close:hover {
+  background: color-mix(in oklab, var(--line-subtle) 60%, transparent);
+  color: var(--ink-strong);
+}
+
+.tour-description {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+}
+
+/* Progress indicators */
+.tour-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line-subtle);
+}
+
+.tour-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.tour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line-subtle);
+  border: none;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  padding: 0;
+}
+
+.tour-dot.active {
+  background: var(--brand-1);
+  width: 24px;
+  border-radius: 4px;
+}
+
+.tour-dot.completed {
+  background: color-mix(in oklab, var(--brand-1) 50%, var(--line-subtle));
+}
+
+.tour-dot:hover {
+  background: color-mix(in oklab, var(--brand-1) 70%, var(--line-subtle));
+}
+
+.tour-count {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+/* Actions */
+.tour-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.tour-nav {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.tour-nav .btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+/* Animations */
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(2px);
+  }
+}
+
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardSlideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardFadeAndScale {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes highlightPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px var(--brand-3, rgba(100, 116, 255, 0.15));
+  }
+  50% {
+    box-shadow: 0 0 0 8px var(--brand-3, rgba(100, 116, 255, 0.05));
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .tour-backdrop,
+  .tour-card,
+  .tour-dot,
+  .tour-target-highlight {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .tour-backdrop {
+    opacity: 1;
+  }
+
+  .tour-card {
+    opacity: 1;
+    transform: none !important;
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .tour-card {
+    margin: 16px;
+    max-width: calc(100% - 32px);
+    padding: 20px;
+  }
+
+  .tour-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tour-nav {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .tour-nav .btn {
+    flex: 1;
+  }
+}

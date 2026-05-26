@@ -11,6 +11,7 @@ import {
   FolderGit2,
   Gauge,
   GraduationCap,
+  HelpCircle,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -23,6 +24,7 @@ import {
   Users,
 } from 'lucide-react';
 
+import { useOnboarding } from '../context/OnboardingContext';
 const buildProjectHref = (projectId, tab) => (
   projectId ? `/projects/${projectId}#${tab}` : '/projects'
 );
@@ -46,7 +48,7 @@ const readStoredSidebarGroups = () => {
   }
 };
 
-export const Sidebar = ({ collapsed = false, onCollapsedChange }) => {
+export const Sidebar = ({ collapsed = false, onCollapsedChange, mobileOpen = false, onMobileClose }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,6 +56,7 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange }) => {
   const [openGroups, setOpenGroups] = useState(readStoredSidebarGroups);
   const userRole = user?.role;
 
+  const { openHelp } = useOnboarding();
   const projectMatch = location.pathname.match(/^\/projects\/(\d+)/);
   const currentProjectId = projectMatch?.[1];
 
@@ -173,7 +176,7 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange }) => {
   if (!user) return null;
 
   return (
-    <aside className={`sidebar ${collapsed ? 'is-rail' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'is-rail' : ''} ${mobileOpen ? 'is-mobile-open' : ''}`}>
       <div className="sidebar-head">
         <div className="sidebar-logo">
           <img className="app-brand-logo app-brand-logo--sidebar" src={logoImage} alt="Capstone Studio" />
@@ -181,6 +184,14 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange }) => {
             <div className="sidebar-logo-text">Capstone Studio</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>Project workspace</div>
           </div>
+          <button
+            type="button"
+            className="sidebar-mobile-close"
+            onClick={onMobileClose}
+            aria-label="Close navigation drawer"
+          >
+            <PanelLeftClose size={17} />
+          </button>
           <button
             type="button"
             className="sidebar-rail-toggle"
@@ -281,6 +292,10 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange }) => {
           <button className="btn btn-secondary" type="button" onClick={() => navigate('/dashboard')}>
             <Sparkles size={15} />
             <span>Open board</span>
+          </button>
+          <button className="btn btn-secondary" type="button" onClick={openHelp}>
+            <HelpCircle size={15} />
+            <span>Help</span>
           </button>
           <button className="btn btn-danger" type="button" onClick={handleLogout}>
             <LogOut size={15} />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import CoolLoader from './components/CoolLoader';
@@ -13,6 +13,9 @@ import VivaPractice from './pages/VivaPractice';
 import UserProfile from './pages/UserProfile';
 import JoinProject from './pages/JoinProject';
 
+import { OnboardingProvider } from './context/OnboardingContext';
+import OnboardingTour from './components/OnboardingTour';
+import HelpCenter from './components/HelpCenter';
 // Protection Shell Component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -48,15 +51,44 @@ const AppLayout = ({ children }) => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem('capstone.sidebarCollapsed') === 'true';
   });
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     window.localStorage.setItem('capstone.sidebarCollapsed', String(sidebarCollapsed));
   }, [sidebarCollapsed]);
 
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [location.pathname, location.hash]);
+
   return (
-    <div className={`app-container ${sidebarCollapsed ? 'sidebar-is-collapsed' : ''}`}>
-      <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
+    <div className={`app-container ${sidebarCollapsed ? 'sidebar-is-collapsed' : ''} ${mobileSidebarOpen ? 'sidebar-mobile-open' : ''}`}>
+      <button
+        type="button"
+        className="sidebar-backdrop"
+        onClick={() => setMobileSidebarOpen(false)}
+        aria-label="Close navigation drawer"
+      />
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
+      />
       <main className="main-content">
+        <div className="main-mobile-shell">
+          <button
+            type="button"
+            className="mobile-sidebar-toggle"
+            onClick={() => setMobileSidebarOpen(true)}
+            aria-label="Open navigation drawer"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
         {children}
       </main>
     </div>
@@ -66,8 +98,11 @@ const AppLayout = ({ children }) => {
 export const App = () => {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <SystemNotifications />
+      <OnboardingProvider>
+        <BrowserRouter>
+          <SystemNotifications />
+          <OnboardingTour />
+          <HelpCenter />
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -154,7 +189,8 @@ export const App = () => {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </OnboardingProvider>
     </AuthProvider>
   );
 };

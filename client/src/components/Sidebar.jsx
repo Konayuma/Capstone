@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import logoImage from '../assets/logo copy.png';
 import {
   ArrowRight,
   BookOpenCheck,
@@ -175,7 +176,7 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange }) => {
     <aside className={`sidebar ${collapsed ? 'is-rail' : ''}`}>
       <div className="sidebar-head">
         <div className="sidebar-logo">
-          <div className="user-avatar">CS</div>
+          <img className="app-brand-logo app-brand-logo--sidebar" src={logoImage} alt="Capstone Studio" />
           <div className="sidebar-logo-copy">
             <div className="sidebar-logo-text">Capstone Studio</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>Project workspace</div>

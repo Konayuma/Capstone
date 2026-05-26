@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowRight, ShieldCheck, LayoutPanelLeft, Loader2 } from 'lucide-react';
+import logoImage from '../assets/logo copy.png';
 
 export const Login = () => {
   const { login } = useAuth();
@@ -44,6 +45,7 @@ export const Login = () => {
 
         <section className="auth-card">
           <header className="auth-header">
+            <img className="app-brand-logo app-brand-logo--auth" src={logoImage} alt="Capstone Studio" />
             <h2 className="auth-logo">Sign In</h2>
             <p>Use your account details to continue.</p>
           </header>

@@ -156,6 +156,27 @@ select {
   min-width: 0;
 }
 
+.app-brand-logo {
+  display: block;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.app-brand-logo--sidebar {
+  width: 42px;
+  height: 42px;
+}
+
+.app-brand-logo--landing {
+  width: 44px;
+  height: 44px;
+}
+
+.app-brand-logo--auth {
+  width: 52px;
+  height: 52px;
+}
+
 .sidebar-logo-text {
   font-weight: 700;
   font-size: 1.02rem;

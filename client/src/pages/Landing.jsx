@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import logoImage from '../assets/logo copy.png';
 import {
   ArrowRight,
   BarChart3,
@@ -49,7 +50,7 @@ export const Landing = () => {
     <div className="landing-page">
       <header className="landing-topbar">
         <Link to="/" className="landing-brand" aria-label="Capstone Studio home">
-          <div className="landing-brand-mark">CS</div>
+          <img className="app-brand-logo app-brand-logo--landing" src={logoImage} alt="Capstone Studio" />
           <div>
             <div className="landing-brand-name">Capstone Studio</div>
             <div className="landing-brand-subtitle">Defense-ready project supervision</div>

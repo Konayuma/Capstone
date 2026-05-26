@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, Users, ArrowRight, Loader2 } from 'lucide-react';
+import logoImage from '../assets/logo copy.png';
 
 export const Register = () => {
   const { register } = useAuth();
@@ -46,6 +47,7 @@ export const Register = () => {
 
         <section className="auth-card">
           <header className="auth-header">
+            <img className="app-brand-logo app-brand-logo--auth" src={logoImage} alt="Capstone Studio" />
             <h2 className="auth-logo">Create Account</h2>
             <p>Choose your role and get started.</p>
           </header>

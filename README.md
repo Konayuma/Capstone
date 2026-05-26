@@ -69,6 +69,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_BUCKET_NAME=capstone-files
 GITHUB_APP_ID=
 GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+GITHUB_APP_SLUG=capstone-studio
 GITHUB_WEBHOOK_SECRET=
 GITHUB_API_BASE_URL=https://api.github.com
 CLIENT_URL=http://localhost:5173
@@ -77,7 +78,7 @@ UPLOAD_DIR=./uploads
 MAX_FILE_SIZE=20971520
 ```
 
-When you connect a repository in the workspace, paste the GitHub App installation ID for that repo. The server uses the app credentials above to mint installation tokens, so GitHub usage is not tied to an individual user.
+When you connect a repository in the workspace, click Open GitHub App to install it, then click Set up GitHub sync. The server discovers the installation automatically from the repository, so GitHub usage is not tied to an individual user.
 
 ## Running Locally
 

@@ -166,6 +166,11 @@ const buildAppJwt = () => {
   return `${unsignedToken}.${signature}`;
 };
 
+const getRepositoryInstallation = async (owner, repo) => {
+  const jwt = buildAppJwt();
+  return githubRequest(`/repos/${owner}/${repo}/installation`, jwt);
+};
+
 const isSupportedDocumentPath = (relativePath) => {
   const normalizedPath = normalizePath(relativePath);
   if (!normalizedPath) {
@@ -295,14 +300,19 @@ export const githubService = {
 
   async saveProjectConnection(projectId, payload) {
     const repository = parseRepositoryReference(payload.repositoryUrl);
-    const installationId = Number(payload.installationId);
+    const providedInstallationId = payload.installationId == null || payload.installationId === ''
+      ? null
+      : Number(payload.installationId);
 
-    if (!Number.isInteger(installationId) || installationId <= 0) {
-      throw Object.assign(new Error('Enter a valid GitHub App installation ID.'), { status: 400 });
-    }
+    const installationDetails = Number.isInteger(providedInstallationId) && providedInstallationId > 0
+      ? { id: providedInstallationId }
+      : await getRepositoryInstallation(repository.owner, repository.repo);
 
-    const installationToken = await getInstallationAccessToken(installationId);
+    const installationToken = await getInstallationAccessToken(installationDetails.id);
     const repositoryMetadata = await githubRequest(`/repos/${repository.owner}/${repository.repo}`, installationToken);
+    const resolvedDefaultBranch = payload.defaultBranch?.trim()
+      ? normalizeOptionalPath(payload.defaultBranch, 'main')
+      : repositoryMetadata.default_branch || 'main';
 
     const updatedProject = await prisma.project.update({
       where: { id: projectId },
@@ -310,8 +320,8 @@ export const githubService = {
         githubRepositoryUrl: repository.repositoryUrl,
         githubRepositoryOwner: repository.owner,
         githubRepositoryName: repository.repo,
-        githubInstallationId: installationId,
-        githubDefaultBranch: normalizeOptionalPath(payload.defaultBranch, 'main'),
+        githubInstallationId: installationDetails.id,
+        githubDefaultBranch: resolvedDefaultBranch,
         githubDocsPath: normalizeOptionalPath(payload.docsPath, 'docs'),
         githubRequirementsPath: normalizeOptionalPath(payload.requirementsPath, 'requirements'),
         githubNotesPath: normalizeOptionalPath(payload.notesPath, 'notes'),
@@ -525,5 +535,13 @@ export const githubService = {
       matchedProjects: projects.length,
       results,
     };
+  },
+
+  getGithubAppInstallUrl(repositoryOwner) {
+    if (!env.GITHUB_APP_SLUG) {
+      return '';
+    }
+
+    return `https://github.com/apps/${encodeURIComponent(env.GITHUB_APP_SLUG)}/installations/new`;
   },
 };

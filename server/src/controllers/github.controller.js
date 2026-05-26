@@ -4,7 +4,7 @@ import { githubService } from '../services/github.service.js';
 
 const connectionSchema = z.object({
   repositoryUrl: z.string().trim().min(1, 'Repository URL is required.'),
-  installationId: z.coerce.number().int().positive('Installation ID is required.'),
+  installationId: z.coerce.number().int().positive().optional(),
   defaultBranch: z.string().trim().optional().default('main'),
   docsPath: z.string().trim().optional().default('docs'),
   requirementsPath: z.string().trim().optional().default('requirements'),
@@ -43,6 +43,16 @@ const githubController = {
       const result = await githubService.saveProjectConnection(projectId, payload);
 
       res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getAppInstallUrl(req, res, next) {
+    try {
+      res.json({
+        installUrl: githubService.getGithubAppInstallUrl(),
+      });
     } catch (error) {
       next(error);
     }

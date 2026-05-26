@@ -19,6 +19,7 @@ const env = {
   SUPABASE_BUCKET_NAME: process.env.SUPABASE_BUCKET_NAME || 'capstone-files',
   GITHUB_APP_ID: process.env.GITHUB_APP_ID,
   GITHUB_APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY,
+  GITHUB_APP_SLUG: process.env.GITHUB_APP_SLUG,
   GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
   GITHUB_API_BASE_URL: process.env.GITHUB_API_BASE_URL || 'https://api.github.com',
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',

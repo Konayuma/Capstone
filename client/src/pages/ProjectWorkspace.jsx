@@ -173,7 +173,6 @@ export const ProjectWorkspace = () => {
   });
   const [githubForm, setGithubForm] = useState({
     repositoryUrl: '',
-    installationId: '',
     defaultBranch: 'main',
     docsPath: 'docs',
     requirementsPath: 'requirements',
@@ -287,7 +286,6 @@ export const ProjectWorkspace = () => {
       });
       setGithubForm({
         repositoryUrl: projRes.data.githubRepositoryUrl || '',
-        installationId: projRes.data.githubInstallationId || '',
         defaultBranch: projRes.data.githubDefaultBranch || 'main',
         docsPath: projRes.data.githubDocsPath || 'docs',
         requirementsPath: projRes.data.githubRequirementsPath || 'requirements',
@@ -856,11 +854,6 @@ export const ProjectWorkspace = () => {
       return;
     }
 
-    if (!String(githubForm.installationId || '').trim()) {
-      toast.error('Enter the GitHub App installation ID.');
-      return;
-    }
-
     setSavingGithubConnection(true);
     try {
       const res = await axios.put(`/projects/${id}/github`, githubForm);
@@ -893,6 +886,41 @@ export const ProjectWorkspace = () => {
     }
   };
 
+  const handleOpenGithubInstall = async () => {
+    try {
+      const res = await axios.get(`/projects/${id}/github/install-url`);
+
+      if (!res.data.installUrl) {
+        toast.error('Set VITE_GITHUB_APP_SLUG to enable the install button.');
+        return;
+      }
+
+      window.open(res.data.installUrl, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to open the GitHub App install page.');
+    }
+  };
+
+  const handleSetupGithubSync = async () => {
+    if (!githubForm.repositoryUrl.trim()) {
+      toast.error('Enter a GitHub repository URL first.');
+      return;
+    }
+
+    setSavingGithubConnection(true);
+    try {
+      const res = await axios.put(`/projects/${id}/github`, githubForm);
+      setProject(res.data.project);
+      setGithubForm(res.data.connection);
+      await refreshProjectFiles();
+      toast.success('GitHub sync is ready.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to set up GitHub sync.');
+    } finally {
+      setSavingGithubConnection(false);
+    }
+  };
+
   const handleDisconnectGithubRepository = async () => {
     if (!window.confirm('Disconnect the GitHub repository and remove imported GitHub files?')) {
       return;
@@ -904,7 +932,6 @@ export const ProjectWorkspace = () => {
       setProject(res.data.project);
       setGithubForm(res.data.connection || {
         repositoryUrl: '',
-        installationId: '',
         defaultBranch: 'main',
         docsPath: 'docs',
         requirementsPath: 'requirements',
@@ -2582,12 +2609,8 @@ export const ProjectWorkspace = () => {
 
                 <div className="github-status-grid">
                   <div className="github-status-pill">
-                    <span>Auth model</span>
-                    <strong>GitHub App</strong>
-                  </div>
-                  <div className="github-status-pill">
-                    <span>Installation ID</span>
-                    <strong>{project?.githubInstallationId || 'Not set'}</strong>
+                    <span>Setup</span>
+                    <strong>{project?.githubSyncEnabled ? 'Ready' : 'Needs setup'}</strong>
                   </div>
                   <div className="github-status-pill">
                     <span>Repository</span>
@@ -2627,18 +2650,6 @@ export const ProjectWorkspace = () => {
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">GitHub App installation ID</label>
-                    <input
-                      className="form-input"
-                      inputMode="numeric"
-                      placeholder="12345678"
-                      value={githubForm.installationId}
-                      onChange={(event) => setGithubForm({ ...githubForm, installationId: event.target.value })}
-                      required
-                    />
-                  </div>
-
                   <div className="grid-2">
                     <div className="form-group">
                       <label className="form-label">Default branch</label>
@@ -2662,12 +2673,15 @@ export const ProjectWorkspace = () => {
                   </div>
 
                   <p className="github-helper-text">
-                    Install the GitHub App on the repository, then paste the installation ID. Capstone imports supported markdown and text files from the selected folders.
+                    Install the GitHub App on the repository, then click Set up GitHub sync. Capstone discovers the installation automatically and imports supported markdown and text files from the selected folders.
                   </p>
 
                   <div className="github-actions">
-                    <button type="submit" className="btn btn-primary" disabled={savingGithubConnection}>
-                      {savingGithubConnection ? <><Loader2 className="spinner-icon" size={15} /> Saving...</> : <><Link2 size={15} /> Save connection</>}
+                    <button type="button" className="btn btn-secondary" onClick={handleOpenGithubInstall} disabled={!githubForm.repositoryUrl.trim()}>
+                      <ExternalLink size={15} /> Open GitHub App
+                    </button>
+                    <button type="button" className="btn btn-primary" onClick={handleSetupGithubSync} disabled={savingGithubConnection}>
+                      {savingGithubConnection ? <><Loader2 className="spinner-icon" size={15} /> Setting up...</> : <><Link2 size={15} /> Set up GitHub sync</>}
                     </button>
                     <button type="button" className="btn btn-secondary" onClick={handleSyncGithubRepository} disabled={syncingGithubRepository || refreshingFiles || !githubForm.repositoryUrl.trim()}>
                       {syncingGithubRepository ? <><Loader2 className="spinner-icon" size={15} /> Syncing...</> : <><RefreshCw size={15} /> Sync now</>}

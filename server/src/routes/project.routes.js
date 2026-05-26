@@ -13,6 +13,7 @@ router.get('/', projectController.list);
 router.get('/:id', requireProjectAccess, projectController.getById);
 router.put('/:id', requireProjectAccess, projectController.update);
 router.get('/:id/github', requireProjectAccess, githubController.getProjectIntegration);
+router.get('/:id/github/install-url', requireProjectAccess, githubController.getAppInstallUrl);
 router.put('/:id/github', requireProjectAccess, githubController.updateProjectIntegration);
 router.post('/:id/github/sync', requireProjectAccess, githubController.syncProjectRepository);
 router.delete('/:id/github', requireProjectAccess, githubController.disconnectProjectRepository);

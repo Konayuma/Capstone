@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, Users, ArrowRight, Loader2 } from 'lucide-react';
 import logoImage from '../assets/logo copy.png';
+import { validateRegistrationInput } from '../lib/authValidation';
 
 export const Register = () => {
   const { register } = useAuth();
@@ -13,11 +14,19 @@ export const Register = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    const nextFieldErrors = validateRegistrationInput({ name, email, password });
+    setFieldErrors(nextFieldErrors);
+
+    if (nextFieldErrors.name || nextFieldErrors.email || nextFieldErrors.password) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -61,12 +70,41 @@ export const Register = () => {
           <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '12px' }}>
             <div className="form-group">
               <label className="form-label">Full name</label>
-              <input className="form-input" value={name} onChange={(e) => setName(e.target.value)} required />
+              <input
+                className="form-input"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (fieldErrors.name) {
+                    setFieldErrors((current) => ({ ...current, name: '' }));
+                  }
+                }}
+                autoComplete="name"
+                required
+                aria-invalid={Boolean(fieldErrors.name)}
+              />
+              {fieldErrors.name && <p style={{ marginTop: '6px', color: 'var(--color-danger)', fontSize: '0.86rem' }}>{fieldErrors.name}</p>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Email</label>
-              <input className="form-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <input
+                className="form-input"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldErrors.email) {
+                    setFieldErrors((current) => ({ ...current, email: '' }));
+                  }
+                }}
+                placeholder="you@domain.com"
+                autoComplete="email"
+                spellCheck={false}
+                required
+                aria-invalid={Boolean(fieldErrors.email)}
+              />
+              {fieldErrors.email && <p style={{ marginTop: '6px', color: 'var(--color-danger)', fontSize: '0.86rem' }}>{fieldErrors.email}</p>}
             </div>
 
             <div className="form-group">
@@ -79,7 +117,23 @@ export const Register = () => {
 
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input className="form-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <input
+                className="form-input"
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) {
+                    setFieldErrors((current) => ({ ...current, password: '' }));
+                  }
+                }}
+                placeholder="Minimum 6 characters"
+                autoComplete="new-password"
+                required
+                minLength={6}
+                aria-invalid={Boolean(fieldErrors.password)}
+              />
+              {fieldErrors.password && <p style={{ marginTop: '6px', color: 'var(--color-danger)', fontSize: '0.86rem' }}>{fieldErrors.password}</p>}
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={loading}>

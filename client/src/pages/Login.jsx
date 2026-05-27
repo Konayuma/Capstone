@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowRight, ShieldCheck, LayoutPanelLeft, Loader2 } from 'lucide-react';
 import logoImage from '../assets/logo copy.png';
+import { validateLoginCredentials } from '../lib/authValidation';
 
 export const Login = () => {
   const { login } = useAuth();
@@ -11,11 +12,19 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    const nextFieldErrors = validateLoginCredentials({ email, password });
+    setFieldErrors(nextFieldErrors);
+
+    if (nextFieldErrors.email || nextFieldErrors.password) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -63,10 +72,19 @@ export const Login = () => {
                 type="email"
                 className="form-input"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldErrors.email) {
+                    setFieldErrors((current) => ({ ...current, email: '' }));
+                  }
+                }}
                 placeholder="you@domain.com"
+                autoComplete="email"
+                spellCheck={false}
                 required
+                aria-invalid={Boolean(fieldErrors.email)}
               />
+              {fieldErrors.email && <p style={{ marginTop: '6px', color: 'var(--color-danger)', fontSize: '0.86rem' }}>{fieldErrors.email}</p>}
             </div>
 
             <div className="form-group">
@@ -75,10 +93,18 @@ export const Login = () => {
                 type="password"
                 className="form-input"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) {
+                    setFieldErrors((current) => ({ ...current, password: '' }));
+                  }
+                }}
                 placeholder="••••••••"
+                autoComplete="current-password"
                 required
+                aria-invalid={Boolean(fieldErrors.password)}
               />
+              {fieldErrors.password && <p style={{ marginTop: '6px', color: 'var(--color-danger)', fontSize: '0.86rem' }}>{fieldErrors.password}</p>}
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={loading}>

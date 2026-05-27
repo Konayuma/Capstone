@@ -5,8 +5,10 @@ import env from '../config/env.js';
 
 export const authService = {
   async register({ name, email, password, role }) {
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     // Check if user already exists
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) {
       throw Object.assign(new Error('An account with this email already exists.'), { status: 409 });
     }
@@ -17,7 +19,7 @@ export const authService = {
 
     // Create user
     const user = await prisma.user.create({
-      data: { name, email, passwordHash, role: role || 'student' },
+      data: { name: String(name).trim(), email: normalizedEmail, passwordHash, role: role || 'student' },
       select: { id: true, name: true, email: true, role: true, createdAt: true },
     });
 
@@ -30,8 +32,10 @@ export const authService = {
   },
 
   async login({ email, password }) {
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     // Find user
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user) {
       throw Object.assign(new Error('Invalid email or password.'), { status: 401 });
     }

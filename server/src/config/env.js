@@ -10,7 +10,10 @@ const env = {
   PORT: parseInt(process.env.PORT || '5000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   DATABASE_URL: process.env.DATABASE_URL,
-  JWT_SECRET: process.env.JWT_SECRET || 'fallback-secret',
+  JWT_SECRET: process.env.JWT_SECRET || (() => {
+    console.warn('WARNING: JWT_SECRET not set. Using insecure fallback. Set a strong secret in production.');
+    return 'fallback-secret';
+  })(),
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   NVIDIA_API_KEY: process.env.NVIDIA_API_KEY,
   NVIDIA_MODEL: process.env.NVIDIA_MODEL || 'minimaxai/minimax-m2.7',

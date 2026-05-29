@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import env from './config/env.js';
+import { apiLimiter, aiLimiter } from './middleware/rateLimiter.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import projectRoutes from './routes/project.routes.js';
@@ -81,6 +82,9 @@ app.use(express.urlencoded({ extended: true }));
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
+// Rate limiting
+app.use('/api', apiLimiter);
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -94,7 +98,6 @@ app.use('/api/projects', vivaRoutes);
 app.use('/api/projects', reportRoutes);
 app.use('/api/projects', supervisorRoutes);
 app.use('/api/github', githubRoutes);
-app.use('/api/supervisor', supervisorRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Health check

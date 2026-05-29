@@ -545,6 +545,10 @@ export const githubService = {
       return '';
     }
 
-    return `https://github.com/apps/${encodeURIComponent(env.GITHUB_APP_SLUG)}/installations/new`;
+    let url = `https://github.com/apps/${encodeURIComponent(env.GITHUB_APP_SLUG)}/installations/new`;
+    if (repositoryOwner) {
+      url += `?account=${encodeURIComponent(repositoryOwner)}`;
+    }
+    return url;
   },
 };

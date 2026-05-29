@@ -51,22 +51,20 @@ export const vivaService = {
       where: { projectId },
     });
 
-    // Save newly generated questions
-    const savedQuestions = [];
-    for (const q of aiResult.questions) {
-      const saved = await prisma.vivaQuestion.create({
-        data: {
+    // Save all new questions in a single batch
+    if (aiResult.questions.length > 0) {
+      await prisma.vivaQuestion.createMany({
+        data: aiResult.questions.map(q => ({
           projectId,
           category: q.category.toLowerCase(),
           difficulty: q.difficulty.toLowerCase(),
           questionText: q.questionText,
           suggestedAnswer: q.suggestedAnswer,
-        },
+        })),
       });
-      savedQuestions.push(saved);
     }
 
-    return savedQuestions;
+    return prisma.vivaQuestion.findMany({ where: { projectId } });
   },
 
   async getVivaQuestions(projectId) {

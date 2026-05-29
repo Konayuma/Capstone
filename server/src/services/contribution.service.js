@@ -143,8 +143,14 @@ export const contributionService = {
         : 100; // default 100 if no deadlines set
 
       // 6. Supervisor Feedback / Score adjustment (10%)
-      // Average score based on comment feedback ratings, or defaults to 85%
-      const supervisorScore = 85; 
+      // Derived from supervisor comments — presence of contribution feedback
+      // indicates active supervision; more detailed comments imply higher engagement
+      const supervisorComments = project.comments.filter(
+        c => c.targetType === 'contribution' && c.userId !== userId
+      );
+      const supervisorScore = supervisorComments.length > 0
+        ? Math.min(80 + supervisorComments.length * 5, 100)
+        : 85;
 
       // Weighted calculation
       const finalScore = Math.round(

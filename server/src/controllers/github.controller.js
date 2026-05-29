@@ -50,8 +50,9 @@ const githubController = {
 
   async getAppInstallUrl(req, res, next) {
     try {
+      const owner = req.query.owner || undefined;
       res.json({
-        installUrl: githubService.getGithubAppInstallUrl(),
+        installUrl: githubService.getGithubAppInstallUrl(owner),
       });
     } catch (error) {
       next(error);

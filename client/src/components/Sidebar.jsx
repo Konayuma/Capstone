@@ -4,9 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import logoImage from '../assets/logo copy.png';
 import {
   ArrowRight,
+  BarChart3,
   BookOpenCheck,
   ChevronDown,
   ClipboardList,
+  Download,
+  ExternalLink,
   FileText,
   FolderGit2,
   Gauge,
@@ -23,6 +26,7 @@ import {
   ShieldAlert,
   Sparkles,
   Users,
+  UserRound,
   X,
 } from 'lucide-react';
 
@@ -34,7 +38,7 @@ const buildProjectHref = (projectId, tab) => (
 const sidebarGroupDefaults = {
   'Studio Board': true,
   'Project Tools': true,
-  'Settings': true,
+  'Account': true,
 };
 
 const sidebarGroupStorageKey = 'capstone.sidebarGroups';
@@ -50,71 +54,100 @@ const readStoredSidebarGroups = () => {
   }
 };
 
+const projectTitleCache = new Map();
+
 export const Sidebar = ({ collapsed = false, onCollapsedChange, mobileOpen = false, onMobileClose }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [query, setQuery] = useState('');
   const [openGroups, setOpenGroups] = useState(readStoredSidebarGroups);
+  const [projectName, setProjectName] = useState('');
   const userRole = user?.role;
 
   const { openHelp } = useOnboarding();
   const projectMatch = location.pathname.match(/^\/projects\/(\d+)/);
   const currentProjectId = projectMatch?.[1];
 
-  const navSections = useMemo(() => [
-    {
-      eyebrow: 'Overview',
-      items: [
-        {
-          label: 'Studio Board',
-          icon: LayoutDashboard,
-          to: '/dashboard',
-          children: [
-            { label: 'Active Projects', icon: Gauge, to: '/dashboard' },
-            { label: 'All Projects', icon: FolderGit2, to: '/projects' },
-          ],
-        },
-      ],
-    },
-    {
-      eyebrow: 'Workspace',
-      items: [
-        {
-          label: 'Project Tools',
-          icon: ClipboardList,
-          to: currentProjectId ? `/projects/${currentProjectId}` : '/projects',
-          children: [
-            { label: 'Requirements', icon: BookOpenCheck, to: buildProjectHref(currentProjectId, 'requirements') },
-            { label: 'Traceability', icon: Layers, to: buildProjectHref(currentProjectId, 'traceability') },
-            { label: 'Tasks', icon: ClipboardList, to: buildProjectHref(currentProjectId, 'tasks') },
-            { label: 'Contributions', icon: Users, to: buildProjectHref(currentProjectId, 'contribution') },
-            { label: 'Viva Practice', icon: GraduationCap, to: currentProjectId ? `/projects/${currentProjectId}/viva` : '/projects' },
-            { label: 'Documents', icon: FileText, to: buildProjectHref(currentProjectId, 'documents') },
-            { label: 'Reports', icon: FileText, to: buildProjectHref(currentProjectId, 'readiness') },
-            { label: 'Comments', icon: MessageSquare, to: buildProjectHref(currentProjectId, 'comments') },
-            { label: 'Project Settings', icon: Settings, to: buildProjectHref(currentProjectId, 'settings') },
-          ],
-        },
-      ],
-    },
-    {
+  useEffect(() => {
+    if (!currentProjectId) { setProjectName(''); return; }
+    const cached = projectTitleCache.get(currentProjectId);
+    if (cached) { setProjectName(cached); return; }
+    import('axios').then(({ default: axios }) => {
+      axios.get(`/projects/${currentProjectId}`, { timeout: 3000 })
+        .then((res) => {
+          const name = res.data.title || '';
+          projectTitleCache.set(currentProjectId, name);
+          setProjectName(name);
+        })
+        .catch(() => {});
+    });
+  }, [currentProjectId]);
+
+  const isOnDashboard = location.pathname === '/dashboard' || location.pathname === '/projects';
+
+  const navSections = useMemo(() => {
+    const sections = [
+      {
+        eyebrow: 'Overview',
+        items: [
+          {
+            label: 'Studio Board',
+            icon: LayoutDashboard,
+            to: '/dashboard',
+            children: [
+              { label: 'Active Projects', icon: Gauge, to: '/dashboard' },
+              { label: 'All Projects', icon: FolderGit2, to: '/projects' },
+            ],
+          },
+        ],
+      },
+    ];
+
+    if (currentProjectId) {
+      sections.push({
+        eyebrow: projectName || 'Workspace',
+        items: [
+          {
+            label: 'Project Tools',
+            icon: ClipboardList,
+            to: buildProjectHref(currentProjectId, 'requirements'),
+            children: [
+              { label: 'Requirements', icon: BookOpenCheck, to: buildProjectHref(currentProjectId, 'requirements') },
+              { label: 'Traceability', icon: Layers, to: buildProjectHref(currentProjectId, 'traceability') },
+              { label: 'Tasks', icon: ClipboardList, to: buildProjectHref(currentProjectId, 'tasks') },
+              { label: 'Team', icon: Users, to: buildProjectHref(currentProjectId, 'team') },
+              { label: 'Contributions', icon: BarChart3, to: buildProjectHref(currentProjectId, 'contribution') },
+              { label: 'Documents', icon: FileText, to: buildProjectHref(currentProjectId, 'documents') },
+              { label: 'Notes', icon: MessageSquare, to: buildProjectHref(currentProjectId, 'notes') },
+              { label: 'Reports', icon: Download, to: buildProjectHref(currentProjectId, 'readiness') },
+              { label: 'Viva Practice', icon: GraduationCap, to: `/projects/${currentProjectId}/viva` },
+              { label: 'Settings', icon: Settings, to: buildProjectHref(currentProjectId, 'settings') },
+            ],
+          },
+        ],
+      });
+    }
+
+    sections.push({
       eyebrow: 'System',
       items: [
         {
-          label: 'Settings',
-          icon: Settings,
-          to: '/dashboard',
+          label: 'Account',
+          icon: UserRound,
+          to: '/profile',
           children: [
-            { label: 'Profile', icon: Users, to: '/profile' },
+            { label: 'Profile', icon: UserRound, to: '/profile' },
             ...(userRole === 'admin'
               ? [{ label: 'Admin Control', icon: ShieldAlert, to: '/admin' }]
               : []),
           ],
         },
       ],
-    },
-  ], [currentProjectId, userRole]);
+    });
+
+    return sections;
+  }, [currentProjectId, projectName, userRole]);
 
   const filteredSections = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -137,7 +170,9 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange, mobileOpen = fal
   const forceOpenGroups = query.trim().length > 0;
 
   const isChildActive = (to) => {
-    return location.pathname === to;
+    if (location.pathname === to) return true;
+    if (to.endsWith('/requirements') && (location.pathname === `/projects/${currentProjectId}` || location.pathname === `/projects/${currentProjectId}/`)) return true;
+    return false;
   };
 
   const handleLogout = () => {
@@ -147,9 +182,9 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange, mobileOpen = fal
 
   useEffect(() => {
     const nextOpenGroups = {
-      'Studio Board': location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/projects'),
-      'Project Tools': location.pathname.startsWith('/projects'),
-      'Settings': location.pathname.startsWith('/profile') || location.pathname.startsWith('/admin'),
+      'Studio Board': location.pathname.startsWith('/dashboard') || !location.pathname.startsWith('/projects'),
+      'Project Tools': location.pathname.startsWith('/projects') && !location.pathname.includes('/viva'),
+      'Account': location.pathname.startsWith('/profile') || location.pathname.startsWith('/admin'),
     };
 
     setOpenGroups((current) => ({
@@ -288,10 +323,12 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange, mobileOpen = fal
         </button>
 
         <div className="sidebar-footer-actions">
-          <button className="btn btn-secondary" type="button" onClick={() => navigate('/dashboard')}>
-            <Sparkles size={15} />
-            <span>Open board</span>
-          </button>
+          {!isOnDashboard && (
+            <button className="btn btn-secondary" type="button" onClick={() => navigate('/dashboard')}>
+              <LayoutDashboard size={15} />
+              <span>Dashboard</span>
+            </button>
+          )}
           <button className="btn btn-secondary" type="button" onClick={openHelp}>
             <HelpCircle size={15} />
             <span>Help</span>

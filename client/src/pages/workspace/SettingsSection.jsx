@@ -7,15 +7,16 @@ import { useWorkspace } from './ProjectWorkspaceLayout';
 import { formatCommentDate } from './workspace.helpers';
 import {
   Pencil, GitBranch, ExternalLink, Link2, RefreshCw, Unlink,
-  Loader2, Trash2,
+  Loader2, Trash2, Download, UserRoundCheck,
 } from 'lucide-react';
 
 export const SettingsSection = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { project, refreshProject, fetchWorkspaceData } = useWorkspace();
+  const { project, canManageTeam, refreshProject, fetchWorkspaceData } = useWorkspace();
 
   const [loading, setLoading] = useState(true);
+  const [supervisors, setSupervisors] = useState([]);
   const [projectForm, setProjectForm] = useState({
     title: '', description: '', category: '', department: '', academicYear: '', status: 'active',
   });
@@ -23,11 +24,14 @@ export const SettingsSection = () => {
     repositoryUrl: '', defaultBranch: 'main', docsPath: 'docs', requirementsPath: 'requirements', notesPath: 'notes',
   });
   const [savingProject, setSavingProject] = useState(false);
+  const [savingSupervisor, setSavingSupervisor] = useState(false);
   const [savingGithubConnection, setSavingGithubConnection] = useState(false);
   const [syncingGithubRepository, setSyncingGithubRepository] = useState(false);
   const [disconnectingGithubRepository, setDisconnectingGithubRepository] = useState(false);
   const [deletingProject, setDeletingProject] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [selectedSupervisorId, setSelectedSupervisorId] = useState('');
 
   useEffect(() => {
     if (project) {
@@ -41,9 +45,16 @@ export const SettingsSection = () => {
         docsPath: project.githubDocsPath || 'docs', requirementsPath: project.githubRequirementsPath || 'requirements',
         notesPath: project.githubNotesPath || 'notes',
       });
+      setSelectedSupervisorId(String(project.supervisorId || ''));
       setLoading(false);
     }
   }, [project]);
+
+  useEffect(() => {
+    axios.get('/users/by-role/supervisor')
+      .then((res) => setSupervisors(res.data))
+      .catch(() => {});
+  }, []);
 
   const handleUpdateProject = async (e) => {
     e.preventDefault();
@@ -56,6 +67,39 @@ export const SettingsSection = () => {
       toast.error(err.response?.data?.error || 'Unable to update project details.');
     } finally {
       setSavingProject(false);
+    }
+  };
+
+  const handleAssignSupervisor = async () => {
+    if (!selectedSupervisorId) { toast.error('Select a supervisor first.'); return; }
+    setSavingSupervisor(true);
+    try {
+      await axios.put(`/projects/${id}`, { supervisorId: parseInt(selectedSupervisorId, 10) });
+      await refreshProject();
+      toast.success('Supervisor assigned.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to assign supervisor.');
+    } finally {
+      setSavingSupervisor(false);
+    }
+  };
+
+  const handleExportProject = async () => {
+    setExporting(true);
+    try {
+      const res = await axios.get(`/projects/${id}/export`);
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${project?.title?.replace(/\s+/g, '_') || 'project'}_export.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Project data exported.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Unable to export project data.');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -287,6 +331,59 @@ export const SettingsSection = () => {
               </button>
             </div>
           </form>
+        </section>
+      </div>
+
+      <div className="grid-2 settings-grid">
+        <section className="card settings-card">
+          <div>
+            <span className="badge badge-info"><UserRoundCheck size={14} /> Supervision</span>
+            <h3>Assign a supervisor</h3>
+            <p>Set the project supervisor who will review requirements, give feedback, and evaluate readiness.</p>
+          </div>
+          <div className="settings-form">
+            <div className="form-group">
+              <label className="form-label">Current supervisor</label>
+              <p style={{ margin: '4px 0', color: 'var(--ink-soft)' }}>
+                {project?.supervisor?.name || 'None assigned'}
+              </p>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Select supervisor</label>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <select className="form-input" value={selectedSupervisorId}
+                  onChange={(e) => setSelectedSupervisorId(e.target.value)}
+                  style={{ background: 'var(--bg-secondary)' }}>
+                  <option value="">-- Choose a supervisor --</option>
+                  {supervisors.map((sup) => (
+                    <option key={sup.id} value={sup.id}>{sup.name} ({sup.email})</option>
+                  ))}
+                </select>
+                <button type="button" className="btn btn-primary" onClick={handleAssignSupervisor}
+                  disabled={savingSupervisor || !selectedSupervisorId}>
+                  {savingSupervisor ? <Loader2 className="spinner-icon" size={15} /> : <UserRoundCheck size={15} />}
+                  Assign
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="card settings-card">
+          <div>
+            <span className="badge badge-info"><Download size={14} /> Export</span>
+            <h3>Export project data</h3>
+            <p>Download all requirements, tasks, files, logs, comments, and readiness scores as a single JSON file.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '8px' }}>
+            <button type="button" className="btn btn-primary" onClick={handleExportProject} disabled={exporting}>
+              {exporting ? <Loader2 className="spinner-icon" size={16} /> : <Download size={16} />}
+              {exporting ? 'Exporting...' : 'Export as JSON'}
+            </button>
+            <span style={{ fontSize: '0.82rem', color: 'var(--ink-soft)' }}>
+              Includes members, requirements with criteria and tests, tasks, files, logs, comments, and readiness.
+            </span>
+          </div>
         </section>
       </div>
 

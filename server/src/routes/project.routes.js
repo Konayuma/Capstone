@@ -12,6 +12,7 @@ router.post('/', projectController.create);
 router.get('/', projectController.list);
 router.get('/dashboard-summary', projectController.dashboardSummary);
 router.get('/:id', requireProjectAccess, projectController.getById);
+router.get('/:id/export', requireProjectAccess, projectController.exportProject);
 router.put('/:id', requireProjectAccess, projectController.update);
 router.get('/:id/github', requireProjectAccess, githubController.getProjectIntegration);
 router.get('/:id/github/install-url', requireProjectAccess, githubController.getAppInstallUrl);

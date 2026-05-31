@@ -10,6 +10,25 @@ const publicUserSelect = {
 };
 
 export const userController = {
+  async byRole(req, res, next) {
+    try {
+      const role = req.params.role;
+      if (!['supervisor', 'admin', 'student'].includes(role)) {
+        return res.status(400).json({ error: 'Invalid role. Must be supervisor, admin, or student.' });
+      }
+
+      const users = await prisma.user.findMany({
+        where: { role },
+        select: { id: true, name: true, email: true, role: true },
+        orderBy: { name: 'asc' },
+      });
+
+      res.json(users);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async search(req, res, next) {
     try {
       const query = String(req.query.q || '').trim();

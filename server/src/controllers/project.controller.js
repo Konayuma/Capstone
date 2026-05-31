@@ -26,6 +26,114 @@ const assertCanManageProject = (req) => {
 };
 
 export const projectController = {
+  async exportProject(req, res, next) {
+    try {
+      const projectId = parseInt(req.params.id, 10);
+
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        include: {
+          members: {
+            include: { user: { select: { id: true, name: true, email: true, role: true } } },
+          },
+          requirements: {
+            include: {
+              acceptanceCriteria: true,
+              testCases: true,
+            },
+          },
+          tasks: {
+            include: {
+              evidence: true,
+              assignedToUser: { select: { id: true, name: true } },
+            },
+          },
+          files: true,
+          progressLogs: {
+            include: { user: { select: { id: true, name: true } } },
+          },
+          comments: {
+            include: { user: { select: { id: true, name: true } } },
+          },
+          readinessScores: {
+            orderBy: { generatedAt: 'desc' },
+            take: 1,
+          },
+        },
+      });
+
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found.' });
+      }
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        project: {
+          id: project.id,
+          title: project.title,
+          description: project.description,
+          category: project.category,
+          department: project.department,
+          academicYear: project.academicYear,
+          status: project.status,
+          createdAt: project.createdAt,
+        },
+        members: project.members.map((m) => ({
+          name: m.user.name,
+          email: m.user.email,
+          role: m.user.role,
+          projectRole: m.projectRole,
+          isLeader: m.isLeader,
+          joinedAt: m.joinedAt,
+        })),
+        requirements: project.requirements.map((r) => ({
+          title: r.title,
+          description: r.description,
+          type: r.type,
+          priority: r.priority,
+          status: r.status,
+          acceptanceCriteria: r.acceptanceCriteria.map((a) => a.criteriaText),
+          testCases: r.testCases.map((t) => ({
+            title: t.testTitle,
+            description: t.testDescription,
+            steps: t.testSteps,
+            expected: t.expectedResult,
+            status: t.status,
+          })),
+        })),
+        tasks: project.tasks.map((t) => ({
+          title: t.title,
+          description: t.description,
+          status: t.status,
+          assignedTo: t.assignedToUser?.name || null,
+          deadline: t.deadline,
+          completedAt: t.completedAt,
+        })),
+        files: project.files.map((f) => ({
+          fileName: f.fileName || f.originalName,
+          fileType: f.fileType,
+          uploadedAt: f.uploadedAt,
+        })),
+        progressLogs: project.progressLogs.map((l) => ({
+          user: l.user.name,
+          weekNumber: l.weekNumber,
+          logText: l.logText,
+          submittedAt: l.submittedAt,
+        })),
+        comments: project.comments.map((c) => ({
+          user: c.user.name,
+          message: c.message,
+          createdAt: c.createdAt,
+        })),
+        readinessScore: project.readinessScores[0]?.overallScore || null,
+      };
+
+      res.json(exportData);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async dashboardSummary(req, res, next) {
     try {
       let where = {};

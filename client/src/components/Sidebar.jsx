@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import logoImage from '../assets/logo copy.png';
@@ -64,10 +64,22 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange, mobileOpen = fal
   const [openGroups, setOpenGroups] = useState(readStoredSidebarGroups);
   const [projectName, setProjectName] = useState('');
   const userRole = user?.role;
+  const searchRef = useRef(null);
 
   const { openHelp } = useOnboarding();
   const projectMatch = location.pathname.match(/^\/projects\/(\d+)/);
   const currentProjectId = projectMatch?.[1];
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !collapsed) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [collapsed]);
 
   useEffect(() => {
     if (!currentProjectId) { setProjectName(''); return; }
@@ -241,6 +253,7 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange, mobileOpen = fal
           <label className="sidebar-search">
             <Search size={16} />
             <input
+              ref={searchRef}
               type="search"
               placeholder="Search..."
               value={query}

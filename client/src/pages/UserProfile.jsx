@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -11,6 +11,11 @@ import {
   ShieldCheck,
   CheckCircle2,
   Save,
+  FileText,
+  MessageSquare,
+  HelpCircle,
+  ClipboardList,
+  Loader2,
 } from 'lucide-react';
 
 const getInitials = (name = '') => name
@@ -31,11 +36,18 @@ const roleLabel = (role) => ({
   doc_lead: 'Documentation Lead',
 }[role] || 'Team Member');
 
+const statConfig = [
+  { key: 'progressLogs', label: 'Progress logs', icon: MessageSquare },
+  { key: 'uploadedFiles', label: 'Uploaded files', icon: FileText },
+  { key: 'vivaAnswers', label: 'Viva answers', icon: HelpCircle },
+];
+
 const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { user, updateProfile } = useAuth();
   const [searchParams] = useSearchParams();
+  const formId = useId();
   const projectId = searchParams.get('projectId');
   const targetUserId = userId || user?.id;
 
@@ -75,7 +87,7 @@ const UserProfile = () => {
         projectRole: 'researcher',
       });
       toast.success(`${profile.name} was added to the team.`);
-      navigate(`/projects/${projectId}#team`);
+      navigate(`/projects/${projectId}/team`);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Unable to add this user to the project.');
     } finally {
@@ -107,100 +119,123 @@ const UserProfile = () => {
   if (!profile) {
     return (
       <div className="profile-page">
-        <button className="btn btn-secondary" onClick={() => navigate(-1)}>
-          <ArrowLeft size={16} />
-          Back
-        </button>
-        <div className="card">Profile not found.</div>
+        <div className="profile-section">
+          <button className="btn btn-secondary" onClick={() => navigate(-1)}>
+            <ArrowLeft size={16} />
+            Back
+          </button>
+          <div className="card" style={{ padding: '40px', textAlign: 'center' }}>
+            <h3>Profile not found</h3>
+            <p style={{ color: 'var(--text-muted)' }}>This user may have been removed or the link is incorrect.</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   const alreadyOnProject = projectId
-    && profile.memberships?.some((membership) => String(membership.project.id) === String(projectId));
+    && profile.memberships?.some((m) => String(m.project.id) === String(projectId));
 
   return (
     <div className="profile-page">
-      <button className="btn btn-secondary" onClick={() => navigate(-1)}>
-        <ArrowLeft size={16} />
-        Back
-      </button>
-
-      <section className="profile-hero">
-        <span className="profile-avatar-xl">{getInitials(profile.name)}</span>
-        <div>
-          <span className="badge badge-info">{profile.role}</span>
+      {/* Hero */}
+      <section className="profile-section profile-hero">
+        <span className="profile-avatar-xl" aria-hidden="true">{getInitials(profile.name)}</span>
+        <div className="profile-hero-copy">
+          <div className="profile-hero-badges">
+            <span className="badge badge-info">{profile.role}</span>
+            {projectId && alreadyOnProject && (
+              <span className="badge badge-success">
+                <CheckCircle2 size={13} />
+                On your team
+              </span>
+            )}
+          </div>
           <h1>{profile.name}</h1>
           <p>{profile.email}</p>
         </div>
-        {projectId && (
-          alreadyOnProject ? (
-            <span className="badge badge-success">
-              <CheckCircle2 size={14} />
-              Already on this team
-            </span>
-          ) : (
+        <div className="profile-hero-actions">
+          <button
+            className="btn btn-secondary profile-back-btn"
+            onClick={() => navigate(projectId ? `/projects/${projectId}/team` : -1)}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={16} />
+            <span className="profile-back-label">Back</span>
+          </button>
+          {projectId && !alreadyOnProject && (
             <button className="btn btn-primary" onClick={handleAddToProject} disabled={adding}>
-              <UserPlus size={16} />
+              {adding ? <Loader2 className="spinner-icon" size={16} /> : <UserPlus size={16} />}
               {adding ? 'Adding...' : 'Add to project'}
             </button>
-          )
-        )}
+          )}
+        </div>
       </section>
 
+      {/* Edit profile */}
       {isOwnProfile && (
-        <section className="card profile-panel">
-          <div>
-            <span className="badge badge-info">Account details</span>
-            <h3>Edit profile</h3>
-          </div>
+        <section className="profile-section">
+          <div className="card profile-panel">
+            <div>
+              <span className="badge badge-info">Account details</span>
+              <h3>Edit profile</h3>
+            </div>
 
-          <form className="profile-edit-form" onSubmit={handleSaveProfile}>
-            <div className="form-group">
-              <label className="form-label">Display name</label>
-              <input
-                className="form-input"
-                value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
-                minLength={2}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">New password</label>
-              <input
-                className="form-input"
-                type="password"
-                value={profilePassword}
-                onChange={(e) => setProfilePassword(e.target.value)}
-                minLength={6}
-                placeholder="Leave blank to keep current password"
-              />
-            </div>
-            <button className="btn btn-primary" type="submit" disabled={savingProfile}>
-              <Save size={16} />
-              {savingProfile ? 'Saving...' : 'Save profile'}
-            </button>
-          </form>
+            <form className="profile-edit-form" onSubmit={handleSaveProfile} noValidate>
+              <div className="form-group">
+                <label className="form-label" htmlFor={`${formId}-name`}>Display name</label>
+                <input
+                  id={`${formId}-name`}
+                  className="form-input"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  minLength={2}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor={`${formId}-password`}>New password</label>
+                <input
+                  id={`${formId}-password`}
+                  className="form-input"
+                  type="password"
+                  value={profilePassword}
+                  onChange={(e) => setProfilePassword(e.target.value)}
+                  minLength={6}
+                  placeholder="Leave blank to keep current password"
+                  autoComplete="new-password"
+                />
+              </div>
+              <div className="profile-edit-actions">
+                <button className="btn btn-secondary" type="button" onClick={() => {
+                  setProfileName(profile.name);
+                  setProfilePassword('');
+                }}>
+                  Reset
+                </button>
+                <button className="btn btn-primary" type="submit" disabled={savingProfile}>
+                  {savingProfile ? <Loader2 className="spinner-icon" size={16} /> : <Save size={16} />}
+                  {savingProfile ? 'Saving...' : 'Save profile'}
+                </button>
+              </div>
+            </form>
+          </div>
         </section>
       )}
 
-      <section className="profile-grid">
-        <article className="card profile-stat">
-          <span>Progress logs</span>
-          <strong>{profile._count?.progressLogs || 0}</strong>
-        </article>
-        <article className="card profile-stat">
-          <span>Uploaded files</span>
-          <strong>{profile._count?.uploadedFiles || 0}</strong>
-        </article>
-        <article className="card profile-stat">
-          <span>Viva answers</span>
-          <strong>{profile._count?.vivaAnswers || 0}</strong>
-        </article>
+      {/* Stats */}
+      <section className="profile-section profile-grid">
+        {statConfig.map(({ key, label, icon: Icon }) => (
+          <article key={key} className="card profile-stat">
+            <span className="profile-stat-icon"><Icon size={18} /></span>
+            <span className="profile-stat-label">{label}</span>
+            <strong className="profile-stat-value">{profile._count?.[key] || 0}</strong>
+          </article>
+        ))}
       </section>
 
-      <section className="grid-2">
+      {/* Projects + Tasks */}
+      <section className="profile-section grid-2">
         <article className="card profile-panel">
           <div>
             <span className="badge badge-info">
@@ -211,49 +246,67 @@ const UserProfile = () => {
           </div>
 
           <div className="profile-list">
-            {profile.memberships?.length ? profile.memberships.map((membership) => (
-              <button
-                key={`${membership.project.id}-${membership.joinedAt}`}
-                type="button"
-                className="profile-list-item"
-                onClick={() => navigate(`/projects/${membership.project.id}#team`)}
-              >
-                <span>
-                  <strong>{membership.project.title}</strong>
-                  <small>{membership.project.academicYear || 'Current term'} · {membership.project.status}</small>
-                </span>
-                <span className="badge badge-info">
-                  {membership.isLeader && <ShieldCheck size={13} />}
-                  {roleLabel(membership.projectRole)}
-                </span>
-              </button>
-            )) : (
-              <p>No project memberships yet. Join a team or ask a supervisor to add you.</p>
+            {profile.memberships?.length ? (
+              profile.memberships.map((membership) => (
+                <button
+                  key={`${membership.project.id}-${membership.joinedAt}`}
+                  type="button"
+                  className="profile-list-item"
+                  onClick={() => navigate(`/projects/${membership.project.id}/team`)}
+                >
+                  <span className="profile-list-item-copy">
+                    <strong>{membership.project.title}</strong>
+                    <small>{membership.project.academicYear || 'Current term'} &middot; {membership.project.status}</small>
+                  </span>
+                  <span className="badge badge-info profile-list-item-role">
+                    {membership.isLeader && <ShieldCheck size={13} />}
+                    {roleLabel(membership.projectRole)}
+                  </span>
+                </button>
+              ))
+            ) : (
+              <div className="profile-list-empty">
+                <FolderKanban size={24} />
+                <p>No project memberships yet.</p>
+                <small>Join a team or ask a supervisor to add you.</small>
+              </div>
             )}
           </div>
         </article>
 
         <article className="card profile-panel">
           <div>
-            <span className="badge badge-info">Assigned work</span>
+            <span className="badge badge-info">
+              <ClipboardList size={14} />
+              Tasks
+            </span>
             <h3>Recent tasks</h3>
           </div>
 
           <div className="profile-list">
-            {profile.assignedTasks?.length ? profile.assignedTasks.map((task) => (
-              <button
-                key={task.id}
-                type="button"
-                className="profile-list-item"
-                onClick={() => navigate(`/projects/${task.projectId}#tasks`)}
-              >
-                <span>
-                  <strong>{task.title}</strong>
-                  <small>{task.status.replace('_', ' ')}</small>
-                </span>
-              </button>
-            )) : (
-              <p>No assigned tasks yet. Tasks will appear here once the project lead assigns work.</p>
+            {profile.assignedTasks?.length ? (
+              profile.assignedTasks.map((task) => (
+                <button
+                  key={task.id}
+                  type="button"
+                  className="profile-list-item"
+                  onClick={() => navigate(`/projects/${task.projectId}/tasks`)}
+                >
+                  <span className="profile-list-item-copy">
+                    <strong>{task.title}</strong>
+                    <small>{task.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</small>
+                  </span>
+                  <span className={`badge ${task.status === 'completed' ? 'badge-success' : task.status === 'in_progress' ? 'badge-warning' : 'badge-info'}`}>
+                    {task.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </span>
+                </button>
+              ))
+            ) : (
+              <div className="profile-list-empty">
+                <ClipboardList size={24} />
+                <p>No assigned tasks yet.</p>
+                <small>Tasks will appear here once the project lead assigns work.</small>
+              </div>
             )}
           </div>
         </article>

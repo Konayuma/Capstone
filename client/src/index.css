@@ -146,7 +146,7 @@ select {
   grid-template-rows: auto 1fr auto;
   gap: 18px;
   overflow: hidden;
-  transition: padding var(--t-normal);
+  transition: padding var(--t-normal), transform 260ms var(--ease-out-quint), opacity 260ms var(--ease-out-quint);
 }
 
 .sidebar-head {
@@ -4491,22 +4491,6 @@ select {
     width: 100%;
   }
 
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  .workspace-live-hero.is-updating .workspace-progress-fill--live,
-  .workspace-tabs.is-updating .workspace-tab-badge {
-    animation: none !important;
-  }
-}
   .landing-topbar {
     align-items: flex-start;
     display: grid;
@@ -4527,4 +4511,123 @@ select {
   .landing-product-visual {
     border-radius: 18px;
   }
+
+  .sidebar {
+    transition: transform 260ms var(--ease-out-quint), opacity 260ms var(--ease-out-quint), box-shadow 260ms var(--ease-out-quint);
+  }
+
+  .sidebar-backdrop {
+    transition: opacity 260ms var(--ease-out-quint);
+  }
+
+  .app-container.sidebar-mobile-open .sidebar {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .btn,
+  .workspace-tab,
+  .sidebar-link,
+  .sidebar-child,
+  .team-person,
+  .member-stack,
+  .project-tile,
+  .requirement-item,
+  .task-item,
+  .comment-item,
+  .documents-item,
+  .team-search-result {
+    cursor: default;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .main-content {
+    overflow-x: hidden;
+  }
+
+  .workspace-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  .workspace-tab {
+    scroll-snap-align: start;
+    flex: 0 0 auto;
+  }
+
+  .task-filter-row {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  form, .form-group, .dashboard-modal-form {
+    max-width: 100%;
+  }
+
+  input, select, textarea, .form-input {
+    font-size: 16px !important;
+  }
+
+  .viva-question-panel {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .viva-question-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .workspace-live-hero.is-updating .workspace-progress-fill--live,
+  .workspace-tabs.is-updating .workspace-tab-badge {
+    animation: none !important;
+  }
+}
+
+/* Dashboard summary widgets */
+.dashboard-summary-widgets {
+  margin-top: 14px;
+}
+
+.dashboard-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.dashboard-summary-card {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+}
+
+.dashboard-summary-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-summary-card strong {
+  font-size: 0.95rem;
+}
+
+.dashboard-summary-card small {
+  font-size: 0.78rem;
 }

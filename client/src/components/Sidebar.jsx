@@ -13,6 +13,7 @@ import {
   GraduationCap,
   HelpCircle,
   LayoutDashboard,
+  Layers,
   LogOut,
   MessageSquare,
   PanelLeftClose,
@@ -27,7 +28,7 @@ import {
 
 import { useOnboarding } from '../context/OnboardingContext';
 const buildProjectHref = (projectId, tab) => (
-  projectId ? `/projects/${projectId}#${tab}` : '/projects'
+  projectId ? `/projects/${projectId}/${tab}` : '/projects'
 );
 
 const sidebarGroupDefaults = {
@@ -85,6 +86,7 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange, mobileOpen = fal
           to: currentProjectId ? `/projects/${currentProjectId}` : '/projects',
           children: [
             { label: 'Requirements', icon: BookOpenCheck, to: buildProjectHref(currentProjectId, 'requirements') },
+            { label: 'Traceability', icon: Layers, to: buildProjectHref(currentProjectId, 'traceability') },
             { label: 'Tasks', icon: ClipboardList, to: buildProjectHref(currentProjectId, 'tasks') },
             { label: 'Contributions', icon: Users, to: buildProjectHref(currentProjectId, 'contribution') },
             { label: 'Viva Practice', icon: GraduationCap, to: currentProjectId ? `/projects/${currentProjectId}/viva` : '/projects' },
@@ -135,11 +137,7 @@ export const Sidebar = ({ collapsed = false, onCollapsedChange, mobileOpen = fal
   const forceOpenGroups = query.trim().length > 0;
 
   const isChildActive = (to) => {
-    const [pathname, hash] = to.split('#');
-    if (hash) {
-      return location.pathname === pathname && location.hash === `#${hash}`;
-    }
-    return location.pathname === pathname;
+    return location.pathname === to;
   };
 
   const handleLogout = () => {

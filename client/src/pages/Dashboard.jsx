@@ -15,6 +15,8 @@ import {
   Layers,
   Loader2,
   UserRound,
+  FileText,
+  AlertTriangle,
 } from 'lucide-react';
 
 const STATUS_META = {
@@ -50,6 +52,8 @@ export const Dashboard = () => {
   const navigate = useNavigate();
 
   const [projects, setProjects] = useState([]);
+  const [dashboardSummary, setDashboardSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState('');
@@ -83,12 +87,17 @@ export const Dashboard = () => {
 
   const fetchProjects = async () => {
     try {
-      const res = await axios.get('/projects');
-      setProjects(res.data);
+      const [projRes, summaryRes] = await Promise.all([
+        axios.get('/projects'),
+        axios.get('/projects/dashboard-summary'),
+      ]);
+      setProjects(projRes.data);
+      setDashboardSummary(summaryRes.data);
     } catch (err) {
-      console.error('Failed to fetch projects:', err);
+      console.error('Failed to fetch dashboard data:', err);
     } finally {
       setLoading(false);
+      setSummaryLoading(false);
     }
   };
 
@@ -242,6 +251,56 @@ export const Dashboard = () => {
           </button>
         </form>
       </section>
+
+      {/* Workspace Summary Widgets */}
+      {dashboardSummary && !summaryLoading && (
+        <section className="dashboard-summary-widgets">
+          <div className="dashboard-summary-grid">
+            <article className="status-chip dashboard-summary-card">
+              <Layers size={18} />
+              <div>
+                <span style={{ color: 'var(--ink-soft)', fontSize: '0.82rem' }}>Requirements</span>
+                <strong>{dashboardSummary.approvedRequirements}/{dashboardSummary.totalRequirements} approved</strong>
+                <small style={{ color: dashboardSummary.approvalRate >= 70 ? 'var(--color-success)' : 'var(--color-warning)' }}>
+                  {dashboardSummary.approvalRate}% approval rate
+                </small>
+              </div>
+            </article>
+            <article className="status-chip dashboard-summary-card">
+              <CheckCircle2 size={18} />
+              <div>
+                <span style={{ color: 'var(--ink-soft)', fontSize: '0.82rem' }}>Tasks</span>
+                <strong>{dashboardSummary.completedTasks}/{dashboardSummary.totalTasks} completed</strong>
+                <small style={{ color: dashboardSummary.taskCompletionRate >= 70 ? 'var(--color-success)' : 'var(--color-warning)' }}>
+                  {dashboardSummary.taskCompletionRate}% completion rate
+                </small>
+              </div>
+            </article>
+            <article className="status-chip dashboard-summary-card">
+              <FileText size={18} />
+              <div>
+                <span style={{ color: 'var(--ink-soft)', fontSize: '0.82rem' }}>Recent Uploads</span>
+                <strong>{dashboardSummary.recentUploads.length} files</strong>
+                {dashboardSummary.recentUploads.length > 0 && (
+                  <small>
+                    Latest: {dashboardSummary.recentUploads[0]?.fileName?.length > 30
+                      ? dashboardSummary.recentUploads[0].fileName.slice(0, 30) + '...'
+                      : dashboardSummary.recentUploads[0]?.fileName}
+                  </small>
+                )}
+              </div>
+            </article>
+            <article className="status-chip dashboard-summary-card">
+              <Activity size={18} />
+              <div>
+                <span style={{ color: 'var(--ink-soft)', fontSize: '0.82rem' }}>Projects</span>
+                <strong>{dashboardSummary.totalProjects} total</strong>
+                <small>{dashboardSummary.totalProjects > 0 ? `${dashboardSummary.totalProjects} workspace${dashboardSummary.totalProjects !== 1 ? 's' : ''}` : 'No workspaces'}</small>
+              </div>
+            </article>
+          </div>
+        </section>
+      )}
 
       <section className="status-row" style={{ marginTop: '14px' }}>
         <article className="status-chip">

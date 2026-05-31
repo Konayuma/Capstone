@@ -26,6 +26,65 @@ const assertCanManageProject = (req) => {
 };
 
 export const projectController = {
+  async dashboardSummary(req, res, next) {
+    try {
+      let where = {};
+
+      if (req.user.role === 'student') {
+        where = { members: { some: { userId: req.user.id } } };
+      } else if (req.user.role === 'supervisor') {
+        where = {
+          OR: [
+            { supervisorId: req.user.id },
+            { members: { some: { userId: req.user.id } } },
+          ],
+        };
+      }
+
+      const [projects, latestFiles] = await Promise.all([
+        prisma.project.findMany({
+          where,
+          include: {
+            _count: { select: { requirements: true, tasks: true, files: true } },
+            requirements: { select: { id: true, status: true } },
+            tasks: { select: { id: true, status: true } },
+          },
+        }),
+        prisma.file.findMany({
+          where: { project: where },
+          include: { project: { select: { id: true, title: true } } },
+          orderBy: { uploadedAt: 'desc' },
+          take: 5,
+        }),
+      ]);
+
+      const totalRequirements = projects.reduce((s, p) => s + p._count.requirements, 0);
+      const totalTasks = projects.reduce((s, p) => s + p._count.tasks, 0);
+      const approvedReqs = projects.reduce((s, p) => s + p.requirements.filter((r) => r.status === 'approved').length, 0);
+      const completedTasks = projects.reduce((s, p) => s + p.tasks.filter((t) => t.status === 'completed').length, 0);
+      const totalProjects = projects.length;
+
+      res.json({
+        totalProjects,
+        totalRequirements,
+        approvedRequirements: approvedReqs,
+        approvalRate: totalRequirements > 0 ? Math.round((approvedReqs / totalRequirements) * 100) : 0,
+        totalTasks,
+        completedTasks,
+        taskCompletionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+        recentUploads: latestFiles.map((f) => ({
+          id: f.id,
+          fileName: f.fileName || f.originalName,
+          projectTitle: f.project.title,
+          projectId: f.projectId,
+          uploadedAt: f.uploadedAt,
+        })),
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async create(req, res, next) {
     try {
       const data = createProjectSchema.parse(req.body);

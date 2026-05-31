@@ -13,6 +13,8 @@ router.get('/:id/requirements', requireProjectAccess, requirementController.getP
 router.post('/:id/requirements', requireProjectAccess, requirementController.createRequirement);
 router.post('/:id/requirements/generate', aiLimiter, requireProjectAccess, requirementController.generateAIRequirements);
 router.get('/:id/requirements/traceability', requireProjectAccess, requirementController.getTraceabilityMatrix);
+router.post('/:id/requirements/bulk', requireProjectAccess, requirementController.bulkRequirementOperation);
+router.get('/:id/requirements/summary', requireProjectAccess, requirementController.getWorkspaceSummary);
 
 // Individual requirement endpoints
 router.get('/requirements/:requirementId', requirementController.getRequirementDetails);
@@ -23,5 +25,8 @@ router.delete('/requirements/:requirementId', requirementController.deleteRequir
 // AI triggers for individual requirements
 router.post('/requirements/:requirementId/acceptance-criteria/generate', aiLimiter, requirementController.generateAcceptanceCriteria);
 router.post('/requirements/:requirementId/test-cases/generate', aiLimiter, requirementController.generateTestCases);
+router.post('/requirements/:requirementId/refine', aiLimiter, requirementController.refineRequirement);
+router.put('/requirements/:requirementId/refine/apply', requirementController.applyRefinement);
+router.post('/requirements/:requirementId/resolve-ambiguity', aiLimiter, requirementController.resolveAmbiguity);
 
 export default router;

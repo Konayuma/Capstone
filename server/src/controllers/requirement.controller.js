@@ -170,6 +170,78 @@ export const requirementController = {
       next(error);
     }
   },
+
+  /** AI-assisted refinement: returns suggested improvements without saving */
+  async refineRequirement(req, res, next) {
+    try {
+      const reqId = parseInt(req.params.requirementId, 10);
+      await assertRequirementAccess(req, reqId);
+      const { guidance } = req.body || {};
+      const result = await requirementService.refineWithAI(reqId, guidance);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /** Apply AI refinement suggestion to a requirement */
+  async applyRefinement(req, res, next) {
+    try {
+      const reqId = parseInt(req.params.requirementId, 10);
+      await assertRequirementAccess(req, reqId);
+      const { title, description, priority } = z.object({
+        title: z.string().min(1).optional(),
+        description: z.string().min(1).optional(),
+        priority: z.enum(['low', 'medium', 'high']).optional(),
+      }).parse(req.body);
+      const updated = await requirementService.applyRefinement(reqId, { title, description, priority });
+      res.json(updated);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /** Resolve ambiguity in a requirement via AI */
+  async resolveAmbiguity(req, res, next) {
+    try {
+      const reqId = parseInt(req.params.requirementId, 10);
+      await assertRequirementAccess(req, reqId);
+      const { vagueTerm, suggestion } = z.object({
+        vagueTerm: z.string().min(1),
+        suggestion: z.string().min(1),
+      }).parse(req.body);
+      const result = await requirementService.resolveAmbiguity(reqId, vagueTerm, suggestion);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /** Bulk operations on requirements */
+  async bulkRequirementOperation(req, res, next) {
+    try {
+      const projectId = parseInt(req.params.id || req.params.projectId, 10);
+      const { action, requirementIds } = z.object({
+        action: z.enum(['approve', 'reject', 'draft', 'delete', 'generate_criteria', 'generate_tests']),
+        requirementIds: z.array(z.number().positive()).min(1),
+      }).parse(req.body);
+      const result = await requirementService.bulkOperation(projectId, { action, requirementIds });
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /** Workspace summary for dashboard enrichment */
+  async getWorkspaceSummary(req, res, next) {
+    try {
+      const projectId = parseInt(req.params.id || req.params.projectId, 10);
+      const summary = await requirementService.getWorkspaceSummary(projectId);
+      res.json(summary);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default requirementController;

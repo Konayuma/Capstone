@@ -8,7 +8,16 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import ProjectWorkspace from './pages/ProjectWorkspace';
+import ProjectWorkspaceLayout from './pages/workspace/ProjectWorkspaceLayout';
+import RequirementsSection from './pages/workspace/RequirementsSection';
+import TasksSection from './pages/workspace/TasksSection';
+import TraceabilityMatrix from './pages/workspace/TraceabilityMatrix';
+import TeamSection from './pages/workspace/TeamSection';
+import ContributionSection from './pages/workspace/ContributionSection';
+import ReadinessSection from './pages/workspace/ReadinessSection';
+import DocumentsSection from './pages/workspace/DocumentsSection';
+import NotesSection from './pages/workspace/NotesSection';
+import SettingsSection from './pages/workspace/SettingsSection';
 import VivaPractice from './pages/VivaPractice';
 import UserProfile from './pages/UserProfile';
 import JoinProject from './pages/JoinProject';
@@ -17,6 +26,7 @@ import { Menu, X } from 'lucide-react';
 import { OnboardingProvider } from './context/OnboardingContext';
 import OnboardingTour from './components/OnboardingTour';
 import HelpCenter from './components/HelpCenter';
+
 // Protection Shell Component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -131,16 +141,28 @@ export const App = () => {
             }
           />
 
+          {/* Nested workspace routes — each tab is its own route with graceful loading */}
           <Route 
             path="/projects/:id" 
             element={
               <ProtectedRoute>
                 <AppLayout>
-                  <ProjectWorkspace />
+                  <ProjectWorkspaceLayout />
                 </AppLayout>
               </ProtectedRoute>
-            } 
-          />
+            }
+          >
+            <Route index element={<Navigate to="requirements" replace />} />
+            <Route path="requirements" element={<RequirementsSection />} />
+            <Route path="traceability" element={<TraceabilityMatrix />} />
+            <Route path="tasks" element={<TasksSection />} />
+            <Route path="team" element={<TeamSection />} />
+            <Route path="contribution" element={<ContributionSection />} />
+            <Route path="readiness" element={<ReadinessSection />} />
+            <Route path="documents" element={<DocumentsSection />} />
+            <Route path="notes" element={<NotesSection />} />
+            <Route path="settings" element={<SettingsSection />} />
+          </Route>
 
           <Route 
             path="/projects/:id/viva" 

@@ -10,6 +10,7 @@ router.use(authenticate);
 
 router.post('/', projectController.create);
 router.get('/', projectController.list);
+router.get('/dashboard-summary', projectController.dashboardSummary);
 router.get('/:id', requireProjectAccess, projectController.getById);
 router.put('/:id', requireProjectAccess, projectController.update);
 router.get('/:id/github', requireProjectAccess, githubController.getProjectIntegration);

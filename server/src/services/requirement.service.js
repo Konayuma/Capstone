@@ -8,6 +8,10 @@ import {
   buildAcceptanceCriteriaPrompt,
   testCasesSchema,
   buildTestCasesPrompt,
+  refineRequirementSchema,
+  buildRefineRequirementPrompt,
+  resolveAmbiguitySchema,
+  buildResolveAmbiguityPrompt,
 } from '../ai/prompts/requirements.js';
 
 export const requirementService = {
@@ -52,8 +56,8 @@ export const requirementService = {
     return prisma.requirement.update({
       where: { id },
       data: {
-        ...(title && { title }),
-        ...(description && { description }),
+        ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
         ...(priority && { priority }),
         ...(status && { status }),
       },
@@ -62,6 +66,12 @@ export const requirementService = {
 
   async delete(id) {
     return prisma.requirement.delete({ where: { id } });
+  },
+
+  async deleteMany(ids) {
+    return prisma.requirement.deleteMany({
+      where: { id: { in: ids } },
+    });
   },
 
   // 1. Convert raw description to complete requirements using NVIDIA AI
@@ -116,7 +126,6 @@ export const requirementService = {
       savedRequirements.push(saved);
     }
 
-    // Return the response containing saved items and raw ambiguity warnings
     return {
       requirements: savedRequirements,
       ambiguityWarnings: aiResult.ambiguityWarnings,
@@ -135,26 +144,20 @@ export const requirementService = {
 
     const prompt = buildAcceptanceCriteriaPrompt(req.title, req.description);
     
-    // Call NVIDIA AI
     const aiResult = await generateStructuredContent(
       prompt,
       acceptanceCriteriaSchema,
       REQUIREMENTS_SYSTEM_INSTRUCTION
     );
 
-    // Remove existing criteria first to refresh
     await prisma.acceptanceCriteria.deleteMany({
       where: { requirementId },
     });
 
-    // Save new criteria
     const savedCriteria = [];
     for (const text of aiResult.criteria) {
       const saved = await prisma.acceptanceCriteria.create({
-        data: {
-          requirementId,
-          criteriaText: text,
-        },
+        data: { requirementId, criteriaText: text },
       });
       savedCriteria.push(saved);
     }
@@ -176,19 +179,16 @@ export const requirementService = {
     const criteriaTexts = req.acceptanceCriteria.map(c => c.criteriaText);
     const prompt = buildTestCasesPrompt(req.title, req.description, criteriaTexts);
 
-    // Call NVIDIA AI
     const aiResult = await generateStructuredContent(
       prompt,
       testCasesSchema,
       REQUIREMENTS_SYSTEM_INSTRUCTION
     );
 
-    // Delete existing test cases first to refresh
     await prisma.testCase.deleteMany({
       where: { requirementId },
     });
 
-    // Save new test cases
     const savedTestCases = [];
     for (const tc of aiResult.testCases) {
       const saved = await prisma.testCase.create({
@@ -206,9 +206,9 @@ export const requirementService = {
     return savedTestCases;
   },
 
-  // 4. Retrieve complete Traceability Matrix for the project
+  // 4. Retrieve complete Traceability Matrix for the project (enriched)
   async getTraceabilityMatrix(projectId) {
-    return prisma.requirement.findMany({
+    const requirements = await prisma.requirement.findMany({
       where: { projectId },
       select: {
         id: true,
@@ -218,29 +218,188 @@ export const requirementService = {
         status: true,
         priority: true,
         acceptanceCriteria: {
-          select: {
-            id: true,
-            criteriaText: true,
-          },
+          select: { id: true, criteriaText: true },
         },
         testCases: {
-          select: {
-            id: true,
-            testTitle: true,
-            status: true,
-          },
+          select: { id: true, testTitle: true, status: true },
         },
         tasks: {
-          select: {
-            id: true,
-            title: true,
-            status: true,
-            assignedTo: true,
-          },
+          select: { id: true, title: true, status: true, assignedTo: true },
         },
       },
       orderBy: { id: 'asc' },
     });
+
+    // Enrich with computed stats
+    return requirements.map((req) => {
+      const criteriaCount = req.acceptanceCriteria.length;
+      const testCount = req.testCases.length;
+      const passedTests = req.testCases.filter((t) => t.status === 'passed').length;
+      const taskCount = req.tasks.length;
+      const completedTasks = req.tasks.filter((t) => t.status === 'completed').length;
+
+      return {
+        ...req,
+        _stats: {
+          criteriaCount,
+          testCount,
+          passedTests,
+          testPassRate: testCount > 0 ? Math.round((passedTests / testCount) * 100) : 0,
+          testCoverage: criteriaCount > 0 ? Math.round((testCount / criteriaCount) * 100) : 0,
+          taskCount,
+          completedTasks,
+          taskCompletionRate: taskCount > 0 ? Math.round((completedTasks / taskCount) * 100) : 0,
+        },
+      };
+    });
+  },
+
+  // 5. AI-assisted refinement for a single requirement
+  async refineWithAI(requirementId, guidance) {
+    const req = await prisma.requirement.findUnique({
+      where: { id: requirementId },
+    });
+
+    if (!req) {
+      throw Object.assign(new Error('Requirement not found'), { status: 404 });
+    }
+
+    const prompt = buildRefineRequirementPrompt(req.title, req.description, guidance);
+    const aiResult = await generateStructuredContent(
+      prompt,
+      refineRequirementSchema,
+      REQUIREMENTS_SYSTEM_INSTRUCTION
+    );
+
+    return {
+      current: { title: req.title, description: req.description, priority: req.priority },
+      suggested: {
+        title: aiResult.refinedTitle,
+        description: aiResult.refinedDescription,
+        priority: aiResult.suggestedPriority?.toLowerCase() || req.priority,
+      },
+      changes: aiResult.changes,
+    };
+  },
+
+  // 6. Apply AI refinement suggestion to a requirement
+  async applyRefinement(requirementId, { title, description, priority }) {
+    return prisma.requirement.update({
+      where: { id: requirementId },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
+        ...(priority && { priority }),
+      },
+    });
+  },
+
+  // 7. Resolve ambiguity in a single requirement using AI
+  async resolveAmbiguity(requirementId, vagueTerm, suggestion) {
+    const req = await prisma.requirement.findUnique({
+      where: { id: requirementId },
+    });
+
+    if (!req) {
+      throw Object.assign(new Error('Requirement not found'), { status: 404 });
+    }
+
+    const prompt = buildResolveAmbiguityPrompt(req.title, req.description, vagueTerm, suggestion);
+    const aiResult = await generateStructuredContent(
+      prompt,
+      resolveAmbiguitySchema,
+      REQUIREMENTS_SYSTEM_INSTRUCTION
+    );
+
+    // Update the requirement with resolved description
+    const updated = await prisma.requirement.update({
+      where: { id: requirementId },
+      data: { description: aiResult.resolvedDescription },
+    });
+
+    return {
+      requirement: updated,
+      improvements: aiResult.improvements,
+    };
+  },
+
+  // 8. Bulk operations on requirements
+  async bulkOperation(projectId, { action, requirementIds }) {
+    switch (action) {
+      case 'approve':
+        return prisma.requirement.updateMany({
+          where: { id: { in: requirementIds }, projectId },
+          data: { status: 'approved' },
+        });
+
+      case 'reject':
+        return prisma.requirement.updateMany({
+          where: { id: { in: requirementIds }, projectId },
+          data: { status: 'rejected' },
+        });
+
+      case 'draft':
+        return prisma.requirement.updateMany({
+          where: { id: { in: requirementIds }, projectId },
+          data: { status: 'draft' },
+        });
+
+      case 'delete':
+        await prisma.acceptanceCriteria.deleteMany({
+          where: { requirementId: { in: requirementIds } },
+        });
+        await prisma.testCase.deleteMany({
+          where: { requirementId: { in: requirementIds } },
+        });
+        return prisma.requirement.deleteMany({
+          where: { id: { in: requirementIds }, projectId },
+        });
+
+      case 'generate_criteria':
+        for (const rid of requirementIds) {
+          await requirementService.generateAcceptanceCriteria(rid);
+        }
+        return { processed: requirementIds.length };
+
+      case 'generate_tests':
+        for (const rid of requirementIds) {
+          await requirementService.generateTestCases(rid);
+        }
+        return { processed: requirementIds.length };
+
+      default:
+        throw Object.assign(new Error(`Unknown bulk action: ${action}`), { status: 400 });
+    }
+  },
+
+  // 9. Workspace summary for dashboard enrichment
+  async getWorkspaceSummary(projectId) {
+    const [requirements, tasks, files, readiness] = await Promise.all([
+      prisma.requirement.findMany({ where: { projectId }, select: { id: true, status: true, type: true, priority: true } }),
+      prisma.task.findMany({ where: { projectId }, select: { id: true, status: true, deadline: true } }),
+      prisma.file.findMany({ where: { projectId }, select: { id: true, uploadedAt: true } }),
+      prisma.readinessScore.findFirst({ where: { projectId }, orderBy: { generatedAt: 'desc' } }),
+    ]);
+
+    const approvedCount = requirements.filter((r) => r.status === 'approved').length;
+    const functionalCount = requirements.filter((r) => r.type === 'functional').length;
+    const nonFunctionalCount = requirements.filter((r) => r.type === 'non_functional').length;
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter((t) => t.status === 'completed').length;
+
+    return {
+      totalRequirements: requirements.length,
+      approvedRequirements: approvedCount,
+      approvalRate: requirements.length > 0 ? Math.round((approvedCount / requirements.length) * 100) : 0,
+      functionalCount,
+      nonFunctionalCount,
+      totalTasks,
+      completedTasks,
+      taskCompletionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+      totalFiles: files.length,
+      readinessScore: readiness?.overallScore || null,
+      recentUploads: files.slice(-5).reverse(),
+    };
   },
 };
 

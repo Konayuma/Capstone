@@ -9,10 +9,10 @@ export default defineConfig({
     cssMinify: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['lucide-react', 'recharts', 'react-hook-form'],
-          utils: ['date-fns', 'axios'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) return 'vendor';
+          if (id.includes('node_modules/lucide-react') || id.includes('node_modules/recharts') || id.includes('node_modules/react-hook-form')) return 'ui';
+          if (id.includes('node_modules/date-fns') || id.includes('node_modules/axios')) return 'utils';
         },
       },
     },

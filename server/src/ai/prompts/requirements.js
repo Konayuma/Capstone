@@ -119,3 +119,46 @@ Requirement Description: ${description}
 Acceptance Criteria:
 ${criteria ? criteria.map(c => `- ${c}`).join('\n') : 'Not provided'}`;
 };
+
+// 4. Schema for AI-assisted requirement refinement
+export const refineRequirementSchema = {
+  type: 'OBJECT',
+  properties: {
+    refinedTitle: { type: 'STRING', description: 'Improved, more precise title for the requirement.' },
+    refinedDescription: { type: 'STRING', description: 'Improved, measurable, and testable description.' },
+    suggestedPriority: { type: 'STRING', description: 'Suggested priority: high, medium, or low.' },
+    changes: { type: 'STRING', description: 'Brief explanation of what was improved and why.' },
+  },
+  required: ['refinedTitle', 'refinedDescription', 'changes'],
+};
+
+export const buildRefineRequirementPrompt = (title, description, guidance) => {
+  return `Review and refine the following system requirement. Improve clarity, testability, and precision. Make the description measurable and unambiguous.
+
+Current Title: ${title}
+Current Description: ${description}
+${guidance ? `Additional Guidance: ${guidance}` : ''}
+
+Return the refined version with a brief explanation of changes.`;
+};
+
+// 5. Schema for resolving ambiguity in a requirement
+export const resolveAmbiguitySchema = {
+  type: 'OBJECT',
+  properties: {
+    resolvedDescription: { type: 'STRING', description: 'The requirement description with vague terms replaced with concrete, measurable specifications.' },
+    improvements: { type: 'ARRAY', description: 'List of specific vague terms that were improved.', items: { type: 'STRING' } },
+  },
+  required: ['resolvedDescription', 'improvements'],
+};
+
+export const buildResolveAmbiguityPrompt = (title, description, vagueTerm, suggestion) => {
+  return `The following requirement contains a vague or ambiguous term that needs to be replaced with a concrete, measurable specification.
+
+Requirement Title: ${title}
+Current Description: ${description}
+Vague Term Detected: "${vagueTerm}"
+Suggestion: ${suggestion}
+
+Rewrite the requirement description, replacing the vague term with the suggested measurable specification. Return the resolved description and list which terms were improved.`;
+};

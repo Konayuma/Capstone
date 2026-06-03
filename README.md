@@ -1,6 +1,6 @@
-# CapstoneGuard AI
+# Capstone Studio
 
-CapstoneGuard AI is an AI-assisted capstone supervision platform for student teams and supervisors. It helps turn rough project ideas into testable requirements, track task progress and evidence, generate viva practice questions, and keep project documentation in one place.
+Capstone Studio is an AI-assisted capstone supervision platform for student teams and supervisors. It helps turn rough project ideas into testable requirements, track task progress and evidence, generate viva practice questions, and keep project documentation in one place.
 
 ## Project Structure
 

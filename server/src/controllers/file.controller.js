@@ -187,7 +187,8 @@ Use these sections in this order:
 ## Testing and evidence gaps
 ## Viva defense risks
 ## Recommended next uploads or fixes`,
-  'You are a strict capstone supervisor reviewing document completeness and evidence quality. Respond in clean markdown with headings and bullet points only.'
+  'You are a strict capstone supervisor reviewing document completeness and evidence quality. Respond in clean markdown with headings and bullet points only.',
+  { demoMode: req.demoMode }
       );
 
       res.json({ analysis, fileCount: project.files.length });

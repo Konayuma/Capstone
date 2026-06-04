@@ -4,7 +4,7 @@ export const vivaController = {
   async generateVivaQuestions(req, res, next) {
     try {
       const projectId = parseInt(req.params.id || req.params.projectId, 10);
-      const questions = await vivaService.generateVivaQuestions(projectId);
+      const questions = await vivaService.generateVivaQuestions(projectId, req.demoMode);
       res.json(questions);
     } catch (error) {
       next(error);
@@ -34,7 +34,7 @@ export const vivaController = {
         return res.status(403).json({ error: 'You do not have access to this project.' });
       }
 
-      const evaluation = await vivaService.evaluateVivaAnswer(req.user.id, questionId, answerText, projectId);
+      const evaluation = await vivaService.evaluateVivaAnswer(req.user.id, questionId, answerText, projectId, req.demoMode);
       res.status(201).json(evaluation);
     } catch (error) {
       next(error);

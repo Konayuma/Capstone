@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import CoolLoader from '../components/CoolLoader';
 import ActionDelight from '../components/ActionDelight';
@@ -22,7 +21,8 @@ const rubricLabels = ['Clarity', 'Correctness', 'Depth', 'Confidence'];
 const parseFeedback = (rawFeedback = '') => {
   const text = rawFeedback.trim();
   const rubric = rubricLabels.map((label) => {
-    const match = text.match(new RegExp(`${label}:\\s*([^\\.\\n]+)`, 'i'));
+    const pattern = label + ':\\s*([^\\.\\n]+)';
+    const match = text.match(new RegExp(pattern, 'i'));
     return {
       label,
       value: match?.[1]?.trim() || 'Not assessed',
@@ -60,7 +60,8 @@ export const VivaPractice = () => {
   const fetchQuestions = async () => {
     try {
       // Fetch existing questions
-      const res = await axios.get(`/projects/${id}/viva/questions`);
+      const url = '/projects/' + id + '/viva/questions';
+      const res = await axios.get(url);
       setQuestions(res.data);
       setCurrentIdx((current) => Math.min(current, Math.max(res.data.length - 1, 0)));
     } catch (err) {
@@ -107,7 +108,8 @@ export const VivaPractice = () => {
   const handleGenerateQuestions = async () => {
     setLoading(true);
     try {
-      const res = await axios.post(`/projects/${id}/viva/generate`);
+      const generateUrl = '/projects/' + id + '/viva/generate';
+      const res = await axios.post(generateUrl);
       setQuestions(res.data);
       setCurrentIdx(0);
       setEvaluation(null);
@@ -128,7 +130,8 @@ export const VivaPractice = () => {
     setEvaluation(null);
     try {
       const q = questions[currentIdx];
-      const res = await axios.post(`/projects/${id}/viva/questions/${q.id}/answer`, {
+      const answerUrl = '/projects/' + id + '/viva/questions/' + q.id + '/answer';
+      const res = await axios.post(answerUrl, {
         answerText
       });
       setEvaluation(res.data);
@@ -163,7 +166,7 @@ export const VivaPractice = () => {
       {/* Back button */}
       <div>
         <button 
-          onClick={() => navigate(`/projects/${id}`)}
+          onClick={() => navigate('/projects/' + id)}
           className="btn btn-secondary"
           style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '0.85rem' }}
         >
@@ -213,7 +216,7 @@ export const VivaPractice = () => {
                       setShowAnswerOutline(false);
                       setShowFeedbackModal(false);
                     }}
-                    className={`viva-question-button ${currentIdx === idx ? 'is-active' : ''}`}
+                    className={'viva-question-button ' + (currentIdx === idx ? 'is-active' : '')}
                     aria-current={currentIdx === idx ? 'true' : undefined}
                   >
                     <span>Question {idx + 1}</span>
@@ -243,7 +246,7 @@ export const VivaPractice = () => {
                 <span className="badge badge-info" style={{ textTransform: 'uppercase' }}>
                   {activeQuestion.category}
                 </span>
-                <span className={`badge ${activeQuestion.difficulty === 'brutal' ? 'badge-danger' : 'badge-warning'}`} style={{ textTransform: 'uppercase' }}>
+                <span className={'badge ' + (activeQuestion.difficulty === 'brutal' ? 'badge-danger' : 'badge-warning')} style={{ textTransform: 'uppercase' }}>
                   {difficultyLabel} level
                 </span>
               </div>

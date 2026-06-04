@@ -113,7 +113,7 @@ export const requirementController = {
         return res.status(400).json({ error: 'rawDescription is required' });
       }
 
-      const result = await requirementService.generateAIRequirements(projectId, rawDescription);
+      const result = await requirementService.generateAIRequirements(projectId, rawDescription, req.demoMode);
       res.json(result);
     } catch (error) {
       next(error);
@@ -124,7 +124,7 @@ export const requirementController = {
     try {
       const reqId = parseInt(req.params.requirementId, 10);
       await assertRequirementAccess(req, reqId);
-      const criteria = await requirementService.generateAcceptanceCriteria(reqId);
+      const criteria = await requirementService.generateAcceptanceCriteria(reqId, req.demoMode);
       res.json({ criteria });
     } catch (error) {
       next(error);
@@ -135,7 +135,7 @@ export const requirementController = {
     try {
       const reqId = parseInt(req.params.requirementId, 10);
       await assertRequirementAccess(req, reqId);
-      const testCases = await requirementService.generateTestCases(reqId);
+      const testCases = await requirementService.generateTestCases(reqId, req.demoMode);
       res.json({ testCases });
     } catch (error) {
       next(error);
@@ -177,7 +177,7 @@ export const requirementController = {
       const reqId = parseInt(req.params.requirementId, 10);
       await assertRequirementAccess(req, reqId);
       const { guidance } = req.body || {};
-      const result = await requirementService.refineWithAI(reqId, guidance);
+      const result = await requirementService.refineWithAI(reqId, guidance, req.demoMode);
       res.json(result);
     } catch (error) {
       next(error);
@@ -210,7 +210,7 @@ export const requirementController = {
         vagueTerm: z.string().min(1),
         suggestion: z.string().min(1),
       }).parse(req.body);
-      const result = await requirementService.resolveAmbiguity(reqId, vagueTerm, suggestion);
+      const result = await requirementService.resolveAmbiguity(reqId, vagueTerm, suggestion, req.demoMode);
       res.json(result);
     } catch (error) {
       next(error);

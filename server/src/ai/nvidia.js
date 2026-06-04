@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import env from '../config/env.js';
+import { demoResponses, simulateDemoDelay } from './demoResponses.js';
 
 const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1';
 
@@ -118,13 +119,19 @@ const callNvidia = async (prompt, schema = null, systemInstruction = '', options
 /**
  * Helper to call NVIDIA's OpenAI-compatible endpoint with structured JSON output.
  * Includes retry logic with exponential backoff for transient failures.
+ * When demoMode is true, returns mock data instead of calling the API.
  * @param {string} prompt - The user prompt
  * @param {object} schema - The expected JSON schema
  * @param {string} [systemInstruction] - Optional system instructions/role
- * @param {object} [options] - Additional options (temperature, maxTokens)
+ * @param {object} [options] - Additional options (temperature, maxTokens, demoMode)
  * @returns {Promise<object>} The parsed JSON output from the model
  */
 export const generateStructuredContent = async (prompt, schema, systemInstruction = '', options = {}) => {
+  if (options.demoMode) {
+    await simulateDemoDelay();
+    return getDemoStructuredResponse(prompt);
+  }
+
   try {
     return await withRetry(() => callNvidia(prompt, schema, systemInstruction, options));
   } catch (error) {
@@ -139,12 +146,18 @@ export const generateStructuredContent = async (prompt, schema, systemInstructio
 /**
  * Helper to call NVIDIA's OpenAI-compatible endpoint with regular text output.
  * Includes retry logic with exponential backoff for transient failures.
+ * When demoMode is true, returns mock data instead of calling the API.
  * @param {string} prompt - The prompt
  * @param {string} [systemInstruction] - Optional role instruction
- * @param {object} [options] - Additional options (temperature, maxTokens)
+ * @param {object} [options] - Additional options (temperature, maxTokens, demoMode)
  * @returns {Promise<string>} Text output
  */
 export const generateTextContent = async (prompt, systemInstruction = '', options = {}) => {
+  if (options.demoMode) {
+    await simulateDemoDelay();
+    return getDemoTextResponse(prompt);
+  }
+
   try {
     return await withRetry(() => callNvidia(prompt, null, systemInstruction, options));
   } catch (error) {
@@ -155,3 +168,54 @@ export const generateTextContent = async (prompt, systemInstruction = '', option
     );
   }
 };
+
+function getDemoStructuredResponse(prompt) {
+  if (prompt.includes('Convert the following project idea')) {
+    return { ...demoResponses.generateRequirements };
+  }
+  if (prompt.includes('Generate specific and testable acceptance criteria')) {
+    return { ...demoResponses.generateAcceptanceCriteria };
+  }
+  if (prompt.includes('Generate structured functional test cases')) {
+    return { ...demoResponses.generateTestCases };
+  }
+  if (prompt.includes('Review and refine the following system requirement')) {
+    return { ...demoResponses.refineRequirement };
+  }
+  if (prompt.includes('contains a vague or ambiguous term')) {
+    return { ...demoResponses.resolveAmbiguity };
+  }
+  if (prompt.includes('Generate exactly 8 examiner-style viva defense questions')) {
+    return { ...demoResponses.generateVivaQuestions };
+  }
+  if (prompt.includes('Act as the final viva examiner and evaluate')) {
+    return { ...demoResponses.evaluateVivaAnswer };
+  }
+  return demoResponses.generateRequirements;
+}
+
+function getDemoTextResponse(prompt) {
+  if (prompt.includes('Analyze this capstone project')) {
+    return `## Document completeness
+- Project proposal is present but missing version history and signature page
+- System architecture diagram not yet uploaded
+- User manual or setup guide is absent
+
+## Testing and evidence gaps
+- No test plan document uploaded
+- No test execution reports found
+- Screenshots of running application are missing
+
+## Viva defense risks
+- No individual contribution statements from team members
+- Missing reflection on technical challenges faced
+- No comparison with existing similar systems documented
+
+## Recommended next uploads or fixes
+- Upload system architecture diagram
+- Add user manual with setup instructions
+- Submit test execution report with screenshots
+- Prepare individual contribution summaries for each team member`;
+  }
+  return 'Mock analysis complete. The project demonstrates adequate documentation coverage but has room for improvement in testing evidence and deployment documentation.';
+}

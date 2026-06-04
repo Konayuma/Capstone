@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import logoImage from '../assets/logo copy.png';
+import { useDemo } from '../context/DemoContext';
 import {
   ArrowRight,
   BarChart3,
@@ -11,6 +12,7 @@ import {
   Gauge,
   GraduationCap,
   MessageSquare,
+  Play,
   SearchCheck,
   ShieldCheck,
   Sparkles,
@@ -44,6 +46,7 @@ const workflow = [
 
 export const Landing = () => {
   const { user } = useAuth();
+  const { isActive, start } = useDemo();
   const primaryHref = user ? '/dashboard' : '/register';
 
   return (
@@ -88,7 +91,14 @@ export const Landing = () => {
               <Link to={primaryHref} className="btn btn-primary">
                 {user ? 'Enter workspace' : 'Start your project'} <ArrowRight size={16} />
               </Link>
-              {!user && <Link to="/login" className="btn btn-secondary">Sign in</Link>}
+              {!user && (
+                <>
+                  <Link to="/login" className="btn btn-secondary">Sign in</Link>
+                  <button type="button" className="btn btn-secondary demo-hero-btn" onClick={start}>
+                    <Play size={14} /> Demo
+                  </button>
+                </>
+              )}
             </div>
             <div className="landing-proof-row" aria-label="Platform highlights">
               <span><CheckCircle2 size={15} /> Requirements</span>

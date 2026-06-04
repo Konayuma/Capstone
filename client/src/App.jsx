@@ -26,6 +26,8 @@ import { Menu, X } from 'lucide-react';
 import { OnboardingProvider } from './context/OnboardingContext';
 import OnboardingTour from './components/OnboardingTour';
 import HelpCenter from './components/HelpCenter';
+import { DemoProvider } from './context/DemoContext';
+import DemoOverlay, { DemoLauncher } from './components/DemoOverlay';
 
 // Protection Shell Component
 const ProtectedRoute = ({ children }) => {
@@ -110,9 +112,12 @@ export const App = () => {
     <AuthProvider>
       <OnboardingProvider>
         <BrowserRouter>
-          <SystemNotifications />
-          <OnboardingTour />
-          <HelpCenter />
+          <DemoProvider>
+            <SystemNotifications />
+            <OnboardingTour />
+            <HelpCenter />
+            <DemoLauncher />
+            <DemoOverlay />
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -211,6 +216,7 @@ export const App = () => {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+          </DemoProvider>
         </BrowserRouter>
       </OnboardingProvider>
     </AuthProvider>

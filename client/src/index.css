@@ -4751,3 +4751,320 @@ select {
 .dashboard-summary-card small {
   font-size: 0.78rem;
 }
+
+/* ── Demo Mode Overlay ── */
+
+.demo-launcher {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+}
+
+.demo-launcher-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 8px 24px color-mix(in oklab, var(--brand-1) 30%, transparent);
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
+}
+
+.demo-launcher-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 32px color-mix(in oklab, var(--brand-1) 40%, transparent);
+}
+
+.demo-launcher-btn:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+
+.demo-hero-btn {
+  border-style: dashed !important;
+  border-color: var(--brand-1) !important;
+  color: var(--brand-2) !important;
+}
+
+.demo-hero-btn:hover {
+  background: color-mix(in oklab, var(--brand-3) 20%, white) !important;
+  border-style: solid !important;
+}
+
+/* Container */
+.demo-overlay-container {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.demo-overlay-container * {
+  pointer-events: auto;
+}
+
+.demo-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in oklab, black 34%, transparent);
+  z-index: 0;
+  cursor: pointer;
+}
+
+.demo-spotlight {
+  position: fixed;
+  z-index: 1;
+  border-radius: 18px;
+  box-shadow: 0 0 0 4px var(--brand-1), 0 0 0 6px color-mix(in oklab, white 70%, transparent), 0 0 0 9999px color-mix(in oklab, black 34%, transparent);
+  transition: all 360ms var(--ease-out-quint);
+  pointer-events: none;
+}
+
+/* Tooltip */
+.demo-tooltip {
+  position: fixed;
+  left: 50%;
+  top: 24px;
+  transform: translateX(-50%);
+  z-index: 2;
+  max-width: 520px;
+  width: calc(100% - 48px);
+  border-radius: var(--radius-md);
+  background: white;
+  box-shadow: 0 16px 48px color-mix(in oklab, black 24%, transparent);
+  padding: 18px 20px;
+  display: grid;
+  gap: 10px;
+  animation: demo-tooltip-in 360ms var(--ease-out-quint) both;
+}
+
+@keyframes demo-tooltip-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.96); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.demo-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.demo-step-counter {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--brand-2);
+  margin-bottom: 4px;
+}
+
+.demo-tooltip-title {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  letter-spacing: 0;
+  color: var(--ink-strong);
+}
+
+.demo-tooltip-desc {
+  font-size: 0.9rem;
+  color: var(--ink-body);
+  line-height: 1.5;
+}
+
+.demo-tooltip-close {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--line-subtle);
+  background: var(--bg-soft);
+  color: var(--ink-soft);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), transform var(--t-fast);
+}
+
+.demo-tooltip-close:hover {
+  color: var(--ink-strong);
+  background: white;
+  transform: translateY(-1px);
+}
+
+.demo-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--brand-3) 20%, white);
+  border: 1px solid color-mix(in oklab, var(--brand-1) 18%, transparent);
+  color: var(--ink-body);
+  font-size: 0.85rem;
+}
+
+/* Controls bar */
+.demo-controls {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 2;
+  width: calc(100% - 48px);
+  max-width: 480px;
+  background: color-mix(in oklab, white 92%, var(--bg-elevated));
+  backdrop-filter: blur(10px);
+  border-radius: 999px;
+  border: 1px solid var(--line-subtle);
+  box-shadow: 0 8px 32px color-mix(in oklab, black 16%, transparent);
+  padding: 0;
+  overflow: hidden;
+  animation: demo-controls-in 400ms var(--ease-out-quint) both 200ms;
+}
+
+@keyframes demo-controls-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.demo-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+}
+
+.demo-controls-center {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.demo-controls-left,
+.demo-controls-right {
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.demo-controls-right {
+  justify-content: flex-end;
+}
+
+.demo-ctrl-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), transform var(--t-fast);
+}
+
+.demo-ctrl-btn:hover:not(:disabled) {
+  background: var(--bg-soft);
+  color: var(--ink-strong);
+  transform: scale(1.1);
+}
+
+.demo-ctrl-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.demo-ctrl-btn--play {
+  width: 40px;
+  height: 40px;
+  background: var(--brand-1);
+  color: white;
+}
+
+.demo-ctrl-btn--play:hover {
+  background: var(--brand-2);
+  color: white;
+}
+
+.demo-speed-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  width: auto;
+  padding: 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  border: 1px solid var(--line-subtle);
+  border-radius: 999px;
+}
+
+.demo-speed-btn:hover {
+  border-color: var(--brand-1);
+  color: var(--brand-2);
+}
+
+.demo-speed-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--brand-2);
+  text-transform: uppercase;
+}
+
+.demo-progress-track {
+  height: 3px;
+  background: color-mix(in oklab, var(--line-subtle) 60%, transparent);
+}
+
+.demo-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-1), var(--brand-2));
+  transition: width 300ms var(--ease-out-quint);
+}
+
+@media (max-width: 640px) {
+  .demo-tooltip {
+    top: 12px;
+    max-width: calc(100% - 24px);
+    padding: 14px 16px;
+  }
+  .demo-tooltip-title {
+    font-size: 0.95rem;
+  }
+  .demo-tooltip-desc {
+    font-size: 0.82rem;
+  }
+  .demo-controls {
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+  }
+  .demo-ctrl-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .demo-ctrl-btn--play {
+    width: 36px;
+    height: 36px;
+  }
+  .demo-launcher {
+    bottom: 16px;
+    right: 16px;
+  }
+  .demo-launcher-btn {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+  }
+  .demo-launcher-btn span {
+    display: none;
+  }
+}

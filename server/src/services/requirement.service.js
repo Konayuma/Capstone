@@ -75,7 +75,7 @@ export const requirementService = {
   },
 
   // 1. Convert raw description to complete requirements using NVIDIA AI
-  async generateAIRequirements(projectId, rawDescription) {
+  async generateAIRequirements(projectId, rawDescription, demoMode = false) {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     });
@@ -90,7 +90,8 @@ export const requirementService = {
     const aiResult = await generateStructuredContent(
       prompt,
       requirementsGenSchema,
-      REQUIREMENTS_SYSTEM_INSTRUCTION
+      REQUIREMENTS_SYSTEM_INSTRUCTION,
+      { demoMode }
     );
 
     // Save generated functional & non-functional requirements to DB
@@ -133,7 +134,7 @@ export const requirementService = {
   },
 
   // 2. Generate acceptance criteria for a single requirement
-  async generateAcceptanceCriteria(requirementId) {
+  async generateAcceptanceCriteria(requirementId, demoMode = false) {
     const req = await prisma.requirement.findUnique({
       where: { id: requirementId },
     });
@@ -147,7 +148,8 @@ export const requirementService = {
     const aiResult = await generateStructuredContent(
       prompt,
       acceptanceCriteriaSchema,
-      REQUIREMENTS_SYSTEM_INSTRUCTION
+      REQUIREMENTS_SYSTEM_INSTRUCTION,
+      { demoMode }
     );
 
     await prisma.acceptanceCriteria.deleteMany({
@@ -166,7 +168,7 @@ export const requirementService = {
   },
 
   // 3. Generate test cases for a single requirement
-  async generateTestCases(requirementId) {
+  async generateTestCases(requirementId, demoMode = false) {
     const req = await prisma.requirement.findUnique({
       where: { id: requirementId },
       include: { acceptanceCriteria: true },
@@ -182,7 +184,8 @@ export const requirementService = {
     const aiResult = await generateStructuredContent(
       prompt,
       testCasesSchema,
-      REQUIREMENTS_SYSTEM_INSTRUCTION
+      REQUIREMENTS_SYSTEM_INSTRUCTION,
+      { demoMode }
     );
 
     await prisma.testCase.deleteMany({
@@ -255,7 +258,7 @@ export const requirementService = {
   },
 
   // 5. AI-assisted refinement for a single requirement
-  async refineWithAI(requirementId, guidance) {
+  async refineWithAI(requirementId, guidance, demoMode = false) {
     const req = await prisma.requirement.findUnique({
       where: { id: requirementId },
     });
@@ -268,7 +271,8 @@ export const requirementService = {
     const aiResult = await generateStructuredContent(
       prompt,
       refineRequirementSchema,
-      REQUIREMENTS_SYSTEM_INSTRUCTION
+      REQUIREMENTS_SYSTEM_INSTRUCTION,
+      { demoMode }
     );
 
     return {
@@ -295,7 +299,7 @@ export const requirementService = {
   },
 
   // 7. Resolve ambiguity in a single requirement using AI
-  async resolveAmbiguity(requirementId, vagueTerm, suggestion) {
+  async resolveAmbiguity(requirementId, vagueTerm, suggestion, demoMode = false) {
     const req = await prisma.requirement.findUnique({
       where: { id: requirementId },
     });
@@ -308,7 +312,8 @@ export const requirementService = {
     const aiResult = await generateStructuredContent(
       prompt,
       resolveAmbiguitySchema,
-      REQUIREMENTS_SYSTEM_INSTRUCTION
+      REQUIREMENTS_SYSTEM_INSTRUCTION,
+      { demoMode }
     );
 
     // Update the requirement with resolved description

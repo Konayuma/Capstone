@@ -11,7 +11,7 @@ import {
 
 export const vivaService = {
   // 1. Generate new examiner questions using NVIDIA AI based on project content
-  async generateVivaQuestions(projectId) {
+  async generateVivaQuestions(projectId, demoMode = false) {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -43,7 +43,8 @@ export const vivaService = {
     const aiResult = await generateStructuredContent(
       prompt,
       vivaQuestionsSchema,
-      VIVA_SYSTEM_INSTRUCTION
+      VIVA_SYSTEM_INSTRUCTION,
+      { demoMode }
     );
 
     // Clear old questions
@@ -80,7 +81,7 @@ export const vivaService = {
   },
 
   // 2. Submit and grade a student's answer using NVIDIA AI
-  async evaluateVivaAnswer(userId, questionId, answerText, projectId = null) {
+  async evaluateVivaAnswer(userId, questionId, answerText, projectId = null, demoMode = false) {
     const question = await prisma.vivaQuestion.findUnique({
       where: { id: questionId },
     });
@@ -102,7 +103,8 @@ export const vivaService = {
     const aiResult = await generateStructuredContent(
       prompt,
       vivaEvaluationSchema,
-      VIVA_SYSTEM_INSTRUCTION
+      VIVA_SYSTEM_INSTRUCTION,
+      { demoMode }
     );
 
     // Format evaluation breakdown into feedback text

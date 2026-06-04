@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import env from './config/env.js';
-import { apiLimiter, aiLimiter } from './middleware/rateLimiter.js';
+import { demoMode } from './middleware/demoMode.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import projectRoutes from './routes/project.routes.js';
@@ -19,6 +19,7 @@ import reportRoutes from './routes/report.routes.js';
 import supervisorRoutes from './routes/supervisor.routes.js';
 import githubRoutes from './routes/github.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import demoRoutes from './routes/demo.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -82,8 +83,8 @@ app.use(express.urlencoded({ extended: true }));
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
-// Rate limiting
-app.use('/api', apiLimiter);
+// Demo mode detection
+app.use('/api', demoMode);
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -99,6 +100,7 @@ app.use('/api/projects', reportRoutes);
 app.use('/api/projects', supervisorRoutes);
 app.use('/api/github', githubRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/demo', demoRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -139,7 +141,7 @@ const isDirectExecution = process.argv[1]
 
 if (isDirectExecution) {
   app.listen(env.PORT, () => {
-    console.log(`\n  CapstoneGuard AI Server`);
+    console.log(`\n  Capstone Studio Server`);
     console.log(`  Environment: ${env.NODE_ENV}`);
     console.log(`  Listening on: http://localhost:${env.PORT}`);
     console.log(`  API docs: http://localhost:${env.PORT}/api/health\n`);

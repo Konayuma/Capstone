@@ -6,7 +6,11 @@ const registerSchema = z.object({
   name: z.string().trim().min(2, 'Name must be at least 2 characters'),
   email: z.string().trim().toLowerCase().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(1, 'Password confirmation is required'),
   role: z.enum(['student', 'supervisor']).optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
 });
 
 const loginSchema = z.object({
@@ -19,6 +23,7 @@ test('register validation trims and normalizes auth fields', () => {
     name: '  Ada Lovelace  ',
     email: '  ADA@Example.com  ',
     password: 'secret123',
+    confirmPassword: 'secret123',
     role: 'student',
   });
 
@@ -34,8 +39,20 @@ test('register validation rejects weak passwords', () => {
       name: 'Ada',
       email: 'ada@example.com',
       password: '123',
+      confirmPassword: '123',
     });
   }, /Password must be at least 6 characters/);
+});
+
+test('register validation rejects mismatched passwords', () => {
+  assert.throws(() => {
+    registerSchema.parse({
+      name: 'Ada',
+      email: 'ada@example.com',
+      password: 'secret123',
+      confirmPassword: 'different',
+    });
+  }, /Passwords do not match/);
 });
 
 test('login validation rejects malformed emails and empty passwords', () => {

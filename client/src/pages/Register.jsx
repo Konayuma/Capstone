@@ -12,18 +12,19 @@ export const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('student');
   const [error, setError] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({ name: '', email: '', password: '' });
+  const [fieldErrors, setFieldErrors] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    const nextFieldErrors = validateRegistrationInput({ name, email, password });
+    const nextFieldErrors = validateRegistrationInput({ name, email, password, confirmPassword });
     setFieldErrors(nextFieldErrors);
 
-    if (nextFieldErrors.name || nextFieldErrors.email || nextFieldErrors.password) {
+    if (nextFieldErrors.name || nextFieldErrors.email || nextFieldErrors.password || nextFieldErrors.confirmPassword) {
       return;
     }
 
@@ -134,6 +135,26 @@ export const Register = () => {
                 aria-invalid={Boolean(fieldErrors.password)}
               />
               {fieldErrors.password && <p style={{ marginTop: '6px', color: 'var(--color-danger)', fontSize: '0.86rem' }}>{fieldErrors.password}</p>}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Confirm Password</label>
+              <input
+                className="form-input"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (fieldErrors.confirmPassword) {
+                    setFieldErrors((current) => ({ ...current, confirmPassword: '' }));
+                  }
+                }}
+                placeholder="Re-enter your password"
+                autoComplete="new-password"
+                required
+                aria-invalid={Boolean(fieldErrors.confirmPassword)}
+              />
+              {fieldErrors.confirmPassword && <p style={{ marginTop: '6px', color: 'var(--color-danger)', fontSize: '0.86rem' }}>{fieldErrors.confirmPassword}</p>}
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={loading}>

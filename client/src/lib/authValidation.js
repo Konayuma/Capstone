@@ -35,10 +35,21 @@ export const validateLoginCredentials = ({ email, password }) => ({
   password: validatePassword(password),
 });
 
-export const validateRegistrationInput = ({ name, email, password }) => ({
+const validateConfirmPassword = (password, confirmPassword) => {
+  if (!confirmPassword) {
+    return 'Please confirm your password.';
+  }
+  if (password !== confirmPassword) {
+    return 'Passwords do not match.';
+  }
+  return '';
+};
+
+export const validateRegistrationInput = ({ name, email, password, confirmPassword }) => ({
   name: String(name || '').trim().length < 2 ? 'Name must be at least 2 characters.' : '',
   email: validateEmail(email),
   password: validatePassword(password, { minLength: 6 }),
+  confirmPassword: validateConfirmPassword(password, confirmPassword),
 });
 
 export const normalizeAuthEmail = normalizeEmail;

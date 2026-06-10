@@ -156,6 +156,20 @@ const DEMO_SCRIPT = [
 const DEMO_EMAIL = 'demo@capstonestudio.ai';
 const DEMO_PASSWORD = 'demo123456';
 const DEMO_STATE_KEY = 'capstone.demoState';
+const TARGET_TIMEOUT = 15000;
+
+const waitForElement = (selector) =>
+  new Promise((resolve) => {
+    if (document.querySelector(selector)) return resolve();
+    const observer = new MutationObserver(() => {
+      if (document.querySelector(selector)) {
+        observer.disconnect();
+        resolve();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => { observer.disconnect(); resolve(); }, TARGET_TIMEOUT);
+  });
 
 export const DemoProvider = ({ children }) => {
   const navigate = useNavigate();
@@ -224,6 +238,10 @@ export const DemoProvider = ({ children }) => {
     };
 
     doNavigate(step.route);
+
+    if (step.action !== 'DEMO_LOGIN' && step.target) {
+      await waitForElement(step.target);
+    }
 
     if (step.action === 'DEMO_LOGIN') {
       try {

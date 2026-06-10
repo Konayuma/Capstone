@@ -155,6 +155,7 @@ const DEMO_SCRIPT = [
 
 const DEMO_EMAIL = 'demo@capstonestudio.ai';
 const DEMO_PASSWORD = 'demo123456';
+const DEMO_STATE_KEY = 'capstone.demoState';
 
 export const DemoProvider = ({ children }) => {
   const navigate = useNavigate();
@@ -167,6 +168,23 @@ export const DemoProvider = ({ children }) => {
   const [demoProjectId, setDemoProjectId] = useState(null);
   const timerRef = useRef(null);
   const isPausedRef = useRef(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(DEMO_STATE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setIsActive(parsed.isActive);
+        setCurrentStep(parsed.currentStep);
+        setPlayState(parsed.playState);
+        setSpeed(parsed.speed);
+        setDemoProjectId(parsed.demoProjectId);
+        localStorage.removeItem(DEMO_STATE_KEY);
+      } catch (e) {
+        console.error('Failed to restore demo state:', e);
+      }
+    }
+  }, []);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -217,6 +235,14 @@ export const DemoProvider = ({ children }) => {
           if (demoProject) {
             setDemoProjectId(demoProject.id);
           }
+          const nextStep = stepIndex + 1;
+          localStorage.setItem(DEMO_STATE_KEY, JSON.stringify({
+            isActive: true,
+            currentStep: nextStep,
+            playState: 'playing',
+            speed,
+            demoProjectId: demoProject?.id || null,
+          }));
           window.location.href = '/dashboard';
           return;
         }
